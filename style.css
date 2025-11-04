@@ -1,0 +1,85 @@
+/* =================================================================== */
+/* ## STYLE.CSS - VERSÃO FINAL E COMPLETA (PARA O TESTE BETA) ## */
+/* =================================================================== */
+
+:root {
+    --verde-principal: #2E7D32;
+    --verde-claro: #81C784;
+    --branco: #FFFFFF;
+    --cinza: #F5F5F5;
+    --sucesso: #4CAF50;
+    --alerta: #FFD700;
+    --erro: #F44336;
+    font-family: 'Inter', sans-serif;
+    /* Variável para a altura real do ecrã, será definida pelo JS */
+    --app-height: 100vh;
+}
+
+/* Garante que o corpo e o container da app ocupem 100% da altura da janela */
+html, body {
+    height: 100vh; /* Fallback para browsers antigos */
+    height: var(--app-height);
+    overflow: hidden; /* Previne o scroll na página inteira */
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased; /* Melhora a renderização da fonte */
+    -moz-osx-font-smoothing: grayscale;
+}
+
+#app-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative; /* Garante que modais e toasts se posicionem corretamente */
+}
+
+main {
+    flex-grow: 1; /* Faz a área principal crescer para ocupar o espaço disponível */
+    overflow-y: auto; /* Permite scroll APENAS na área de conteúdo */
+    -webkit-overflow-scrolling: touch; /* Melhora a fluidez do scroll em iOS */
+}
+
+nav {
+    flex-shrink: 0; /* Impede que a barra de navegação encolha */
+    display: none; /* Escondida por defeito, o JS irá mostrá-la */
+}
+
+/* Fontes, Cores e Animações */
+.font-logo { font-family: 'Merienda', cursive; }
+.bg-verde-principal { background-color: var(--verde-principal); }
+.text-verde-principal { color: var(--verde-principal); }
+.border-verde-principal { border-color: var(--verde-principal); }
+.bg-verde-claro { background-color: var(--verde-claro); }
+.bg-sucesso { background-color: var(--sucesso); }
+.bg-alerta { background-color: var(--alerta); }
+.text-alerta { color: #c8a900; }
+.bg-erro { background-color: var(--erro); }
+.text-erro { color: var(--erro); }
+.transition-all { transition: all 0.3s ease-in-out; }
+
+.fade-in { animation: fadeIn 0.5s ease-in-out; }
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Gradiente para a barra de progresso */
+.bg-progress-gradient {
+    background-image: linear-gradient(to right, var(--verde-claro), var(--verde-principal));
+}
+
+/* Componentes específicos */
+.camera-viewfinder {
+    width: 100%; padding-top: 100%; position: relative; background: #000;
+    border-radius: 24px; overflow: hidden; border: 4px solid var(--cinza);
+}
+.camera-viewfinder-content {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    display: flex; align-items: center; justify-content: center; flex-direction: column; color: white;
+}
+input[type="file"] { display: none; }
+
+/* Garante que os botões do mapa ficam na camada de cima */
+#btn-locate-me { z-index: 1000; }
+#screen-map button[data-page="camera"] { z-index: 1000; }

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="referrer" content="unsafe-url">
+    <title>Arboriza</title>
+    
+    <link rel="icon" href="https://cdn.prod.website-files.com/68c9b59ad35a897b62c3262c/68c9baa2c06920a9e64b5588_logoarborizacolor.png" type="image/png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merienda:wght@700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@0.378.0/dist/umd/lucide.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="style.css"> 
+</head>
+<body class="bg-cinza">
+    <div id="app-container" class="max-w-md mx-auto bg-branco shadow-lg">
+        <main>
+            <div id="screen-onboarding" class="p-8 flex flex-col h-full text-center items-center justify-center fade-in">
+                <img src="https://cdn.prod.website-files.com/68c9b59ad35a897b62c3262c/68c9baa2c06920a9e64b5588_logoarborizacolor.png" alt="Logo Arboriza" class="w-48 h-48 mx-auto object-contain"> 
+                <p class="text-gray-600 mt-8 text-xl">Tá perdido? abraça uma árvore e</p>
+                <h2 class="text-6xl font-bold text-verde-principal font-logo mt-2">Arboriza</h2>
+                <div class="mt-auto w-full">
+                    <button data-page="map" class="nav-to-btn w-full bg-verde-principal text-white font-bold py-4 px-4 rounded-xl shadow-lg hover:bg-opacity-90 transition-all">COMEÇAR</button>
+                    <button data-page="map" class="nav-to-btn w-full text-gray-600 font-semibold py-4 px-4 mt-2">Já tem conta? Entrar</button>
+                </div>
+            </div>
+
+             <div id="screen-camera" class="p-6 flex flex-col h-full hidden fade-in">
+                <h3 class="text-2xl font-bold text-center mb-4">Identificar Planta</h3>
+                <div class="camera-viewfinder"><div class="camera-viewfinder-content"><i data-lucide="camera" class="w-24 h-24 text-gray-500"></i><p class="mt-4 text-gray-400">Câmera indisponível no protótipo</p></div></div>
+                <p class="text-center text-gray-500 mt-4">Aponte para uma folha ou flor para identificar</p>
+                <div class="flex items-center justify-center gap-8 mt-auto">
+                    <label for="plant-photo-input"><i data-lucide="image" class="w-10 h-10 text-gray-600 cursor-pointer"></i></label>
+                    <input type="file" id="plant-photo-input" accept="image/*"> <button id="btn-capture" class="w-20 h-20 bg-verde-principal rounded-full border-4 border-white shadow-lg"></button>
+                    <i data-lucide="help-circle" class="w-10 h-10 text-gray-600"></i>
+                </div>
+            </div>
+
+            <div id="screen-result" class="p-6 hidden fade-in">
+                <img id="result-plant-image" src="https://placehold.co/400x300/81C784/FFFFFF?text=Planta" alt="Planta Identificada" class="w-full h-64 object-cover rounded-2xl shadow-lg">
+                <div class="text-center mt-6">
+                    <h3 id="result-common-name" class="text-3xl font-bold text-verde-principal"></h3>
+                    <p id="result-scientific-name" class="text-lg text-gray-600 italic mt-1"></p>
+                </div>
+                <div class="bg-gray-100 p-3 rounded-lg mt-4 text-center">
+                    <img src="https://my.plantnet.org/images/powered-by-plantnet-light.png" alt="Powered by PlantNet" class="h-8 mx-auto"> 
+                    <p class="font-semibold mt-2">Confiança: <span id="result-confidence">0%</span></p>
+                    <div class="w-full bg-gray-300 rounded-full h-2.5 mt-2"><div id="result-confidence-bar" class="bg-progress-gradient h-2.5 rounded-full" style="width: 0%"></div></div>
+                </div>
+                <div class="mt-8 text-center">
+                    <p class="text-lg font-semibold">Esta é a planta que você identificou?</p>
+                    <div class="flex gap-4 mt-4">
+                        <button id="btn-confirm-no" class="w-full bg-erro text-white font-bold py-3 rounded-xl shadow-lg">Não, tentar de novo</button>
+                        <button id="btn-initiate-care" class="w-full bg-sucesso text-white font-bold py-3 rounded-xl shadow-lg">Sim, cuidar dela!</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="screen-care" class="p-6 hidden fade-in">
+                <h3 id="care-title" class="text-2xl font-bold text-center"></h3>
+                <p id="care-subtitle" class="text-center text-gray-500"></p>
+                <div id="care-actions-container" class="space-y-4 mt-6">
+                    <button id="action-water" class="care-action-btn w-full text-left p-4 bg-cinza rounded-lg flex items-center gap-4 hover:bg-gray-200 transition-all"><span class="text-3xl">💧</span><div><p class="font-bold">Regar a planta</p><p class="text-sm text-gray-600">Um pouco de água para refrescar!</p></div></button>
+                    <button id="action-clean" class="care-action-btn w-full text-left p-4 bg-cinza rounded-lg flex items-center gap-4 hover:bg-gray-200 transition-all"><span class="text-3xl">🧹</span><div><p class="font-bold">Limpar o canteiro</p><p class="text-sm text-gray-600">Deixar o espaço dela mais bonito.</p></div></button>
+                    <a id="action-prune" href="tel:1746" class="w-full text-left p-4 bg-cinza rounded-lg flex items-center gap-4 hover:bg-gray-200 transition-all"><span class="text-3xl">✂️</span><div><p class="font-bold">Solicitar Poda (Prefeitura)</p><p class="text-sm text-gray-600">Ligar para a central 1746.</p></div></a>
+                </div>
+                <div id="add-tree-button-container" class="mt-6 hidden">
+                    <button data-page="add-tree" class="nav-to-btn w-full bg-verde-principal text-white font-bold py-3 px-4 rounded-xl shadow-lg">Cadastrar Nova Árvore</button>
+                </div>
+                <div id="care-confirmation-section" class="mt-8 p-4 bg-verde-claro bg-opacity-30 rounded-lg hidden">
+                    <h4 class="font-bold text-center text-verde-principal">Missão quase completa!</h4>
+                    <p class="text-center text-gray-700 mt-2">Tire uma foto para registrar o seu cuidado e deixe uma mensagem para a comunidade ver.</p>
+                    <label for="care-photo-input" class="mt-4 w-full bg-white text-verde-principal font-semibold py-3 px-4 rounded-xl shadow-sm flex items-center justify-center gap-2 cursor-pointer"><i data-lucide="camera"></i><span>Anexar Foto do Cuidado</span></label>
+                    <input type="file" id="care-photo-input" accept="image/*"> <textarea id="care-message" class="w-full p-2 border rounded-lg mt-3" rows="3" placeholder="Tá sem inspiração? Fala de como se sentiu durante essa missão..."></textarea>
+                    <button id="btn-finish-care" class="w-full mt-3 bg-verde-principal text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:bg-opacity-90">Finalizar Missão</button>
+                </div>
+            </div>
+
+            <div id="screen-map" class="flex flex-col h-full hidden fade-in">
+                <div id="map-container" class="flex-grow bg-gray-300 relative">
+                    <button id="btn-locate-me" class="absolute bottom-4 left-4 w-12 h-12 bg-white text-verde-principal rounded-full shadow-lg flex items-center justify-center">
+                        <i data-lucide="compass" class="w-6 h-6"></i>
+                    </button>
+                    <button data-page="camera" class="nav-to-btn absolute bottom-4 right-4 w-16 h-16 bg-verde-principal text-white rounded-full shadow-lg flex items-center justify-center">
+                        <i data-lucide="scan-search" class="w-8 h-8"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="screen-profile" class="p-6 hidden fade-in">
+                <div class="text-center">
+                    <img id="profile-avatar" src="https://placehold.co/128x128/cccccc/FFFFFF?text=U" alt="Foto do usuário" class="w-32 h-32 rounded-full mx-auto border-4 border-white shadow-lg object-cover">
+                    <h3 id="profile-name" class="text-2xl font-bold mt-4">Usuário</h3>
+                    <p class="text-md text-gray-500">Nível 1: Semente</p>
+                </div>
+                <div class="mt-6">
+                    <p class="text-sm text-gray-600 text-center mb-1">
+                        <span id="profile-points-text">0</span> Pontos | <span id="profile-progress-text">0%</span> para o próximo nível
+                    </p>
+                    <div class="w-full bg-gray-200 rounded-full h-4">
+                        <div id="profile-progress-bar" class="bg-progress-gradient h-4 rounded-full" style="width: 0%;"></div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-4 text-center mt-6">
+                    <div class="bg-cinza p-4 rounded-xl"><p id="profile-stat-cared" class="text-2xl font-bold">🌳 0</p><p class="text-sm text-gray-600">Cuidadas</p></div>
+                    <div class="bg-cinza p-4 rounded-xl"><p id="profile-stat-identified" class="text-2xl font-bold">🌿 0</p><p class="text-sm text-gray-600">Identificadas</p></div>
+                    <div class="bg-cinza p-4 rounded-xl"><p id="profile-stat-added" class="text-2xl font-bold">📍 0</p><p class="text-sm text-gray-600">Adicionadas</p></div>
+                </div>
+                 <div class="mt-8">
+                    <h4 class="font-bold text-lg mb-2">Árvores Adotadas</h4>
+                    <div id="adopted-trees-list" class="space-y-2">
+                         <p class="text-gray-500 text-center italic">Nenhuma árvore adotada ainda.</p>
+                         </div>
+                </div>
+                <div class="mt-8">
+                    <h4 class="font-bold text-lg mb-2">Ranking da Região</h4>
+                    <div class="space-y-3">
+                        <div class="flex items-center bg-cinza p-3 rounded-lg"><span class="font-bold text-lg">1.</span><img src="https://placehold.co/40x40/81C784/FFFFFF?text=M" class="w-10 h-10 rounded-full mx-3 object-cover"><span class="font-semibold">Você</span><span id="ranking-your-score" class="ml-auto text-gray-600">0 pts</span></div>
+                        <div class="flex items-center bg-white p-3 rounded-lg"><span class="font-bold text-lg">2.</span><img src="https://placehold.co/40x40/cccccc/FFFFFF?text=C" class="w-10 h-10 rounded-full mx-3 object-cover"><span class="font-semibold">Carlos</span><span class="ml-auto text-gray-600">1800 pts</span></div>
+                        <div class="flex items-center bg-white p-3 rounded-lg"><span class="font-bold text-lg">3.</span><img src="https://placehold.co/40x40/cccccc/FFFFFF?text=A" class="w-10 h-10 rounded-full mx-3 object-cover"><span class="font-semibold">Ana</span><span class="ml-auto text-gray-600">1550 pts</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="screen-achievements" class="p-6 hidden fade-in">
+                <h3 class="text-2xl font-bold text-center mb-6">Sua Jornada</h3>
+                <div class="mb-6">
+                    <h4 class="font-bold text-lg mb-2">Emblemas</h4>
+                    <div id="achievements-list" class="space-y-4">
+                         <div data-achievement="Guardiã Iniciante" class="bg-cinza p-4 rounded-lg">
+                            <div class="flex justify-between items-center"><p class="font-bold">Guardiã Iniciante</p><span class="counter text-sm font-semibold text-gray-600">0/5</span></div>
+                            <p class="text-sm text-gray-600 mt-1">Cuide de 5 árvores.</p><div class="w-full bg-gray-300 rounded-full h-2.5 mt-3"><div class="progress-bar bg-sucesso h-2.5 rounded-full" style="width: 0%"></div></div></div>
+                         <div data-achievement="Botânica de Primeira" class="bg-cinza p-4 rounded-lg">
+                            <div class="flex justify-between items-center"><p class="font-bold">Botânica de Primeira</p><span class="counter text-sm font-semibold text-gray-600">0/10</span></div>
+                            <p class="text-sm text-gray-600 mt-1">Identifique 10 espécies diferentes.</p><div class="w-full bg-gray-300 rounded-full h-2.5 mt-3"><div class="progress-bar bg-sucesso h-2.5 rounded-full" style="width: 0%"></div></div></div>
+                         <div data-achievement="Desbravador(a)" class="bg-cinza p-4 rounded-lg">
+                            <div class="flex justify-between items-center"><p class="font-bold">Desbravador(a)</p><span class="counter text-sm font-semibold text-gray-600">0/3</span></div>
+                            <p class="text-sm text-gray-600 mt-1">Adicione 3 novas árvores ao mapa.</p><div class="w-full bg-gray-300 rounded-full h-2.5 mt-3"><div class="progress-bar bg-sucesso h-2.5 rounded-full" style="width: 0%"></div></div></div>
+                    </div>
+                </div>
+                <div class="mt-8">
+                    <h4 class="font-bold text-lg mb-2">Recompensas com Parceiros</h4>
+                    <p class="text-gray-600 mb-4">Complete emblemas e desbloqueie descontos!</p>
+                    <div class="space-y-3">
+                        <div class="bg-white p-4 rounded-lg border flex items-center"><div><p class="font-semibold">Sucos do Marcão</p><p class="text-sm text-gray-500">Rua Fonseca, 240 - Bangu</p></div><a href="#" class="ml-auto text-sm text-blue-600 font-semibold">Ver no mapa</a></div>
+                        <div class="bg-white p-4 rounded-lg border flex items-center"><div><p class="font-semibold">Floricultura Pense Verde</p><p class="text-sm text-gray-500">Estrada da Posse, 123 - Campo Grande</p></div><a href="#" class="ml-auto text-sm text-blue-600 font-semibold">Ver no mapa</a></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="screen-feed" class="p-4 hidden fade-in space-y-4">
+                 <h3 class="text-2xl font-bold text-center mb-2">Feed da Galera</h3>
+                 <div id="feed-posts-container" class="space-y-4"></div>
+            </div>
+
+            <div id="screen-tree-profile" class="hidden fade-in">
+                 <div class="relative">
+                    <img id="tree-profile-image" src="https://placehold.co/600x300/81C784/FFFFFF?text=Árvore" class="w-full h-56 object-cover">
+                    <button id="btn-care-from-profile" class="absolute bottom-4 right-4 bg-verde-principal text-white font-bold py-3 px-5 rounded-xl shadow-lg">Cuidar</button>
+                    <button data-page="map" class="nav-to-btn absolute top-4 left-4 bg-white rounded-full p-2 shadow-lg"><i data-lucide="arrow-left"></i></button>
+                 </div>
+                 <div class="p-4">
+                    <h3 id="tree-profile-name" class="text-2xl font-bold"></h3>
+                    <p id="tree-profile-scientific-name" class="text-md text-gray-500 italic"></p>
+                    <p id="tree-profile-address" class="text-sm text-gray-600 mt-2 flex items-center gap-1"><i data-lucide="map-pin" class="w-4 h-4"></i><span></span></p>
+                    <div id="tree-profile-status-badge" class="text-white text-center font-bold p-2 rounded-lg my-4"></div>
+                     
+                    <h4 class="font-bold text-lg mb-2 mt-6">Histórico de Ações</h4>
+                    <div id="tree-profile-history" class="space-y-2 text-sm text-gray-700 max-h-32 overflow-y-auto border p-2 rounded-lg bg-gray-50"></div>
+
+                    <h4 class="font-bold text-lg mb-2 mt-6">Mural de Mensagens</h4>
+                    <div id="tree-profile-timeline" class="space-y-4"></div>
+
+                    <h4 class="font-bold text-lg mb-2 mt-6">Padrinhos e Madrinhas</h4>
+                    <div id="tree-profile-padrinhos" class="flex flex-wrap gap-2"></div>
+                 </div>
+            </div>
+            
+             <div id="screen-add-tree" class="p-6 hidden fade-in">
+                <h3 class="text-2xl font-bold text-center">Cadastrar Nova Árvore</h3>
+                <p class="text-center text-gray-500 mt-1">Que legal! Vamos dar uma identidade para esta nova amiga.</p>
+                <div class="mt-6">
+                    <label for="add-tree-photo-input" class="w-full bg-white text-verde-principal font-semibold py-3 px-4 rounded-xl shadow-sm flex items-center justify-center gap-2 cursor-pointer border-2 border-dashed">
+                        <i data-lucide="camera"></i>
+                        <span>Foto da Árvore (Opcional)</span>
+                    </label>
+                    <input type="file" id="add-tree-photo-input" accept="image/*"> <img id="add-tree-photo-preview" class="w-full h-auto rounded-lg mt-2 hidden object-cover">
+                </div>
+                <div class="mt-4">
+                    <h4 class="font-semibold mb-2">Qual o estado de saúde dela?</h4>
+                    <select id="add-tree-health" class="w-full p-3 border rounded-lg bg-white">
+                        <option value="healthy">Parece saudável e feliz</option>
+                        <option value="needs-care">Parece um pouco triste (folhas secas, lixo)</option>
+                        <option value="critical">Parece muito doente ou danificada</option>
+                    </select>
+                </div>
+                <div class="mt-4">
+                     <h4 class="font-semibold mb-2">Deixe a primeira mensagem no mural!</h4>
+                     <textarea id="add-tree-message" class="w-full p-2 border rounded-lg" rows="4" placeholder="Ex: Que bom te encontrar! Espero que cresça forte."></textarea>
+                </div>
+                <button id="btn-finish-add-tree" class="w-full mt-6 bg-verde-principal text-white font-bold py-3 px-4 rounded-xl shadow-lg">Finalizar Cadastro</button>
+            </div>
+            
+            <div id="screen-learn" class="p-6 hidden fade-in">
+                <div class="text-center">
+                    <i data-lucide="bot" class="w-16 h-16 mx-auto text-verde-principal"></i>
+                    <h3 class="text-2xl font-bold mt-2">Pergunta pro Arvoreco!</h3>
+                    <p class="text-gray-600 mt-1">O que você quer saber sobre o universo das plantas?</p>
+                </div>
+                <div class="mt-6 relative">
+                    <input type="text" id="learn-search-input" placeholder="Ex: Como adubar uma planta?" class="w-full p-4 pr-12 bg-cinza rounded-lg">
+                    <button id="learn-search-btn" class="absolute right-2 top-1/2 -translate-y-1/2 bg-verde-principal text-white rounded-lg p-2"><i data-lucide="search"></i></button>
+                </div>
+                <div class="mt-4">
+                    <p class="text-sm font-semibold text-gray-500 mb-2">Sugestões:</p>
+                    <div class="flex flex-wrap gap-2">
+                        <button class="suggested-question-btn text-sm bg-gray-200 text-gray-700 py-1 px-3 rounded-full">Como melhorar a terra do canteiro?</button>
+                        <button class="suggested-question-btn text-sm bg-gray-200 text-gray-700 py-1 px-3 rounded-full">Por que não pode pintar os troncos das árvores?</button>
+                        <button class="suggested-question-btn text-sm bg-gray-200 text-gray-700 py-1 px-3 rounded-full">Como proteger uma árvore jovem?</button>
+                    </div>
+                </div>
+                <div id="learn-results-container" class="mt-6 hidden"></div>
+            </div>
+
+        </main>
+
+        <nav class="bg-white shadow-t-lg border-t border-gray-200 flex justify-around">
+            <button data-page="map" class="nav-btn flex-1 flex flex-col items-center justify-center p-2 text-gray-400"><i data-lucide="map" class="w-6 h-6"></i><span class="text-xs font-semibold mt-1">Mapa</span></button>
+            <button data-page="learn" class="nav-btn flex-1 flex flex-col items-center justify-center p-2 text-gray-400"><i data-lucide="graduation-cap" class="w-6 h-6"></i><span class="text-xs font-semibold mt-1">Saber Mais</span></button>
+            <button data-page="feed" class="nav-btn flex-1 flex flex-col items-center justify-center p-2 text-gray-400"><i data-lucide="newspaper" class="w-6 h-6"></i><span class="text-xs font-semibold mt-1">Feed</span></button>
+            <button data-page="achievements" class="nav-btn flex-1 flex flex-col items-center justify-center p-2 text-gray-400"><i data-lucide="award" class="w-6 h-6"></i><span class="text-xs font-semibold mt-1">Conquistas</span></button>
+            <button data-page="profile" class="nav-btn flex-1 flex flex-col items-center justify-center p-2 text-gray-400"><i data-lucide="user" class="w-6 h-6"></i><span class="text-xs font-semibold mt-1">Perfil</span></button>
+        </nav>
+        
+        <div id="toast-notification" class="hidden fixed bottom-24 left-1/2 -translate-x-1/2 bg-gray-800 text-white py-2 px-5 rounded-full shadow-lg z-50"><p></p></div>
+
+        <div id="loading-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+            <div class="bg-white p-6 rounded-lg flex items-center gap-4 shadow-xl">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-verde-principal"></div>
+                <p id="loading-message" class="font-semibold text-gray-700"></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-storage-compat.js"></script>
+    
+    <script src="script.js" type="module"></script>
+</body>
+</html>

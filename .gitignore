@@ -1,0 +1,3 @@
+# Ignora dependências locais
+node_modules/
+netlify/functions/node_modules/
