@@ -1,3 +1,4 @@
+// MUDANÇAS: Adicionada lógica de upload de avatar e postagem de comentário.
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
     getAuth,
@@ -62,7 +63,7 @@ const appState = {
 // --- 3. FUNÇÕES PRINCIPAIS (Ciclo de Vida da App) ---
 
 const initializeAppCore = () => {
-    console.log("Arboriza 1.0.1 iniciando...");
+    console.log("Arboriza 1.0.3 iniciando...");
     setAppHeight();
     window.addEventListener('resize', setAppHeight);
     lucide.createIcons();
@@ -269,7 +270,44 @@ const getFirebaseErrorMessage = (error) => {
 };
 
 
-// --- 6. GAMIFICAÇÃO (Agora com Firestore) ---
+// --- 6. GAMIFICAÇÃO E PERFIL ---
+
+// NOVO: Função de Upload de Foto de Perfil
+const handleProfilePicUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file || !appState.currentUser) return;
+
+    showLoadingModal(true, "Atualizando sua foto...");
+    
+    try {
+        // 1. Caminho seguro no Storage
+        const filePath = `user-avatars/${appState.currentUser.uid}/avatar.jpg`;
+        const fileRef = ref(storage, filePath);
+        
+        // 2. Faz o upload
+        const snapshot = await uploadBytes(fileRef, file);
+        const downloadURL = await getDownloadURL(snapshot.ref);
+        
+        // 3. Atualiza o documento do usuário no Firestore
+        const userRef = doc(db, "users", appState.currentUser.uid);
+        await updateDoc(userRef, {
+            photoURL: downloadURL
+        });
+        
+        // 4. Atualiza o estado local e a UI
+        appState.currentUser.photoURL = downloadURL;
+        document.getElementById('profile-avatar').src = downloadURL;
+        
+        showToast("Foto de perfil atualizada!");
+
+    } catch (error) {
+        console.error("Erro ao atualizar foto de perfil:", error);
+        showToast("Erro ao enviar sua foto.");
+    } finally {
+        showLoadingModal(false);
+    }
+};
+
 
 const awardPoints = async (action) => {
     if (!appState.currentUser) return;
@@ -293,6 +331,9 @@ const awardPoints = async (action) => {
         case 'adopt_tree':
             points = 20;
             break;
+        case 'comment_tree':
+            points = 5; // Dá 5 pontos por um comentário
+            break;
     }
 
     if (points > 0) {
@@ -303,6 +344,7 @@ const awardPoints = async (action) => {
         
         const userRef = doc(db, "users", appState.currentUser.uid);
         try {
+            // Atualiza apenas os campos que mudam
             await updateDoc(userRef, {
                 points: newStats.points,
                 treesAdded: newStats.treesAdded,
@@ -651,7 +693,7 @@ const renderAdopter = (adopter) => {
 };
 
 
-// --- 8. LÓGICA DE "ADOTAR" ÁRVORE ---
+// --- 8. LÓGICA DE "ADOTAR" E "COMENTAR" ---
 
 const checkAdoptionStatus = async (treeId) => {
     const btn = document.getElementById('btn-adopt-tree');
@@ -724,9 +766,53 @@ const handleAdoptTree = async () => {
     }
 };
 
+// NOVO: Função para postar comentário rápido
+const handlePostComment = async () => {
+    const tree = appState.currentTree;
+    const user = appState.currentUser;
+    const input = document.getElementById('tree-comment-input');
+    const message = input.value;
+
+    if (!tree || !user || !message) {
+        showToast("Escreva uma mensagem primeiro!");
+        return;
+    }
+    
+    const btn = document.getElementById('btn-post-comment');
+    btn.disabled = true;
+
+    try {
+        const commentEvent = {
+            action: "comentou.", // Ação diferente de "cuidou"
+            message: message,
+            photoUrl: null, // Sem foto para um comentário rápido
+            user: { 
+                id: user.uid, 
+                name: user.name, 
+                photoURL: user.photoURL 
+            },
+            timestamp: serverTimestamp()
+        };
+        
+        const eventsCollectionRef = collection(db, "trees", tree.id, "careEvents");
+        await addDoc(eventsCollectionRef, commentEvent);
+        
+        awardPoints('comment_tree'); // Dá pontos por comentar
+        input.value = ''; // Limpa o campo
+        showToast("Mensagem postada no mural!");
+
+    } catch (error) {
+        console.error("Erro ao postar comentário:", error);
+        showToast("Erro ao enviar sua mensagem.");
+    } finally {
+        btn.disabled = false;
+    }
+};
+
 
 // --- 9. FLUXO DE CUIDADO E CADASTRO ---
 
+// Esta função é para fotos de CUIDADO e de ÁRVORE (pasta /photos/)
 const uploadImage = async (file) => {
     if (!file) return null;
     
@@ -758,6 +844,7 @@ const handleFinishCare = async () => {
     const photoFile = document.getElementById('care-photo-input').files[0];
     
     try {
+        // A função 'uploadImage' já funciona para isso!
         const photoUrl = await uploadImage(photoFile);
         
         const careEvent = {
@@ -960,6 +1047,7 @@ const handleRegisterNewTree = async () => {
     const photoFile = document.getElementById('add-tree-photo-input').files[0];
 
     try {
+        // A função 'uploadImage' já funciona para isso!
         const photoUrl = await uploadImage(photoFile);
         
         const newTree = {
@@ -1057,18 +1145,21 @@ const setupEventListeners = () => {
         }
     });
 
+    // Autenticação
     document.getElementById('login-form').addEventListener('submit', handleLogin);
     document.getElementById('signup-form').addEventListener('submit', handleSignup);
     document.getElementById('btn-logout').addEventListener('click', handleLogout);
 
+    // NOVO: Perfil
+    document.getElementById('profile-avatar-input').addEventListener('change', handleProfilePicUpload);
+
+    // Identificação
     document.getElementById('plant-photo-input').addEventListener('change', (e) => {
         if (e.target.files && e.target.files.length > 0) {
             handlePlantIdentification(e.target.files[0]);
         }
     });
-    
     document.getElementById('btn-capture').addEventListener('click', capturePhotoFromFeed);
-
     document.getElementById('btn-confirm-no').addEventListener('click', () => {
         showToast("Tente tirar uma foto de outro ângulo.");
         document.getElementById('plant-photo-input').value = null;
@@ -1076,6 +1167,7 @@ const setupEventListeners = () => {
     });
     document.getElementById('btn-initiate-care').addEventListener('click', initiateCareFlow);
 
+    // Cadastro
     document.getElementById('btn-finish-add-tree').addEventListener('click', handleRegisterNewTree);
     document.getElementById('add-tree-photo-input').addEventListener('change', (e) => {
         if (e.target.files && e.target.files[0]) {
@@ -1085,8 +1177,10 @@ const setupEventListeners = () => {
         }
     });
 
+    // Mapa
     document.getElementById('btn-locate-me').addEventListener('click', centerMapOnUserLocation);
 
+    // Cuidado
     document.getElementById('btn-finish-care').addEventListener('click', handleFinishCare);
     document.querySelectorAll('.care-action-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -1098,6 +1192,7 @@ const setupEventListeners = () => {
         });
     });
 
+    // Perfil da Árvore
     document.getElementById('btn-care-from-profile').addEventListener('click', () => {
         if (appState.currentTree) {
             showPage('care');
@@ -1112,8 +1207,11 @@ const setupEventListeners = () => {
         }
     });
     document.getElementById('btn-adopt-tree').addEventListener('click', handleAdoptTree);
+    // NOVO: Comentário Rápido
+    document.getElementById('btn-post-comment').addEventListener('click', handlePostComment);
 
 
+    // Saber Mais
     document.querySelectorAll('.suggested-question-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const query = btn.textContent;
@@ -1126,6 +1224,7 @@ const setupEventListeners = () => {
         handleLearnSearch(query);
     });
 
+    // Modais
     document.getElementById('btn-show-help').addEventListener('click', () => document.getElementById('help-modal').classList.remove('hidden'));
     document.getElementById('btn-close-help-modal').addEventListener('click', () => document.getElementById('help-modal').classList.add('hidden'));
 };

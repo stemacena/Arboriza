@@ -154,7 +154,15 @@
             <div id="screen-profile" class="p-6 hidden fade-in">
                 <div class="text-center relative">
                     <button id="btn-logout" class="absolute top-0 right-0 text-gray-500 hover:text-erro"><i data-lucide="log-out" class="w-6 h-6"></i></button>
-                    <img id="profile-avatar" src="https://placehold.co/128x128/cccccc/FFFFFF?text=U" alt="Foto do usuário" class="w-32 h-32 rounded-full mx-auto border-4 border-white shadow-lg object-cover">
+                    
+                    <label for="profile-avatar-input" class="cursor-pointer relative inline-block">
+                        <img id="profile-avatar" src="https://placehold.co/128x128/cccccc/FFFFFF?text=U" alt="Foto do usuário" class="w-32 h-32 rounded-full mx-auto border-4 border-white shadow-lg object-cover">
+                        <div class="absolute bottom-1 right-1 bg-white p-1 rounded-full shadow-md border border-gray-200">
+                            <i data-lucide="camera" class="w-5 h-5 text-verde-principal"></i>
+                        </div>
+                    </label>
+                    <input type="file" id="profile-avatar-input" accept="image/*" class="hidden"> 
+                    
                     <h3 id="profile-name" class="text-2xl font-bold mt-4">Usuário</h3>
                     <p id="profile-level" class="text-md text-gray-500">Nível 1: Semente</p>
                 </div>
@@ -229,6 +237,10 @@
                     <div id="tree-profile-history" class="space-y-2 text-sm text-gray-700 max-h-32 overflow-y-auto border p-2 rounded-lg bg-gray-50"></div>
 
                     <h4 class="font-bold text-lg mb-2 mt-6">Mural de Mensagens</h4>
+                    <div class="flex gap-2 mb-4">
+                        <input type="text" id="tree-comment-input" class="w-full p-2 border rounded-lg bg-cinza" placeholder="Deixar uma mensagem...">
+                        <button id="btn-post-comment" class="bg-verde-principal text-white rounded-lg p-3 flex-shrink-0"><i data-lucide="send" class="w-5 h-5"></i></button>
+                    </div>
                     <div id="tree-profile-timeline" class="space-y-4"></div>
 
                     <h4 class="font-bold text-lg mb-2 mt-6">Adoram essa árvore:</h4>

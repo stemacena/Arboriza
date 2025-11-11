@@ -83,7 +83,7 @@ input[type="file"] { display: none; }
 
 #arvoreco-mapa {
     bottom: 24px;
-    right: 88px; /* Ajustado para ficar mais perto do botão */
+    right: 88px;
     flex-direction: row-reverse;
 }
 #arvoreco-mapa .avatar-img {
@@ -91,7 +91,7 @@ input[type="file"] { display: none; }
 }
 
 #arvoreco-camera {
-    top: 70px; /* Ajustado para ficar ABAIXO do título */
+    top: 70px;
     left: 16px;
 }
 
