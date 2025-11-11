@@ -18,22 +18,18 @@
     <link rel="stylesheet" href="style.css"> 
 </head>
 <body class="bg-cinza">
-    <!-- O container da app agora é o ponto de entrada -->
     <div id="app-container" class="max-w-md mx-auto bg-branco shadow-lg">
         
-        <!-- Tela de Onboarding (Inicial) -->
         <div id="screen-onboarding" class="p-8 flex flex-col h-full text-center items-center justify-center fade-in">
             <img src="https://cdn.prod.website-files.com/68c9b59ad35a897b62c3262c/68c9baa2c06920a9e64b5588_logoarborizacolor.png" alt="Logo Arboriza" class="w-48 h-48 mx-auto object-contain"> 
             <p class="text-gray-600 mt-8 text-xl">Tá perdido? abraça uma árvore e</p>
             <h2 class="text-6xl font-bold text-verde-principal font-logo mt-2">Arboriza</h2>
             <div class="mt-auto w-full">
-                <!-- ATUALIZAÇÃO: Botões agora levam para 'signup' e 'login' -->
                 <button data-page="signup" class="nav-to-btn w-full bg-verde-principal text-white font-bold py-4 px-4 rounded-xl shadow-lg hover:bg-opacity-90 transition-all">COMEÇAR</button>
                 <button data-page="login" class="nav-to-btn w-full text-gray-600 font-semibold py-4 px-4 mt-2">Já tem conta? Entrar</button>
             </div>
         </div>
 
-        <!-- NOVA TELA: Login -->
         <div id="screen-login" class="p-8 flex flex-col h-full hidden fade-in">
             <h3 class="text-3xl font-bold text-verde-principal text-center mb-8">Bem-vindo de volta!</h3>
             <form id="login-form" class="space-y-4">
@@ -51,7 +47,6 @@
             <button data-page="signup" class="nav-to-btn w-full text-center text-gray-600 font-semibold py-4 mt-auto">Não tem conta? Criar agora</button>
         </div>
 
-        <!-- NOVA TELA: Signup (Criar Conta) -->
         <div id="screen-signup" class="p-8 flex flex-col h-full hidden fade-in">
             <h3 class="text-3xl font-bold text-verde-principal text-center mb-8">Crie sua conta</h3>
             <form id="signup-form" class="space-y-4">
@@ -73,10 +68,8 @@
             <button data-page="login" class="nav-to-btn w-full text-center text-gray-600 font-semibold py-4 mt-auto">Já tem conta? Entrar</button>
         </div>
 
-        <!-- Conteúdo Principal da App (só aparece depois do login) -->
         <main class="hidden">
-            <div id="screen-camera" class="p-6 flex flex-col h-full hidden fade-in">
-                <!-- NOVO: Arvoreco Flutuante -->
+            <div id="screen-camera" class="p-6 flex flex-col h-full hidden fade-in relative">
                 <div class="arvoreco-avatar" id="arvoreco-camera">
                     <div class="speech-bubble speech-bubble-bottom-left">
                         Tire a foto bem de perto da folha ou flor! Se não der certo, tente outro ângulo.
@@ -86,7 +79,6 @@
 
                 <h3 class="text-2xl font-bold text-center mb-4">Identificar Planta</h3>
                 <div class="camera-viewfinder relative">
-                    <!-- A sobreposição de vídeo/câmera real virá aqui -->
                     <video id="camera-feed" class="absolute top-0 left-0 w-full h-full object-cover rounded-[20px] hidden" autoplay playsinline></video>
                     <div id="camera-placeholder" class="camera-viewfinder-content"><i data-lucide="camera" class="w-24 h-24 text-gray-500"></i><p class="mt-4 text-gray-400">Aguardando permissão da câmera...</p></div>
                 </div>
@@ -96,7 +88,6 @@
                     <label for="plant-photo-input"><i data-lucide="image" class="w-10 h-10 text-gray-600 cursor-pointer"></i></label>
                     <input type="file" id="plant-photo-input" accept="image/*" capture="environment">
                     <button id="btn-capture" class="w-20 h-20 bg-verde-principal rounded-full border-4 border-white shadow-lg"></button>
-                    <!-- ATUALIZAÇÃO: Botão de ajuda agora funciona -->
                     <button id="btn-show-help"><i data-lucide="help-circle" class="w-10 h-10 text-gray-600"></i></button>
                 </div>
             </div>
@@ -107,7 +98,6 @@
                     <h3 id="result-common-name" class="text-3xl font-bold text-verde-principal"></h3>
                     <p id="result-scientific-name" class="text-lg text-gray-600 italic mt-1"></p>
                 </div>
-                <!-- ATUALIZAÇÃO: Trocado 'bg-gray-100' por 'bg-white border' -->
                 <div class="bg-white border p-3 rounded-lg mt-4 text-center">
                     <img src="https://my.plantnet.org/images/powered-by-plantnet-light.png" alt="Powered by PlantNet" class="h-8 mx-auto"> 
                     <p class="font-semibold mt-2">Confiança: <span id="result-confidence">0%</span></p>
@@ -145,12 +135,11 @@
 
             <div id="screen-map" class="flex flex-col h-full hidden fade-in">
                 <div id="map-container" class="flex-grow bg-gray-300 relative">
-                    <!-- NOVO: Arvoreco Flutuante -->
                     <div class="arvoreco-avatar" id="arvoreco-mapa">
                         <div class="speech-bubble speech-bubble-bottom-right">
                             Aqui você pode ver se a árvore que encontrou está perdida ou já foi abraçada!
                         </div>
-                        <img src="httpsa://cdn.prod.website-files.com/68c9b59ad35a897b62c3262c/68c9baa2c06920a9e64b5588_logoarborizacolor.png" alt="Arvoreco" class="avatar-img">
+                        <img src="https://cdn.prod.website-files.com/68c9b59ad35a897b62c3262c/68c9baa2c06920a9e64b5588_logoarborizacolor.png" alt="Arvoreco" class="avatar-img">
                     </div>
 
                     <button id="btn-locate-me" class="absolute bottom-4 left-4 w-12 h-12 bg-white text-verde-principal rounded-full shadow-lg flex items-center justify-center z-[1000]">
@@ -185,16 +174,12 @@
                  <div class="mt-8">
                     <h4 class="font-bold text-lg mb-2">Árvores Adotadas</h4>
                     <div id="adopted-trees-list" class="space-y-3">
-                         <!-- Conteúdo será preenchido pelo script.js -->
                          <p class="text-gray-500 text-center italic">Nenhuma árvore adotada ainda.</p>
                     </div>
                 </div>
-                <!-- Ranking será implementado no futuro -->
-                <!-- <div class="mt-8"> ... Ranking ... </div> -->
             </div>
 
             <div id="screen-achievements" class="p-6 hidden fade-in">
-                <!-- Conteúdo de Conquistas (sem alteração funcional por enquanto) -->
                 <h3 class="text-2xl font-bold text-center mb-6">Sua Jornada</h3>
                 <div class="mb-6">
                     <h4 class="font-bold text-lg mb-2">Emblemas</h4>
@@ -222,16 +207,13 @@
 
             <div id="screen-feed" class="p-4 hidden fade-in space-y-4">
                  <h3 class="text-2xl font-bold text-center mb-2">Feed da Galera</h3>
-                 <div id="feed-posts-container" class="space-y-4">
-                    <!-- Conteúdo será preenchido pelo script.js -->
-                 </div>
+                 <div id="feed-posts-container" class="space-y-4"></div>
             </div>
 
             <div id="screen-tree-profile" class="hidden fade-in">
                  <div class="relative">
                     <img id="tree-profile-image" src="https://placehold.co/600x300/81C784/FFFFFF?text=Árvore" class="w-full h-56 object-cover">
                     <div class="absolute bottom-4 right-4 flex gap-2">
-                        <!-- NOVO: Botão Adotar -->
                         <button id="btn-adopt-tree" class="bg-white text-verde-principal font-bold py-3 px-5 rounded-xl shadow-lg flex items-center gap-2"><i data-lucide="heart" class="w-5 h-5"></i><span>Adotar</span></button>
                         <button id="btn-care-from-profile" class="bg-verde-principal text-white font-bold py-3 px-5 rounded-xl shadow-lg">Cuidar</button>
                     </div>
@@ -244,20 +226,13 @@
                     <div id="tree-profile-status-badge" class="text-white text-center font-bold p-2 rounded-lg my-4"></div>
                      
                     <h4 class="font-bold text-lg mb-2 mt-6">Histórico de Ações</h4>
-                    <div id="tree-profile-history" class="space-y-2 text-sm text-gray-700 max-h-32 overflow-y-auto border p-2 rounded-lg bg-gray-50">
-                        <!-- Conteúdo será preenchido pelo script.js -->
-                    </div>
+                    <div id="tree-profile-history" class="space-y-2 text-sm text-gray-700 max-h-32 overflow-y-auto border p-2 rounded-lg bg-gray-50"></div>
 
                     <h4 class="font-bold text-lg mb-2 mt-6">Mural de Mensagens</h4>
-                    <div id="tree-profile-timeline" class="space-y-4">
-                        <!-- Conteúdo será preenchido pelo script.js -->
-                    </div>
+                    <div id="tree-profile-timeline" class="space-y-4"></div>
 
-                    <!-- ATUALIZAÇÃO: Mudança no título -->
                     <h4 class="font-bold text-lg mb-2 mt-6">Adoram essa árvore:</h4>
-                    <div id="tree-profile-adopters" class="flex flex-wrap gap-2">
-                        <!-- Conteúdo será preenchido pelo script.js -->
-                    </div>
+                    <div id="tree-profile-adopters" class="flex flex-wrap gap-2"></div>
                  </div>
             </div>
             
@@ -288,7 +263,6 @@
             </div>
             
             <div id="screen-learn" class="p-6 hidden fade-in">
-                <!-- Conteúdo de Aprender (sem alteração funcional por enquanto) -->
                 <div class="text-center">
                     <i data-lucide="bot" class="w-16 h-16 mx-auto text-verde-principal"></i>
                     <h3 class="text-2xl font-bold mt-2">Pergunta pro Arvoreco!</h3>
@@ -311,7 +285,6 @@
 
         </main>
 
-        <!-- Barra de Navegação (só aparece depois do login) -->
         <nav class="bg-white shadow-t-lg border-t border-gray-200 justify-around hidden">
             <button data-page="map" class="nav-btn flex-1 flex flex-col items-center justify-center p-2 text-gray-400"><i data-lucide="map" class="w-6 h-6"></i><span class="text-xs font-semibold mt-1">Mapa</span></button>
             <button data-page="learn" class="nav-btn flex-1 flex flex-col items-center justify-center p-2 text-gray-400"><i data-lucide="graduation-cap" class="w-6 h-6"></i><span class="text-xs font-semibold mt-1">Saber Mais</span></button>
@@ -320,7 +293,6 @@
             <button data-page="profile" class="nav-btn flex-1 flex flex-col items-center justify-center p-2 text-gray-400"><i data-lucide="user" class="w-6 h-6"></i><span class="text-xs font-semibold mt-1">Perfil</span></button>
         </nav>
         
-        <!-- Elementos Globais (Modais, Toasts) -->
         <div id="toast-notification" class="hidden fixed bottom-24 left-1/2 -translate-x-1/2 bg-gray-800 text-white py-2 px-5 rounded-full shadow-lg z-[2000]"><p></p></div>
 
         <div id="loading-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[3000]">
@@ -330,7 +302,6 @@
             </div>
         </div>
 
-        <!-- NOVO: Modal de Permissão de Localização -->
         <div id="location-permission-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[2000] p-4">
             <div class="bg-white p-6 rounded-lg shadow-xl text-center">
                 <i data-lucide="compass" class="w-16 h-16 mx-auto text-verde-principal"></i>
@@ -341,7 +312,6 @@
             </div>
         </div>
 
-        <!-- NOVO: Modal de Ajuda da Câmera -->
         <div id="help-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[2000] p-4">
             <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
                 <div class="flex justify-between items-center mb-4">
@@ -357,17 +327,11 @@
         </div>
     </div>
 
-    <!-- 
-      ATUALIZAÇÃO CRÍTICA: MUDANÇA DOS SCRIPTS DO FIREBASE
-      Estamos trocando os scripts "compat" pela nova versão modular (v9+).
-      Isso é ESSENCIAL para a autenticação funcionar.
-    -->
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js" type="module"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js" type="module"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js" type="module"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js" type="module"></script>
     
-    <!-- Nosso script principal, que agora usa os módulos acima -->
     <script src="script.js" type="module"></script>
 </body>
 </html>

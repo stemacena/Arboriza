@@ -1,7 +1,3 @@
-/* =================================================================== */
-/* ## STYLE.CSS - VERSÃO 1.0.1 (Com Autenticação e Arvoreco) ## */
-/* =================================================================== */
-
 :root {
     --verde-principal: #2E7D32;
     --verde-claro: #81C784;
@@ -15,7 +11,7 @@
 }
 
 html, body {
-    height: 100vh; /* Fallback */
+    height: 100vh;
     height: var(--app-height);
     overflow: hidden;
     margin: 0;
@@ -32,9 +28,6 @@ html, body {
     position: relative;
 }
 
-/* Container 'main' e 'nav' só aparecem *depois* do login.
-  O JS vai remover a classe 'hidden' deles quando o usuário entrar.
-*/
 main {
     flex-grow: 1;
     overflow-y: auto;
@@ -45,7 +38,6 @@ nav {
     flex-shrink: 0;
 }
 
-/* Fontes, Cores e Animações */
 .font-logo { font-family: 'Merienda', cursive; }
 .bg-verde-principal { background-color: var(--verde-principal); }
 .text-verde-principal { color: var(--verde-principal); }
@@ -68,7 +60,6 @@ nav {
     background-image: linear-gradient(to right, var(--verde-claro), var(--verde-principal));
 }
 
-/* Componentes específicos */
 .camera-viewfinder {
     width: 100%; padding-top: 100%; position: relative; background: #000;
     border-radius: 24px; overflow: hidden; border: 4px solid var(--cinza);
@@ -79,43 +70,35 @@ nav {
 }
 input[type="file"] { display: none; }
 
-/* Z-index dos botões do mapa */
 #btn-locate-me { z-index: 1000; }
 #screen-map button[data-page="camera"] { z-index: 1000; }
 
-/* ================================================= */
-/* ## NOVOS ESTILOS v1.0.1 (Arvoreco e Balão) ## */
-/* ================================================= */
 
 .arvoreco-avatar {
     position: absolute;
-    z-index: 1001; /* Acima dos botões do mapa */
+    z-index: 1001;
     display: flex;
     align-items: flex-end;
 }
 
-/* Posição do Arvoreco no Mapa */
 #arvoreco-mapa {
-    bottom: 24px; /* 1.5rem */
-    right: 96px; /* 6rem (perto do botão de scan) */
-    flex-direction: row-reverse; /* Balão fica à esquerda */
+    bottom: 24px;
+    right: 88px; /* Ajustado para ficar mais perto do botão */
+    flex-direction: row-reverse;
 }
 #arvoreco-mapa .avatar-img {
-    transform: scaleX(-1); /* Vira o Arvoreco para a esquerda */
+    transform: scaleX(-1);
 }
 
-/* Posição do Arvoreco na Câmera */
 #arvoreco-camera {
-    top: 16px; /* 1rem */
-    left: 16px; /* 1rem */
+    top: 70px; /* Ajustado para ficar ABAIXO do título */
+    left: 16px;
 }
 
 .arvoreco-avatar .avatar-img {
-    width: 56px; /* 3.5rem */
+    width: 56px;
     height: 56px;
     border-radius: 50%;
-    /* border: 2px solid var(--branco); */
-    /* box-shadow: 0 2px 8px rgba(0,0,0,0.2); */
     object-fit: contain;
     animation: bounceAvatar 2s ease-in-out infinite;
 }
@@ -125,7 +108,6 @@ input[type="file"] { display: none; }
     50% { transform: translateY(-8px) scaleX(1); }
     55% { transform: translateY(0) scaleX(1); }
 }
-/* Virar a imagem do Arvoreco no mapa */
 #arvoreco-mapa .avatar-img {
     animation: bounceAvatarMap 2s ease-in-out infinite;
 }
@@ -155,7 +137,6 @@ input[type="file"] { display: none; }
     to { opacity: 1; transform: scale(1); }
 }
 
-/* Seta do balão */
 .speech-bubble::after {
     content: '';
     position: absolute;
@@ -164,10 +145,9 @@ input[type="file"] { display: none; }
     border: 8px solid transparent;
 }
 
-/* Balão na Câmera (seta para baixo-esquerda) */
 .speech-bubble-bottom-left {
-    margin-left: 10px; /* Espaço da seta */
-    margin-bottom: 8px; /* Espaço do avatar */
+    margin-left: 10px;
+    margin-bottom: 8px;
 }
 .speech-bubble-bottom-left::after {
     border-top-color: var(--branco);
@@ -177,10 +157,9 @@ input[type="file"] { display: none; }
     transform: rotate(-45deg);
 }
 
-/* Balão no Mapa (seta para baixo-direita) */
 .speech-bubble-bottom-right {
-    margin-right: 10px; /* Espaço da seta */
-    margin-bottom: 8px; /* Espaço do avatar */
+    margin-right: 10px;
+    margin-bottom: 8px;
 }
 .speech-bubble-bottom-right::after {
     border-top-color: var(--branco);

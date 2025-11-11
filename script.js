@@ -1,9 +1,3 @@
-// ===================================================================
-// ## SCRIPT.JS - VERSÃO 1.0.1 (Refatorado com Autenticação) ##
-// ===================================================================
-
-// --- IMPORTAÇÕES DO FIREBASE (v9+ Modular) ---
-// Importamos as funções que precisamos dos módulos do Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
     getAuth,
@@ -21,15 +15,15 @@ import {
     collection,
     query,
     getDocs,
-    onSnapshot, // Para carregar dados em tempo real
+    onSnapshot, 
     orderBy,
     limit,
     collectionGroup,
     serverTimestamp,
-    GeoPoint, // Importante para localização
+    GeoPoint,
     updateDoc,
     deleteDoc,
-    Timestamp // Para datas
+    Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {
     getStorage,
@@ -40,67 +34,55 @@ import {
 
 // --- 1. CONFIGURAÇÃO E INICIALIZAÇÃO ---
 const firebaseConfig = {
-    
-     apiKey: "AIzaSyDz5FUlrXC07aQDMJ4XzomdT4gkyKZVKgg",
-  authDomain: "arboriza-bd.firebaseapp.com",
-  databaseURL: "https://arboriza-bd-default-rtdb.firebaseio.com",
-  projectId: "arboriza-bd",
-  storageBucket: "arboriza-bd.firebasestorage.app",
-  messagingSenderId: "210425976523",
-  appId: "1:210425976523:web:2733f5b67fe02aa7d4ad4e"
+    apiKey: "AIzaSyDz5FUlrXC07aQDMJ4XzomdT4gkyKZVKgg",
+    authDomain: "arboriza-bd.firebaseapp.com",
+    projectId: "arboriza-bd",
+    storageBucket: "arboriza-bd.firebasestorage.app",
+    messagingSenderId: "210425976523",
+    appId: "1:210425976523:web:2733f5b67fe02aa7d4ad4e"
 };
 
-// Inicializa o Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
 // --- 2. ESTADO GLOBAL DA APLICAÇÃO ---
-// Usamos um objeto para guardar o estado da aplicação
 const appState = {
-    currentUser: null, // Guarda os dados do usuário logado (vem do Firestore)
-    currentTree: null, // Guarda a árvore selecionada
-    currentPlantInfo: null, // Guarda info da planta recém-identificada
-    lastUserLocation: null, // Guarda { latitude, longitude }
-    locationPermissionGranted: false, // Controla permissão
-    map: null, // Guarda a instância do mapa
-    userMarker: null, // Guarda o marcador do usuário
-    treeMarkers: {} // Guarda os marcadores das árvores
+    currentUser: null,
+    currentTree: null,
+    currentPlantInfo: null,
+    lastUserLocation: null,
+    locationPermissionGranted: false,
+    map: null,
+    userMarker: null,
+    treeMarkers: {}
 };
 
 // --- 3. FUNÇÕES PRINCIPAIS (Ciclo de Vida da App) ---
 
-// Função que roda assim que o script carrega
 const initializeAppCore = () => {
     console.log("Arboriza 1.0.1 iniciando...");
-    setAppHeight(); // Ajusta altura para 100vh em mobile
+    setAppHeight();
     window.addEventListener('resize', setAppHeight);
-    lucide.createIcons(); // Carrega ícones
+    lucide.createIcons();
 
-    // Ouve todas as mudanças de autenticação (login, logout)
     onAuthStateChanged(auth, (user) => {
         if (user) {
-            // Usuário está logado
             console.log("Usuário logado:", user.uid);
             fetchUserProfile(user.uid);
         } else {
-            // Usuário está deslogado
             console.log("Nenhum usuário logado.");
             appState.currentUser = null;
-            // Mostra a tela de onboarding (que leva ao login/signup)
             showPage('onboarding');
-            // Esconde os elementos principais da UI
             document.querySelector('main').classList.add('hidden');
             document.querySelector('nav').classList.add('hidden');
         }
     });
 
-    // Adiciona todos os event listeners da aplicação
     setupEventListeners();
 };
 
-// Busca o perfil do usuário no Firestore após o login
 const fetchUserProfile = async (uid) => {
     showLoadingModal(true, "Carregando seu perfil...");
     const userRef = doc(db, "users", uid);
@@ -110,15 +92,12 @@ const fetchUserProfile = async (uid) => {
         appState.currentUser = { uid: uid, ...userSnap.data() };
         console.log("Perfil do usuário carregado:", appState.currentUser);
         
-        // Usuário logado e perfil carregado, mostra a app principal
         document.querySelector('main').classList.remove('hidden');
         document.querySelector('nav').classList.remove('hidden');
         
-        // ATUALIZAÇÃO: Pede localização ANTES de ir para o mapa
         promptForLocation(); 
 
     } else {
-        // Isso pode acontecer se o cadastro falhar em criar o doc
         console.error("Usuário logado, mas sem perfil no Firestore!");
         showToast("Erro ao carregar seu perfil. Tente logar novamente.");
         handleLogout();
@@ -133,7 +112,6 @@ const loadingModal = document.getElementById('loading-modal');
 const loadingMessage = document.getElementById('loading-message');
 
 const showPage = (pageId) => {
-    // Proteção de rotas: se não estiver logado, só pode ver onboarding, login e signup
     const publicPages = ['onboarding', 'login', 'signup'];
     if (!appState.currentUser && !publicPages.includes(pageId)) {
         console.warn(`Acesso bloqueado à página ${pageId}. Redirecionando para login.`);
@@ -148,11 +126,10 @@ const showPage = (pageId) => {
         activeScreen.classList.remove('hidden');
     } else {
         console.error(`Tela com ID screen-${pageId} não encontrada! Voltando para o mapa.`);
-        showPage('map'); // Fallback seguro
+        showPage('map');
         return;
     }
 
-    // Esconde a nav em páginas de autenticação
     const authPages = ['onboarding', 'login', 'signup'];
     const nav = document.querySelector('nav');
     if (nav) {
@@ -161,7 +138,6 @@ const showPage = (pageId) => {
 
     updateNavButtons(pageId);
 
-    // Lógicas específicas de cada página
     if (pageId === 'map') {
         setTimeout(() => {
             if (appState.map) appState.map.invalidateSize();
@@ -169,7 +145,7 @@ const showPage = (pageId) => {
     }
     if (pageId === 'feed') loadFeedPosts();
     if (pageId === 'profile' || pageId === 'achievements') updateGamificationUI();
-    if (pageId === 'camera') requestCameraAccess(); // ATUALIZAÇÃO: Pede câmera
+    if (pageId === 'camera') requestCameraAccess();
 };
 
 const updateNavButtons = (currentPage) => {
@@ -213,7 +189,6 @@ const handleSignup = async (e) => {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
         
-        // Usuário criado! Agora, cria o perfil dele no Firestore
         const userRef = doc(db, "users", user.uid);
         const newUserProfile = {
             name: name,
@@ -230,7 +205,6 @@ const handleSignup = async (e) => {
         
         await setDoc(userRef, newUserProfile);
         
-        // O onAuthStateChanged vai pegar essa mudança e logar o usuário
         console.log("Conta e perfil criados com sucesso!");
         
     } catch (error) {
@@ -253,7 +227,6 @@ const handleLogin = async (e) => {
 
     try {
         await signInWithEmailAndPassword(auth, email, password);
-        // Sucesso! O onAuthStateChanged vai cuidar do resto.
         console.log("Login com sucesso!");
 
     } catch (error) {
@@ -268,8 +241,7 @@ const handleLogin = async (e) => {
 const handleLogout = async () => {
     try {
         await signOut(auth);
-        // Sucesso! O onAuthStateChanged vai cuidar do resto.
-        appState.map = null; // Destrói a instância do mapa
+        appState.map = null;
         showPage('onboarding');
     } catch (error) {
         console.error("Erro ao sair:", error);
@@ -289,6 +261,8 @@ const getFirebaseErrorMessage = (error) => {
         case 'auth/wrong-password':
         case 'auth/invalid-credential':
             return 'Email ou senha incorretos.';
+        case 'auth/configuration-not-found':
+             return 'Configuração de login não encontrada. (Ative Email/Senha no Firebase).';
         default:
             return 'Ocorreu um erro. Tente novamente.';
     }
@@ -301,7 +275,7 @@ const awardPoints = async (action) => {
     if (!appState.currentUser) return;
 
     let points = 0;
-    let newStats = { ...appState.currentUser }; // Copia estado atual
+    let newStats = { ...appState.currentUser };
 
     switch (action) {
         case 'add_tree':
@@ -313,11 +287,11 @@ const awardPoints = async (action) => {
             newStats.treesCared = (newStats.treesCared || 0) + 1;
             break;
         case 'identify_tree':
-            points = 10; // Dando 10 pontos por identificar
+            points = 10;
             newStats.treesIdentified = (newStats.treesIdentified || 0) + 1;
             break;
         case 'adopt_tree':
-            points = 20; // Pontos por adotar
+            points = 20;
             break;
     }
 
@@ -325,10 +299,8 @@ const awardPoints = async (action) => {
         newStats.points = (newStats.points || 0) + points;
         showToast(`Você ganhou ${points} pontos!`);
         
-        // Atualiza o estado local
         appState.currentUser = newStats;
         
-        // Atualiza no Firestore
         const userRef = doc(db, "users", appState.currentUser.uid);
         try {
             await updateDoc(userRef, {
@@ -349,12 +321,11 @@ const updateGamificationUI = () => {
     const user = appState.currentUser;
     if (!user) return;
 
-    // Atualiza Perfil
     document.getElementById('profile-name').textContent = user.name || 'Guardião';
     document.getElementById('profile-avatar').src = user.photoURL || `https://placehold.co/128x128/cccccc/FFFFFF?text=${user.name.charAt(0)}`;
     document.getElementById('profile-level').textContent = user.levelName || 'Nível 1: Semente';
     
-    const pointsToLevelUp = 1000; // Exemplo
+    const pointsToLevelUp = 1000;
     const currentPoints = Number(user.points) || 0; 
     const progress = Math.min((currentPoints / pointsToLevelUp) * 100, 100);
 
@@ -365,10 +336,8 @@ const updateGamificationUI = () => {
     document.getElementById('profile-stat-identified').textContent = `🌿 ${user.treesIdentified || 0}`;
     document.getElementById('profile-stat-added').textContent = `📍 ${user.treesAdded || 0}`;
     
-    // ATUALIZAÇÃO: Carrega árvores adotadas no perfil
     loadAdoptedTreesForProfile();
 
-    // Atualiza Conquistas
     updateAchievementProgress('Guardiã Iniciante', user.treesCared || 0, 5);
     updateAchievementProgress('Botânica de Primeira', user.treesIdentified || 0, 10);
     updateAchievementProgress('Desbravador(a)', user.treesAdded || 0, 3);
@@ -403,7 +372,7 @@ const loadAdoptedTreesForProfile = async () => {
             return;
         }
         
-        listEl.innerHTML = ''; // Limpa o "carregando"
+        listEl.innerHTML = '';
         querySnapshot.forEach((doc) => {
             const tree = doc.data();
             const treeId = doc.id;
@@ -417,7 +386,6 @@ const loadAdoptedTreesForProfile = async () => {
                 </div>
                 <i data-lucide="chevron-right" class="ml-auto text-gray-400"></i>
             `;
-            // Adiciona listener para ir ao perfil da árvore
             el.addEventListener('click', () => showTreeProfile(treeId));
             listEl.appendChild(el);
         });
@@ -432,18 +400,15 @@ const loadAdoptedTreesForProfile = async () => {
 
 // --- 7. LÓGICA DO MAPA E FIREBASE ---
 
-// ATUALIZAÇÃO: Pede permissão de localização
 const promptForLocation = () => {
-    // Se já temos a permissão, apenas inicia o mapa
     if (appState.locationPermissionGranted) {
         console.log("Permissão de localização já concedida.");
         showPage('map');
-        initializeMap(); // Inicializa o mapa
-        centerMapOnUserLocation(); // Centraliza no usuário
+        initializeMap();
+        centerMapOnUserLocation();
         return;
     }
 
-    // Se não temos, mostra o modal
     const modal = document.getElementById('location-permission-modal');
     modal.classList.remove('hidden');
 
@@ -458,17 +423,16 @@ const promptForLocation = () => {
             console.log("Localização obtida:", appState.lastUserLocation);
             
             showPage('map');
-            initializeMap(); // Inicializa o mapa
+            initializeMap();
 
         } catch (error) {
             console.error("Erro de Geolocalização:", error);
             showToast("Não foi possível obter sua localização. O mapa será centralizado no Rio.");
-            // Centraliza no Rio como fallback
             appState.lastUserLocation = { latitude: -22.894744, longitude: -43.294099 };
-            appState.locationPermissionGranted = false; // Não foi concedida
+            appState.locationPermissionGranted = false;
             
             showPage('map');
-            initializeMap(); // Inicializa o mapa
+            initializeMap();
 
         } finally {
             showLoadingModal(false);
@@ -491,12 +455,11 @@ const initializeMap = () => {
         return;
     }
     
-    // Centraliza no usuário ou no Rio (fallback)
     const initialCoords = [appState.lastUserLocation.latitude, appState.lastUserLocation.longitude];
     
     appState.map = L.map('map-container', { 
         zoomControl: false,
-        maxZoom: 20 // ATUALIZAÇÃO: Zoom máximo aumentado
+        maxZoom: 20
     }).setView(initialCoords, 17); 
     
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
@@ -506,7 +469,6 @@ const initializeMap = () => {
     
     L.control.zoom({ position: 'topright' }).addTo(appState.map);
 
-    // Adiciona o marcador do usuário se a permissão foi dada
     if (appState.locationPermissionGranted && appState.lastUserLocation) {
         appState.userMarker = L.marker(initialCoords)
             .addTo(appState.map)
@@ -514,34 +476,29 @@ const initializeMap = () => {
             .openPopup();
     }
 
-    loadTreesOnMap(); // Carrega árvores reais
+    loadTreesOnMap();
 };
 
-// ATUALIZAÇÃO: Botão de localizar agora re-centraliza
 const centerMapOnUserLocation = async () => {
     if (appState.locationPermissionGranted && appState.lastUserLocation) {
-        // Se já tem permissão, só re-centraliza
         appState.map.setView([appState.lastUserLocation.latitude, appState.lastUserLocation.longitude], 18);
         if (appState.userMarker) {
             appState.userMarker.setLatLng(appState.lastUserLocation).openPopup();
         }
     } else {
-        // Se não tem, pede novamente (como no fluxo inicial)
         promptForLocation();
     }
 };
 
 const addTreeMarkerToMap = (tree) => {
-    // Converte GeoPoint do Firebase para LatLng do Leaflet
     if (!tree.location || !tree.location.latitude || !tree.location.longitude) {
         console.warn("Árvore sem dados de localização válidos:", tree.id);
         return;
     }
     const latLng = [tree.location.latitude, tree.location.longitude];
 
-    // Evita adicionar marcador duplicado
     if (appState.treeMarkers[tree.id]) {
-        appState.treeMarkers[tree.id].setLatLng(latLng); // Atualiza posição se necessário
+        appState.treeMarkers[tree.id].setLatLng(latLng);
         return;
     }
 
@@ -559,17 +516,15 @@ const addTreeMarkerToMap = (tree) => {
     });
 
     const marker = L.marker(latLng, { icon: treeIcon });
-    marker.treeData = tree; // Guarda os dados completos no marcador
+    marker.treeData = tree;
 
     marker.on('click', () => showTreeProfile(tree.id));
     marker.addTo(appState.map);
 
-    appState.treeMarkers[tree.id] = marker; // Salva referência
+    appState.treeMarkers[tree.id] = marker;
 };
 
 const loadTreesOnMap = () => {
-    // Usamos onSnapshot para carregar árvores em tempo real!
-    // Se uma árvore nova for cadastrada, ela aparece "magicamente".
     const q = query(collection(db, "trees"));
     
     onSnapshot(q, (querySnapshot) => {
@@ -597,24 +552,20 @@ const showTreeProfile = async (treeId) => {
         appState.currentTree = { id: docSnap.id, ...docSnap.data() };
         const tree = appState.currentTree;
 
-        // Preenche os dados básicos
         document.getElementById('tree-profile-name').textContent = tree.commonName || 'Nome não definido';
         document.getElementById('tree-profile-scientific-name').textContent = tree.scientificName || '';
         document.getElementById('tree-profile-address').querySelector('span').textContent = tree.address || (tree.location ? `${tree.location.latitude.toFixed(5)}, ${tree.location.longitude.toFixed(5)}` : "Localização não disponível");
         document.getElementById('tree-profile-image').src = tree.coverPhoto || 'https://placehold.co/600x300/81C784/FFFFFF?text=Árvore';
 
-        // Atualiza o status visual
         const statusBadge = document.getElementById('tree-profile-status-badge');
         if (tree.status === 'healthy') { statusBadge.className = 'bg-sucesso text-white text-center font-bold p-2 rounded-lg my-4'; statusBadge.textContent = 'Saudável'; }
         else if (tree.status === 'needs-care') { statusBadge.className = 'bg-alerta text-yellow-800 text-center font-bold p-2 rounded-lg my-4'; statusBadge.textContent = 'Precisa de Cuidado'; }
         else { statusBadge.className = 'bg-erro text-white text-center font-bold p-2 rounded-lg my-4'; statusBadge.textContent = 'Em Estado Crítico'; }
 
-        // Carrega o histórico, mural e "adoradores" (em tempo real)
         loadTreeSubcollection(treeId, 'careEvents', 'tree-profile-history', renderHistoryEvent);
-        loadTreeSubcollection(treeId, 'careEvents', 'tree-profile-timeline', renderTimelineEvent, true); // 'true' para filtrar por posts com mensagem
+        loadTreeSubcollection(treeId, 'careEvents', 'tree-profile-timeline', renderTimelineEvent, true);
         loadTreeSubcollection(treeId, 'adopters', 'tree-profile-adopters', renderAdopter);
 
-        // ATUALIZAÇÃO: Verifica se o usuário já adotou
         checkAdoptionStatus(treeId);
 
         showPage('tree-profile');
@@ -627,14 +578,12 @@ const showTreeProfile = async (treeId) => {
     }
 };
 
-// Função genérica para carregar subcoleções (Histórico, Mural, Adotadores)
 const loadTreeSubcollection = (treeId, subcollection, containerId, renderFunction, filterByMessage = false) => {
     const container = document.getElementById(containerId);
     container.innerHTML = `<p class="text-gray-500 text-sm">Carregando...</p>`;
 
     let q = query(collection(db, "trees", treeId, subcollection));
     
-    // Adiciona ordenação para eventos
     if (subcollection === 'careEvents') {
         q = query(q, orderBy("timestamp", "desc"));
     }
@@ -645,13 +594,12 @@ const loadTreeSubcollection = (treeId, subcollection, containerId, renderFunctio
             return;
         }
         
-        container.innerHTML = ''; // Limpa container
+        container.innerHTML = '';
         let itemsFound = 0;
 
         snapshot.forEach(doc => {
             const item = doc.data();
             
-            // Filtro para o mural (só mostra se tiver mensagem)
             if (filterByMessage && !item.message) {
                 return;
             }
@@ -671,7 +619,6 @@ const loadTreeSubcollection = (treeId, subcollection, containerId, renderFunctio
     });
 };
 
-// Funções "render" para a subcoleção
 const renderHistoryEvent = (event) => {
     if (!event || !event.user || !event.action) return '';
     const eventDate = event.timestamp ? event.timestamp.toDate().toLocaleDateString('pt-BR') : 'sem data';
@@ -709,21 +656,23 @@ const renderAdopter = (adopter) => {
 const checkAdoptionStatus = async (treeId) => {
     const btn = document.getElementById('btn-adopt-tree');
     const user = appState.currentUser;
-    if (!user) return;
+    if (!user || !btn) return; 
 
     const adoptRef = doc(db, "trees", treeId, "adopters", user.uid);
     const docSnap = await getDoc(adoptRef);
 
     if (docSnap.exists()) {
-        // Usuário JÁ adotou
         btn.classList.replace('text-verde-principal', 'text-erro');
-        btn.querySelector('span').textContent = 'Remover Adoção';
-        btn.querySelector('i').setAttribute('data-lucide', 'heart-off');
+        btn.innerHTML = `
+            <i data-lucide="heart-off" class="w-5 h-5"></i>
+            <span>Remover Adoção</span>
+        `;
     } else {
-        // Usuário NÃO adotou
         btn.classList.replace('text-erro', 'text-verde-principal');
-        btn.querySelector('span').textContent = 'Adotar';
-        btn.querySelector('i').setAttribute('data-lucide', 'heart');
+        btn.innerHTML = `
+            <i data-lucide="heart" class="w-5 h-5"></i>
+            <span>Adotar</span>
+        `;
     }
     lucide.createIcons();
 };
@@ -734,7 +683,7 @@ const handleAdoptTree = async () => {
     if (!tree || !user) return;
 
     const btn = document.getElementById('btn-adopt-tree');
-    btn.disabled = true; // Previne cliques duplos
+    btn.disabled = true;
 
     const treeAdoptRef = doc(db, "trees", tree.id, "adopters", user.uid);
     const userAdoptRef = doc(db, "users", user.uid, "adoptedTrees", tree.id);
@@ -743,12 +692,10 @@ const handleAdoptTree = async () => {
         const docSnap = await getDoc(treeAdoptRef);
         
         if (docSnap.exists()) {
-            // JÁ ADOTOU -> Remover Adoção
             await deleteDoc(treeAdoptRef);
             await deleteDoc(userAdoptRef);
             showToast(`${tree.commonName} removida das suas adoções.`);
         } else {
-            // NÃO ADOTOU -> Adotar
             const adoptionData = {
                 name: user.name,
                 photoURL: user.photoURL,
@@ -756,7 +703,6 @@ const handleAdoptTree = async () => {
             };
             await setDoc(treeAdoptRef, adoptionData);
             
-            // Adiciona no perfil do usuário também
             await setDoc(userAdoptRef, {
                 commonName: tree.commonName,
                 scientificName: tree.scientificName,
@@ -768,7 +714,7 @@ const handleAdoptTree = async () => {
             awardPoints('adopt_tree');
         }
         
-        checkAdoptionStatus(tree.id); // Atualiza o botão
+        checkAdoptionStatus(tree.id);
 
     } catch (error) {
         console.error("Erro ao adotar/desadotar:", error);
@@ -784,7 +730,6 @@ const handleAdoptTree = async () => {
 const uploadImage = async (file) => {
     if (!file) return null;
     
-    // ATENÇÃO: Verifique se as regras do Storage permitem esta pasta
     const filePath = `photos/${Date.now()}_${file.name}`; 
     const fileRef = ref(storage, filePath);
     
@@ -799,7 +744,7 @@ const uploadImage = async (file) => {
         showToast("Erro ao enviar a foto. Tente novamente.");
         return null;
     } finally {
-        showLoadingModal(false); // Garante que o modal de loading da foto feche
+        showLoadingModal(false);
     }
 };
 
@@ -813,11 +758,10 @@ const handleFinishCare = async () => {
     const photoFile = document.getElementById('care-photo-input').files[0];
     
     try {
-        // Faz o upload da foto ANTES de registrar no Firestore
         const photoUrl = await uploadImage(photoFile);
         
         const careEvent = {
-            action: "cuidou da planta.", // TODO: Ser mais específico (regar, limpar)
+            action: "cuidou da planta.",
             message: message || '',
             photoUrl: photoUrl || null,
             user: { 
@@ -833,9 +777,8 @@ const handleFinishCare = async () => {
         
         awardPoints('care_tree');
         showToast("Cuidado registrado com sucesso! 🌳");
-        showPage('tree-profile'); // Volta para o perfil da árvore
+        showPage('tree-profile');
         
-        // Limpa os campos
         document.getElementById('care-message').value = '';
         document.getElementById('care-photo-input').value = null;
         document.getElementById('care-confirmation-section').classList.add('hidden');
@@ -853,7 +796,6 @@ const loadFeedPosts = async () => {
     feedContainer.innerHTML = '<p class="text-center text-gray-500">Carregando o feed da galera...</p>';
     
     try {
-        // collectionGroup 'careEvents' busca em *todas* as subcoleções 'careEvents' de *todas* as árvores.
         const q = query(
             collectionGroup(db, 'careEvents'), 
             orderBy('timestamp', 'desc'), 
@@ -866,13 +808,12 @@ const loadFeedPosts = async () => {
             return;
         }
 
-        feedContainer.innerHTML = ''; // Limpa a mensagem de "carregando"
+        feedContainer.innerHTML = '';
         
         snapshot.forEach(doc => {
             const event = doc.data();
-            // Só mostra no feed se tiver foto OU mensagem
             if (event.photoUrl || event.message) {
-                feedContainer.innerHTML += renderTimelineEvent(event); // Reutiliza a função de render
+                feedContainer.innerHTML += renderTimelineEvent(event);
             }
         });
 
@@ -885,7 +826,6 @@ const loadFeedPosts = async () => {
 
 // --- 10. FLUXO DE IDENTIFICAÇÃO E CÂMERA ---
 
-// ATUALIZAÇÃO: Pede acesso à câmera
 const requestCameraAccess = async () => {
     const videoEl = document.getElementById('camera-feed');
     const placeholder = document.getElementById('camera-placeholder');
@@ -893,7 +833,7 @@ const requestCameraAccess = async () => {
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: 'environment' } // Pede a câmera traseira
+                video: { facingMode: 'environment' }
             });
             videoEl.srcObject = stream;
             videoEl.classList.remove('hidden');
@@ -908,7 +848,6 @@ const requestCameraAccess = async () => {
     }
 };
 
-// ATUALIZAÇÃO: Captura da foto pela tag <video>
 const capturePhotoFromFeed = () => {
     const video = document.getElementById('camera-feed');
     if (!video.srcObject) {
@@ -922,12 +861,11 @@ const capturePhotoFromFeed = () => {
     const context = canvas.getContext('2d');
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
     
-    // Converte o canvas para um Blob (arquivo)
     canvas.toBlob((blob) => {
         if (blob) {
             handlePlantIdentification(blob);
         }
-    }, 'image/jpeg', 0.95); // 95% de qualidade
+    }, 'image/jpeg', 0.95);
 };
 
 
@@ -935,7 +873,7 @@ const handlePlantIdentification = async (file) => {
     if (!file) return;
 
     const resultImageEl = document.getElementById('result-plant-image');
-    resultImageEl.src = URL.createObjectURL(file); // Mostra preview da foto tirada/escolhida
+    resultImageEl.src = URL.createObjectURL(file);
     showPage('result');
     showLoadingModal(true, "Identificando a planta...");
 
@@ -943,7 +881,6 @@ const handlePlantIdentification = async (file) => {
     formData.append('images', file);
     
     try {
-        // Usa o caminho relativo para a função Netlify (como no seu código beta)
         const response = await fetch('/.netlify/functions/identify', { 
             method: 'POST', 
             body: formData 
@@ -958,9 +895,9 @@ const handlePlantIdentification = async (file) => {
         const data = await response.json();
         const bestMatch = data.results?.[0];
 
-        if (bestMatch && bestMatch.score > 0.2) { // Só aceita se tiver mais de 20%
+        if (bestMatch && bestMatch.score > 0.2) {
             appState.currentPlantInfo = {
-                commonName: bestMatch.species.commonNames?.[0] || bestMatch.species.scientificNameWithoutAuthor.split(' ')[0], // Usa o primeiro nome científico como fallback
+                commonName: bestMatch.species.commonNames?.[0] || bestMatch.species.scientificNameWithoutAuthor.split(' ')[0],
                 scientificName: bestMatch.species.scientificNameWithoutAuthor,
                 score: bestMatch.score
             };
@@ -984,7 +921,7 @@ const handlePlantIdentification = async (file) => {
         document.getElementById('result-scientific-name').textContent = "Verifique sua conexão.";
         document.getElementById('result-confidence').textContent = `0%`;
         document.getElementById('result-confidence-bar').style.width = `0%`;
-        showToast("Não foi possível conectar ao sistema de identificação."); 
+        showToast(error.message);
     } finally {
         showLoadingModal(false);
     }
@@ -998,23 +935,16 @@ const initiateCareFlow = async () => {
     
     awardPoints('identify_tree'); 
     
-    // Lógica para verificar se a árvore existe
-    // Por enquanto, vamos assumir que não existe para mostrar o fluxo de cadastro
     const treeExists = false; 
-    // TODO: Implementar busca por localização + espécie
-    // const existingTree = await findTreeNearby(appState.currentPlantInfo.scientificName, appState.lastUserLocation);
 
     if (treeExists) {
-        // Mostra a tela de cuidado normal
-        // appState.currentTree = existingTree; // Define a árvore encontrada
-        // ... (código para mostrar cuidado normal)
+        // Lógica futura
     } else {
-        // Mostra a tela de cuidado adaptada para cadastro
         showPage('care');
         document.getElementById('care-title').textContent = "Árvore não cadastrada!";
         document.getElementById('care-subtitle').textContent = `Gostaria de adicionar esta ${appState.currentPlantInfo.commonName} ao mapa?`;
-        document.getElementById('care-actions-container').classList.add('hidden'); // Esconde ações
-        document.getElementById('add-tree-button-container').classList.remove('hidden'); // Mostra botão de cadastrar
+        document.getElementById('care-actions-container').classList.add('hidden');
+        document.getElementById('add-tree-button-container').classList.remove('hidden');
     }
 };
 
@@ -1030,7 +960,7 @@ const handleRegisterNewTree = async () => {
     const photoFile = document.getElementById('add-tree-photo-input').files[0];
 
     try {
-        const photoUrl = await uploadImage(photoFile); // Upload da foto da árvore
+        const photoUrl = await uploadImage(photoFile);
         
         const newTree = {
             commonName: appState.currentPlantInfo.commonName,
@@ -1047,7 +977,6 @@ const handleRegisterNewTree = async () => {
         
         const docRef = await addDoc(collection(db, "trees"), newTree);
         
-        // Adiciona a primeira mensagem (se houver)
         if (message || photoUrl) {
             const firstMessage = {
                 action: "cadastrou esta árvore.",
@@ -1058,18 +987,16 @@ const handleRegisterNewTree = async () => {
                     photoURL: appState.currentUser.photoURL 
                 },
                 timestamp: serverTimestamp(),
-                photoUrl: photoUrl // Usa a mesma foto do cadastro
+                photoUrl: photoUrl
             };
             await addDoc(collection(db, "trees", docRef.id, "careEvents"), firstMessage);
         }
         
         awardPoints('add_tree');
-        // O onSnapshot do mapa vai cuidar de adicionar o marcador
         showToast("Árvore cadastrada com sucesso!");
         
-        showPage('map'); // Volta para o mapa
+        showPage('map');
         
-        // Limpa a tela de cadastro
         document.getElementById('add-tree-photo-input').value = null;
         document.getElementById('add-tree-photo-preview').classList.add('hidden');
         document.getElementById('add-tree-message').value = '';
@@ -1116,15 +1043,12 @@ const handleLearnSearch = (query) => {
 
 // --- 12. HELPERS E EVENT LISTENERS ---
 
-// Ajusta a altura da app para mobile
 const setAppHeight = () => {
     const doc = document.documentElement;
     doc.style.setProperty('--app-height', `${window.innerHeight}px`);
 };
 
-// Centraliza todos os listeners de eventos
 const setupEventListeners = () => {
-    // Navegação Principal (botões data-page)
     document.body.addEventListener('click', (e) => {
         const navBtn = e.target.closest('.nav-btn, .nav-to-btn');
         if (navBtn && navBtn.dataset.page) { 
@@ -1133,22 +1057,18 @@ const setupEventListeners = () => {
         }
     });
 
-    // Forms de Autenticação
     document.getElementById('login-form').addEventListener('submit', handleLogin);
     document.getElementById('signup-form').addEventListener('submit', handleSignup);
     document.getElementById('btn-logout').addEventListener('click', handleLogout);
 
-    // Identificação (Upload de Galeria)
     document.getElementById('plant-photo-input').addEventListener('change', (e) => {
         if (e.target.files && e.target.files.length > 0) {
             handlePlantIdentification(e.target.files[0]);
         }
     });
     
-    // Identificação (Captura da Câmera)
     document.getElementById('btn-capture').addEventListener('click', capturePhotoFromFeed);
 
-    // Fluxo de Resultado
     document.getElementById('btn-confirm-no').addEventListener('click', () => {
         showToast("Tente tirar uma foto de outro ângulo.");
         document.getElementById('plant-photo-input').value = null;
@@ -1156,7 +1076,6 @@ const setupEventListeners = () => {
     });
     document.getElementById('btn-initiate-care').addEventListener('click', initiateCareFlow);
 
-    // Fluxo de Cadastro
     document.getElementById('btn-finish-add-tree').addEventListener('click', handleRegisterNewTree);
     document.getElementById('add-tree-photo-input').addEventListener('change', (e) => {
         if (e.target.files && e.target.files[0]) {
@@ -1166,24 +1085,19 @@ const setupEventListeners = () => {
         }
     });
 
-    // Mapa
     document.getElementById('btn-locate-me').addEventListener('click', centerMapOnUserLocation);
 
-    // Fluxo de Cuidado
     document.getElementById('btn-finish-care').addEventListener('click', handleFinishCare);
     document.querySelectorAll('.care-action-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            // Se for o link da prefeitura, deixa continuar
             if (e.currentTarget.id === 'action-prune') return; 
             
             if (!btn.disabled) {
                 document.getElementById('care-confirmation-section').classList.remove('hidden');
-                // TODO: Salvar qual ação foi (regar/limpar)
             }
         });
     });
 
-    // Perfil da Árvore
     document.getElementById('btn-care-from-profile').addEventListener('click', () => {
         if (appState.currentTree) {
             showPage('care');
@@ -1191,7 +1105,6 @@ const setupEventListeners = () => {
             document.getElementById('care-subtitle').textContent = "O que esta belezura precisa hoje?";
             document.getElementById('care-actions-container').classList.remove('hidden');
             document.getElementById('add-tree-button-container').classList.add('hidden');
-            // Habilita botões
             document.getElementById('action-water').disabled = false;
             document.getElementById('action-clean').disabled = false;
             document.getElementById('action-water').classList.remove('opacity-50', 'cursor-not-allowed');
@@ -1201,7 +1114,6 @@ const setupEventListeners = () => {
     document.getElementById('btn-adopt-tree').addEventListener('click', handleAdoptTree);
 
 
-    // Aba "Saber Mais"
     document.querySelectorAll('.suggested-question-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const query = btn.textContent;
@@ -1214,11 +1126,9 @@ const setupEventListeners = () => {
         handleLearnSearch(query);
     });
 
-    // Modais
     document.getElementById('btn-show-help').addEventListener('click', () => document.getElementById('help-modal').classList.remove('hidden'));
     document.getElementById('btn-close-help-modal').addEventListener('click', () => document.getElementById('help-modal').classList.add('hidden'));
 };
 
 // --- INICIALIZA A APLICAÇÃO ---
-// Adiciona o listener para rodar o código quando o DOM estiver pronto
 document.addEventListener('DOMContentLoaded', initializeAppCore);
