@@ -18,26 +18,86 @@
     <link rel="stylesheet" href="style.css"> 
 </head>
 <body class="bg-cinza">
+    <!-- O container da app agora é o ponto de entrada -->
     <div id="app-container" class="max-w-md mx-auto bg-branco shadow-lg">
-        <main>
-            <div id="screen-onboarding" class="p-8 flex flex-col h-full text-center items-center justify-center fade-in">
-                <img src="https://cdn.prod.website-files.com/68c9b59ad35a897b62c3262c/68c9baa2c06920a9e64b5588_logoarborizacolor.png" alt="Logo Arboriza" class="w-48 h-48 mx-auto object-contain"> 
-                <p class="text-gray-600 mt-8 text-xl">Tá perdido? abraça uma árvore e</p>
-                <h2 class="text-6xl font-bold text-verde-principal font-logo mt-2">Arboriza</h2>
-                <div class="mt-auto w-full">
-                    <button data-page="map" class="nav-to-btn w-full bg-verde-principal text-white font-bold py-4 px-4 rounded-xl shadow-lg hover:bg-opacity-90 transition-all">COMEÇAR</button>
-                    <button data-page="map" class="nav-to-btn w-full text-gray-600 font-semibold py-4 px-4 mt-2">Já tem conta? Entrar</button>
-                </div>
+        
+        <!-- Tela de Onboarding (Inicial) -->
+        <div id="screen-onboarding" class="p-8 flex flex-col h-full text-center items-center justify-center fade-in">
+            <img src="https://cdn.prod.website-files.com/68c9b59ad35a897b62c3262c/68c9baa2c06920a9e64b5588_logoarborizacolor.png" alt="Logo Arboriza" class="w-48 h-48 mx-auto object-contain"> 
+            <p class="text-gray-600 mt-8 text-xl">Tá perdido? abraça uma árvore e</p>
+            <h2 class="text-6xl font-bold text-verde-principal font-logo mt-2">Arboriza</h2>
+            <div class="mt-auto w-full">
+                <!-- ATUALIZAÇÃO: Botões agora levam para 'signup' e 'login' -->
+                <button data-page="signup" class="nav-to-btn w-full bg-verde-principal text-white font-bold py-4 px-4 rounded-xl shadow-lg hover:bg-opacity-90 transition-all">COMEÇAR</button>
+                <button data-page="login" class="nav-to-btn w-full text-gray-600 font-semibold py-4 px-4 mt-2">Já tem conta? Entrar</button>
             </div>
+        </div>
 
-             <div id="screen-camera" class="p-6 flex flex-col h-full hidden fade-in">
+        <!-- NOVA TELA: Login -->
+        <div id="screen-login" class="p-8 flex flex-col h-full hidden fade-in">
+            <h3 class="text-3xl font-bold text-verde-principal text-center mb-8">Bem-vindo de volta!</h3>
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label for="login-email" class="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" id="login-email" required class="w-full p-3 mt-1 border rounded-lg bg-cinza focus:border-verde-principal focus:ring-verde-principal" placeholder="seu@email.com">
+                </div>
+                <div>
+                    <label for="login-password" class="block text-sm font-medium text-gray-700">Senha</label>
+                    <input type="password" id="login-password" required class="w-full p-3 mt-1 border rounded-lg bg-cinza focus:border-verde-principal focus:ring-verde-principal" placeholder="••••••••">
+                </div>
+                <button type="submit" class="w-full bg-verde-principal text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:bg-opacity-90">Entrar</button>
+            </form>
+            <p id="login-error-message" class="text-erro text-center text-sm mt-4 hidden"></p>
+            <button data-page="signup" class="nav-to-btn w-full text-center text-gray-600 font-semibold py-4 mt-auto">Não tem conta? Criar agora</button>
+        </div>
+
+        <!-- NOVA TELA: Signup (Criar Conta) -->
+        <div id="screen-signup" class="p-8 flex flex-col h-full hidden fade-in">
+            <h3 class="text-3xl font-bold text-verde-principal text-center mb-8">Crie sua conta</h3>
+            <form id="signup-form" class="space-y-4">
+                <div>
+                    <label for="signup-name" class="block text-sm font-medium text-gray-700">Seu nome (de guardião)</label>
+                    <input type="text" id="signup-name" required class="w-full p-3 mt-1 border rounded-lg bg-cinza focus:border-verde-principal focus:ring-verde-principal" placeholder="Ex: Arvoreco da Silva">
+                </div>
+                <div>
+                    <label for="signup-email" class="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" id="signup-email" required class="w-full p-3 mt-1 border rounded-lg bg-cinza focus:border-verde-principal focus:ring-verde-principal" placeholder="seu@email.com">
+                </div>
+                <div>
+                    <label for="signup-password" class="block text-sm font-medium text-gray-700">Crie uma senha</label>
+                    <input type="password" id="signup-password" required minlength="6" class="w-full p-3 mt-1 border rounded-lg bg-cinza focus:border-verde-principal focus:ring-verde-principal" placeholder="Mínimo 6 caracteres">
+                </div>
+                <button type="submit" class="w-full bg-verde-principal text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:bg-opacity-90">Criar conta e Arborizar</button>
+            </form>
+            <p id="signup-error-message" class="text-erro text-center text-sm mt-4 hidden"></p>
+            <button data-page="login" class="nav-to-btn w-full text-center text-gray-600 font-semibold py-4 mt-auto">Já tem conta? Entrar</button>
+        </div>
+
+        <!-- Conteúdo Principal da App (só aparece depois do login) -->
+        <main class="hidden">
+            <div id="screen-camera" class="p-6 flex flex-col h-full hidden fade-in">
+                <!-- NOVO: Arvoreco Flutuante -->
+                <div class="arvoreco-avatar" id="arvoreco-camera">
+                    <div class="speech-bubble speech-bubble-bottom-left">
+                        Tire a foto bem de perto da folha ou flor! Se não der certo, tente outro ângulo.
+                    </div>
+                    <img src="httpsa://cdn.prod.website-files.com/68c9b59ad35a897b62c3262c/68c9baa2c06920a9e64b5588_logoarborizacolor.png" alt="Arvoreco" class="avatar-img">
+                </div>
+
                 <h3 class="text-2xl font-bold text-center mb-4">Identificar Planta</h3>
-                <div class="camera-viewfinder"><div class="camera-viewfinder-content"><i data-lucide="camera" class="w-24 h-24 text-gray-500"></i><p class="mt-4 text-gray-400">Câmera indisponível no protótipo</p></div></div>
+                <div class="camera-viewfinder relative">
+                    <!-- A sobreposição de vídeo/câmera real virá aqui -->
+                    <video id="camera-feed" class="absolute top-0 left-0 w-full h-full object-cover rounded-[20px] hidden" autoplay playsinline></video>
+                    <div id="camera-placeholder" class="camera-viewfinder-content"><i data-lucide="camera" class="w-24 h-24 text-gray-500"></i><p class="mt-4 text-gray-400">Aguardando permissão da câmera...</p></div>
+                </div>
                 <p class="text-center text-gray-500 mt-4">Aponte para uma folha ou flor para identificar</p>
+                
                 <div class="flex items-center justify-center gap-8 mt-auto">
                     <label for="plant-photo-input"><i data-lucide="image" class="w-10 h-10 text-gray-600 cursor-pointer"></i></label>
-                    <input type="file" id="plant-photo-input" accept="image/*"> <button id="btn-capture" class="w-20 h-20 bg-verde-principal rounded-full border-4 border-white shadow-lg"></button>
-                    <i data-lucide="help-circle" class="w-10 h-10 text-gray-600"></i>
+                    <input type="file" id="plant-photo-input" accept="image/*" capture="environment">
+                    <button id="btn-capture" class="w-20 h-20 bg-verde-principal rounded-full border-4 border-white shadow-lg"></button>
+                    <!-- ATUALIZAÇÃO: Botão de ajuda agora funciona -->
+                    <button id="btn-show-help"><i data-lucide="help-circle" class="w-10 h-10 text-gray-600"></i></button>
                 </div>
             </div>
 
@@ -47,7 +107,8 @@
                     <h3 id="result-common-name" class="text-3xl font-bold text-verde-principal"></h3>
                     <p id="result-scientific-name" class="text-lg text-gray-600 italic mt-1"></p>
                 </div>
-                <div class="bg-gray-100 p-3 rounded-lg mt-4 text-center">
+                <!-- ATUALIZAÇÃO: Trocado 'bg-gray-100' por 'bg-white border' -->
+                <div class="bg-white border p-3 rounded-lg mt-4 text-center">
                     <img src="https://my.plantnet.org/images/powered-by-plantnet-light.png" alt="Powered by PlantNet" class="h-8 mx-auto"> 
                     <p class="font-semibold mt-2">Confiança: <span id="result-confidence">0%</span></p>
                     <div class="w-full bg-gray-300 rounded-full h-2.5 mt-2"><div id="result-confidence-bar" class="bg-progress-gradient h-2.5 rounded-full" style="width: 0%"></div></div>
@@ -76,27 +137,37 @@
                     <h4 class="font-bold text-center text-verde-principal">Missão quase completa!</h4>
                     <p class="text-center text-gray-700 mt-2">Tire uma foto para registrar o seu cuidado e deixe uma mensagem para a comunidade ver.</p>
                     <label for="care-photo-input" class="mt-4 w-full bg-white text-verde-principal font-semibold py-3 px-4 rounded-xl shadow-sm flex items-center justify-center gap-2 cursor-pointer"><i data-lucide="camera"></i><span>Anexar Foto do Cuidado</span></label>
-                    <input type="file" id="care-photo-input" accept="image/*"> <textarea id="care-message" class="w-full p-2 border rounded-lg mt-3" rows="3" placeholder="Tá sem inspiração? Fala de como se sentiu durante essa missão..."></textarea>
+                    <input type="file" id="care-photo-input" accept="image/*" capture="environment">
+                    <textarea id="care-message" class="w-full p-2 border rounded-lg mt-3" rows="3" placeholder="Tá sem inspiração? Fala de como se sentiu durante essa missão..."></textarea>
                     <button id="btn-finish-care" class="w-full mt-3 bg-verde-principal text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:bg-opacity-90">Finalizar Missão</button>
                 </div>
             </div>
 
             <div id="screen-map" class="flex flex-col h-full hidden fade-in">
                 <div id="map-container" class="flex-grow bg-gray-300 relative">
-                    <button id="btn-locate-me" class="absolute bottom-4 left-4 w-12 h-12 bg-white text-verde-principal rounded-full shadow-lg flex items-center justify-center">
+                    <!-- NOVO: Arvoreco Flutuante -->
+                    <div class="arvoreco-avatar" id="arvoreco-mapa">
+                        <div class="speech-bubble speech-bubble-bottom-right">
+                            Aqui você pode ver se a árvore que encontrou está perdida ou já foi abraçada!
+                        </div>
+                        <img src="httpsa://cdn.prod.website-files.com/68c9b59ad35a897b62c3262c/68c9baa2c06920a9e64b5588_logoarborizacolor.png" alt="Arvoreco" class="avatar-img">
+                    </div>
+
+                    <button id="btn-locate-me" class="absolute bottom-4 left-4 w-12 h-12 bg-white text-verde-principal rounded-full shadow-lg flex items-center justify-center z-[1000]">
                         <i data-lucide="compass" class="w-6 h-6"></i>
                     </button>
-                    <button data-page="camera" class="nav-to-btn absolute bottom-4 right-4 w-16 h-16 bg-verde-principal text-white rounded-full shadow-lg flex items-center justify-center">
+                    <button data-page="camera" class="nav-to-btn absolute bottom-4 right-4 w-16 h-16 bg-verde-principal text-white rounded-full shadow-lg flex items-center justify-center z-[1000]">
                         <i data-lucide="scan-search" class="w-8 h-8"></i>
                     </button>
                 </div>
             </div>
             
             <div id="screen-profile" class="p-6 hidden fade-in">
-                <div class="text-center">
+                <div class="text-center relative">
+                    <button id="btn-logout" class="absolute top-0 right-0 text-gray-500 hover:text-erro"><i data-lucide="log-out" class="w-6 h-6"></i></button>
                     <img id="profile-avatar" src="https://placehold.co/128x128/cccccc/FFFFFF?text=U" alt="Foto do usuário" class="w-32 h-32 rounded-full mx-auto border-4 border-white shadow-lg object-cover">
                     <h3 id="profile-name" class="text-2xl font-bold mt-4">Usuário</h3>
-                    <p class="text-md text-gray-500">Nível 1: Semente</p>
+                    <p id="profile-level" class="text-md text-gray-500">Nível 1: Semente</p>
                 </div>
                 <div class="mt-6">
                     <p class="text-sm text-gray-600 text-center mb-1">
@@ -113,21 +184,17 @@
                 </div>
                  <div class="mt-8">
                     <h4 class="font-bold text-lg mb-2">Árvores Adotadas</h4>
-                    <div id="adopted-trees-list" class="space-y-2">
+                    <div id="adopted-trees-list" class="space-y-3">
+                         <!-- Conteúdo será preenchido pelo script.js -->
                          <p class="text-gray-500 text-center italic">Nenhuma árvore adotada ainda.</p>
-                         </div>
-                </div>
-                <div class="mt-8">
-                    <h4 class="font-bold text-lg mb-2">Ranking da Região</h4>
-                    <div class="space-y-3">
-                        <div class="flex items-center bg-cinza p-3 rounded-lg"><span class="font-bold text-lg">1.</span><img src="https://placehold.co/40x40/81C784/FFFFFF?text=M" class="w-10 h-10 rounded-full mx-3 object-cover"><span class="font-semibold">Você</span><span id="ranking-your-score" class="ml-auto text-gray-600">0 pts</span></div>
-                        <div class="flex items-center bg-white p-3 rounded-lg"><span class="font-bold text-lg">2.</span><img src="https://placehold.co/40x40/cccccc/FFFFFF?text=C" class="w-10 h-10 rounded-full mx-3 object-cover"><span class="font-semibold">Carlos</span><span class="ml-auto text-gray-600">1800 pts</span></div>
-                        <div class="flex items-center bg-white p-3 rounded-lg"><span class="font-bold text-lg">3.</span><img src="https://placehold.co/40x40/cccccc/FFFFFF?text=A" class="w-10 h-10 rounded-full mx-3 object-cover"><span class="font-semibold">Ana</span><span class="ml-auto text-gray-600">1550 pts</span></div>
                     </div>
                 </div>
+                <!-- Ranking será implementado no futuro -->
+                <!-- <div class="mt-8"> ... Ranking ... </div> -->
             </div>
 
             <div id="screen-achievements" class="p-6 hidden fade-in">
+                <!-- Conteúdo de Conquistas (sem alteração funcional por enquanto) -->
                 <h3 class="text-2xl font-bold text-center mb-6">Sua Jornada</h3>
                 <div class="mb-6">
                     <h4 class="font-bold text-lg mb-2">Emblemas</h4>
@@ -155,13 +222,19 @@
 
             <div id="screen-feed" class="p-4 hidden fade-in space-y-4">
                  <h3 class="text-2xl font-bold text-center mb-2">Feed da Galera</h3>
-                 <div id="feed-posts-container" class="space-y-4"></div>
+                 <div id="feed-posts-container" class="space-y-4">
+                    <!-- Conteúdo será preenchido pelo script.js -->
+                 </div>
             </div>
 
             <div id="screen-tree-profile" class="hidden fade-in">
                  <div class="relative">
                     <img id="tree-profile-image" src="https://placehold.co/600x300/81C784/FFFFFF?text=Árvore" class="w-full h-56 object-cover">
-                    <button id="btn-care-from-profile" class="absolute bottom-4 right-4 bg-verde-principal text-white font-bold py-3 px-5 rounded-xl shadow-lg">Cuidar</button>
+                    <div class="absolute bottom-4 right-4 flex gap-2">
+                        <!-- NOVO: Botão Adotar -->
+                        <button id="btn-adopt-tree" class="bg-white text-verde-principal font-bold py-3 px-5 rounded-xl shadow-lg flex items-center gap-2"><i data-lucide="heart" class="w-5 h-5"></i><span>Adotar</span></button>
+                        <button id="btn-care-from-profile" class="bg-verde-principal text-white font-bold py-3 px-5 rounded-xl shadow-lg">Cuidar</button>
+                    </div>
                     <button data-page="map" class="nav-to-btn absolute top-4 left-4 bg-white rounded-full p-2 shadow-lg"><i data-lucide="arrow-left"></i></button>
                  </div>
                  <div class="p-4">
@@ -171,13 +244,20 @@
                     <div id="tree-profile-status-badge" class="text-white text-center font-bold p-2 rounded-lg my-4"></div>
                      
                     <h4 class="font-bold text-lg mb-2 mt-6">Histórico de Ações</h4>
-                    <div id="tree-profile-history" class="space-y-2 text-sm text-gray-700 max-h-32 overflow-y-auto border p-2 rounded-lg bg-gray-50"></div>
+                    <div id="tree-profile-history" class="space-y-2 text-sm text-gray-700 max-h-32 overflow-y-auto border p-2 rounded-lg bg-gray-50">
+                        <!-- Conteúdo será preenchido pelo script.js -->
+                    </div>
 
                     <h4 class="font-bold text-lg mb-2 mt-6">Mural de Mensagens</h4>
-                    <div id="tree-profile-timeline" class="space-y-4"></div>
+                    <div id="tree-profile-timeline" class="space-y-4">
+                        <!-- Conteúdo será preenchido pelo script.js -->
+                    </div>
 
-                    <h4 class="font-bold text-lg mb-2 mt-6">Padrinhos e Madrinhas</h4>
-                    <div id="tree-profile-padrinhos" class="flex flex-wrap gap-2"></div>
+                    <!-- ATUALIZAÇÃO: Mudança no título -->
+                    <h4 class="font-bold text-lg mb-2 mt-6">Adoram essa árvore:</h4>
+                    <div id="tree-profile-adopters" class="flex flex-wrap gap-2">
+                        <!-- Conteúdo será preenchido pelo script.js -->
+                    </div>
                  </div>
             </div>
             
@@ -189,7 +269,8 @@
                         <i data-lucide="camera"></i>
                         <span>Foto da Árvore (Opcional)</span>
                     </label>
-                    <input type="file" id="add-tree-photo-input" accept="image/*"> <img id="add-tree-photo-preview" class="w-full h-auto rounded-lg mt-2 hidden object-cover">
+                    <input type="file" id="add-tree-photo-input" accept="image/*" capture="environment">
+                    <img id="add-tree-photo-preview" class="w-full h-auto rounded-lg mt-2 hidden object-cover">
                 </div>
                 <div class="mt-4">
                     <h4 class="font-semibold mb-2">Qual o estado de saúde dela?</h4>
@@ -207,6 +288,7 @@
             </div>
             
             <div id="screen-learn" class="p-6 hidden fade-in">
+                <!-- Conteúdo de Aprender (sem alteração funcional por enquanto) -->
                 <div class="text-center">
                     <i data-lucide="bot" class="w-16 h-16 mx-auto text-verde-principal"></i>
                     <h3 class="text-2xl font-bold mt-2">Pergunta pro Arvoreco!</h3>
@@ -229,7 +311,8 @@
 
         </main>
 
-        <nav class="bg-white shadow-t-lg border-t border-gray-200 flex justify-around">
+        <!-- Barra de Navegação (só aparece depois do login) -->
+        <nav class="bg-white shadow-t-lg border-t border-gray-200 justify-around hidden">
             <button data-page="map" class="nav-btn flex-1 flex flex-col items-center justify-center p-2 text-gray-400"><i data-lucide="map" class="w-6 h-6"></i><span class="text-xs font-semibold mt-1">Mapa</span></button>
             <button data-page="learn" class="nav-btn flex-1 flex flex-col items-center justify-center p-2 text-gray-400"><i data-lucide="graduation-cap" class="w-6 h-6"></i><span class="text-xs font-semibold mt-1">Saber Mais</span></button>
             <button data-page="feed" class="nav-btn flex-1 flex flex-col items-center justify-center p-2 text-gray-400"><i data-lucide="newspaper" class="w-6 h-6"></i><span class="text-xs font-semibold mt-1">Feed</span></button>
@@ -237,20 +320,54 @@
             <button data-page="profile" class="nav-btn flex-1 flex flex-col items-center justify-center p-2 text-gray-400"><i data-lucide="user" class="w-6 h-6"></i><span class="text-xs font-semibold mt-1">Perfil</span></button>
         </nav>
         
-        <div id="toast-notification" class="hidden fixed bottom-24 left-1/2 -translate-x-1/2 bg-gray-800 text-white py-2 px-5 rounded-full shadow-lg z-50"><p></p></div>
+        <!-- Elementos Globais (Modais, Toasts) -->
+        <div id="toast-notification" class="hidden fixed bottom-24 left-1/2 -translate-x-1/2 bg-gray-800 text-white py-2 px-5 rounded-full shadow-lg z-[2000]"><p></p></div>
 
-        <div id="loading-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+        <div id="loading-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[3000]">
             <div class="bg-white p-6 rounded-lg flex items-center gap-4 shadow-xl">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-verde-principal"></div>
                 <p id="loading-message" class="font-semibold text-gray-700"></p>
             </div>
         </div>
+
+        <!-- NOVO: Modal de Permissão de Localização -->
+        <div id="location-permission-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[2000] p-4">
+            <div class="bg-white p-6 rounded-lg shadow-xl text-center">
+                <i data-lucide="compass" class="w-16 h-16 mx-auto text-verde-principal"></i>
+                <h3 class="text-2xl font-bold mt-4">Olá, Guardião!</h3>
+                <p class="text-gray-600 mt-2">Para te mostrar as árvores pertinho de você, o Arboriza precisa da sua localização.</p>
+                <p class="text-sm text-gray-500 mt-4">Nós só usamos isso para centralizar o mapa onde você está.</p>
+                <button id="btn-grant-location" class="w-full mt-6 bg-verde-principal text-white font-bold py-3 px-4 rounded-xl shadow-lg">Entendido, permitir localização</button>
+            </div>
+        </div>
+
+        <!-- NOVO: Modal de Ajuda da Câmera -->
+        <div id="help-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[2000] p-4">
+            <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-2xl font-bold text-verde-principal">Dicas do Arvoreco</h3>
+                    <button id="btn-close-help-modal"><i data-lucide="x"></i></button>
+                </div>
+                <div class="space-y-4 text-gray-700">
+                    <p><strong>1. Identificando:</strong> Para ter uma boa identificação, chegue bem perto da **folha** 🍃 ou **flor** 🌸. Evite fotos da árvore inteira de longe!</p>
+                    <p><strong>2. Cadastrando:</strong> Se a árvore não está no mapa, você pode cadastrá-la! Vá para a tela de "Cuidar" após a identificação e escolha "Cadastrar Nova Árvore".</p>
+                    <p><strong>3. Cuidando:</strong> Você pode "Cuidar" 💧 de qualquer árvore já cadastrada, registrando suas ações e deixando mensagens para a comunidade.</p>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-storage-compat.js"></script>
+    <!-- 
+      ATUALIZAÇÃO CRÍTICA: MUDANÇA DOS SCRIPTS DO FIREBASE
+      Estamos trocando os scripts "compat" pela nova versão modular (v9+).
+      Isso é ESSENCIAL para a autenticação funcionar.
+    -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js" type="module"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js" type="module"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js" type="module"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js" type="module"></script>
     
+    <!-- Nosso script principal, que agora usa os módulos acima -->
     <script src="script.js" type="module"></script>
 </body>
 </html>

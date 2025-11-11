@@ -1,5 +1,5 @@
 /* =================================================================== */
-/* ## STYLE.CSS - VERSÃO FINAL E COMPLETA (PARA O TESTE BETA) ## */
+/* ## STYLE.CSS - VERSÃO 1.0.1 (Com Autenticação e Arvoreco) ## */
 /* =================================================================== */
 
 :root {
@@ -11,18 +11,16 @@
     --alerta: #FFD700;
     --erro: #F44336;
     font-family: 'Inter', sans-serif;
-    /* Variável para a altura real do ecrã, será definida pelo JS */
     --app-height: 100vh;
 }
 
-/* Garante que o corpo e o container da app ocupem 100% da altura da janela */
 html, body {
-    height: 100vh; /* Fallback para browsers antigos */
+    height: 100vh; /* Fallback */
     height: var(--app-height);
-    overflow: hidden; /* Previne o scroll na página inteira */
+    overflow: hidden;
     margin: 0;
     padding: 0;
-    -webkit-font-smoothing: antialiased; /* Melhora a renderização da fonte */
+    -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
@@ -31,18 +29,20 @@ html, body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    position: relative; /* Garante que modais e toasts se posicionem corretamente */
+    position: relative;
 }
 
+/* Container 'main' e 'nav' só aparecem *depois* do login.
+  O JS vai remover a classe 'hidden' deles quando o usuário entrar.
+*/
 main {
-    flex-grow: 1; /* Faz a área principal crescer para ocupar o espaço disponível */
-    overflow-y: auto; /* Permite scroll APENAS na área de conteúdo */
-    -webkit-overflow-scrolling: touch; /* Melhora a fluidez do scroll em iOS */
+    flex-grow: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 nav {
-    flex-shrink: 0; /* Impede que a barra de navegação encolha */
-    display: none; /* Escondida por defeito, o JS irá mostrá-la */
+    flex-shrink: 0;
 }
 
 /* Fontes, Cores e Animações */
@@ -64,7 +64,6 @@ nav {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Gradiente para a barra de progresso */
 .bg-progress-gradient {
     background-image: linear-gradient(to right, var(--verde-claro), var(--verde-principal));
 }
@@ -80,6 +79,113 @@ nav {
 }
 input[type="file"] { display: none; }
 
-/* Garante que os botões do mapa ficam na camada de cima */
+/* Z-index dos botões do mapa */
 #btn-locate-me { z-index: 1000; }
 #screen-map button[data-page="camera"] { z-index: 1000; }
+
+/* ================================================= */
+/* ## NOVOS ESTILOS v1.0.1 (Arvoreco e Balão) ## */
+/* ================================================= */
+
+.arvoreco-avatar {
+    position: absolute;
+    z-index: 1001; /* Acima dos botões do mapa */
+    display: flex;
+    align-items: flex-end;
+}
+
+/* Posição do Arvoreco no Mapa */
+#arvoreco-mapa {
+    bottom: 24px; /* 1.5rem */
+    right: 96px; /* 6rem (perto do botão de scan) */
+    flex-direction: row-reverse; /* Balão fica à esquerda */
+}
+#arvoreco-mapa .avatar-img {
+    transform: scaleX(-1); /* Vira o Arvoreco para a esquerda */
+}
+
+/* Posição do Arvoreco na Câmera */
+#arvoreco-camera {
+    top: 16px; /* 1rem */
+    left: 16px; /* 1rem */
+}
+
+.arvoreco-avatar .avatar-img {
+    width: 56px; /* 3.5rem */
+    height: 56px;
+    border-radius: 50%;
+    /* border: 2px solid var(--branco); */
+    /* box-shadow: 0 2px 8px rgba(0,0,0,0.2); */
+    object-fit: contain;
+    animation: bounceAvatar 2s ease-in-out infinite;
+}
+
+@keyframes bounceAvatar {
+    0%, 100% { transform: translateY(0) scaleX(1); }
+    50% { transform: translateY(-8px) scaleX(1); }
+    55% { transform: translateY(0) scaleX(1); }
+}
+/* Virar a imagem do Arvoreco no mapa */
+#arvoreco-mapa .avatar-img {
+    animation: bounceAvatarMap 2s ease-in-out infinite;
+}
+@keyframes bounceAvatarMap {
+    0%, 100% { transform: translateY(0) scaleX(-1); }
+    50% { transform: translateY(-8px) scaleX(-1); }
+    55% { transform: translateY(0) scaleX(-1); }
+}
+
+
+.speech-bubble {
+    position: relative;
+    background: var(--branco);
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #333;
+    max-width: 200px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    animation: fadeInBubble 0.5s ease-out 0.2s forwards;
+    opacity: 0;
+}
+
+@keyframes fadeInBubble {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Seta do balão */
+.speech-bubble::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 0;
+    border: 8px solid transparent;
+}
+
+/* Balão na Câmera (seta para baixo-esquerda) */
+.speech-bubble-bottom-left {
+    margin-left: 10px; /* Espaço da seta */
+    margin-bottom: 8px; /* Espaço do avatar */
+}
+.speech-bubble-bottom-left::after {
+    border-top-color: var(--branco);
+    border-left-color: var(--branco);
+    bottom: -8px;
+    left: 10px;
+    transform: rotate(-45deg);
+}
+
+/* Balão no Mapa (seta para baixo-direita) */
+.speech-bubble-bottom-right {
+    margin-right: 10px; /* Espaço da seta */
+    margin-bottom: 8px; /* Espaço do avatar */
+}
+.speech-bubble-bottom-right::after {
+    border-top-color: var(--branco);
+    border-right-color: var(--branco);
+    bottom: -8px;
+    right: 10px;
+    transform: rotate(45deg);
+}

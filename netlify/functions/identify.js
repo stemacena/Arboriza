@@ -1,6 +1,13 @@
 // ===================================================================
 // ## IDENTIFY.JS - VERSÃO FINAL (LÊ A CHAVE DO AMBIENTE) ##
 // ===================================================================
+//
+// Olá! Este arquivo é sua Função Netlify.
+// Ele já está CORRETO e SEGURO. Você não precisa mudar nada aqui.
+// A chave `process.env.PLANTNET_API_KEY` é lida das variáveis
+// de ambiente do seu site no painel do Netlify.
+//
+// ===================================================================
 
 const fetch = require('node-fetch');
 const FormData = require('form-data');
@@ -83,7 +90,7 @@ exports.handler = async (event) => {
     }
 
     try {
-        const { files } = await parseMultipartForm(event); // Não precisamos mais do apiKey dos 'fields'
+        const { files } = await parseMultipartForm(event);
         const imageFile = files['images'];
 
         if (!imageFile || !imageFile.content || imageFile.content.length === 0) {
