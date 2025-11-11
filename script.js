@@ -40,16 +40,14 @@ import {
 
 // --- 1. CONFIGURAÇÃO E INICIALIZAÇÃO ---
 const firebaseConfig = {
-    // ###############################################################
-    // ## COLE A SUA CONFIGURAÇÃO COMPLETA DO FIREBASE AQUI DENTRO ##
-    // ###############################################################
-    // Exemplo:
-    apiKey: "SUA_API_KEY",
-    authDomain: "SEU_AUTH_DOMAIN",
-    projectId: "SEU_PROJECT_ID",
-    storageBucket: "SEU_STORAGE_BUCKET",
-    messagingSenderId: "SEU_MESSAGING_SENDER_ID",
-    appId: "SEU_APP_ID"
+    
+     apiKey: "AIzaSyDz5FUlrXC07aQDMJ4XzomdT4gkyKZVKgg",
+  authDomain: "arboriza-bd.firebaseapp.com",
+  databaseURL: "https://arboriza-bd-default-rtdb.firebaseio.com",
+  projectId: "arboriza-bd",
+  storageBucket: "arboriza-bd.firebasestorage.app",
+  messagingSenderId: "210425976523",
+  appId: "1:210425976523:web:2733f5b67fe02aa7d4ad4e"
 };
 
 // Inicializa o Firebase
