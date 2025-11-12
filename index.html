@@ -32,6 +32,13 @@
 
         <div id="screen-login" class="p-8 flex flex-col h-full hidden fade-in">
             <h3 class="text-3xl font-bold text-verde-principal text-center mb-8">Bem-vindo de volta!</h3>
+            
+            <button id="btn-google-login-main" class="w-full bg-white border border-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-xl shadow-sm flex items-center justify-center gap-3 hover:bg-gray-50">
+                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.19 4.118-4.102 5.424l6.19 5.238C42.418 34.569 44 29.625 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>
+                Continuar com Google
+            </button>
+            <div class="my-4 flex items-center"><span class="flex-grow bg-gray-200 h-px"></span><span class="mx-4 text-gray-500 text-sm">ou</span><span class="flex-grow bg-gray-200 h-px"></span></div>
+
             <form id="login-form" class="space-y-4">
                 <div>
                     <label for="login-email" class="block text-sm font-medium text-gray-700">Email</label>
@@ -44,11 +51,21 @@
                 <button type="submit" class="w-full bg-verde-principal text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:bg-opacity-90">Entrar</button>
             </form>
             <p id="login-error-message" class="text-erro text-center text-sm mt-4 hidden"></p>
+            
+            <button id="btn-show-forgot-password" class="w-full text-center text-sm text-gray-600 font-semibold py-2 mt-2">Esqueci minha senha</button>
+            
             <button data-page="signup" class="nav-to-btn w-full text-center text-gray-600 font-semibold py-4 mt-auto">Não tem conta? Criar agora</button>
         </div>
 
         <div id="screen-signup" class="p-8 flex flex-col h-full hidden fade-in">
             <h3 class="text-3xl font-bold text-verde-principal text-center mb-8">Crie sua conta</h3>
+            
+            <button id="btn-google-login-signup" class="w-full bg-white border border-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-xl shadow-sm flex items-center justify-center gap-3 hover:bg-gray-50">
+                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.19 4.118-4.102 5.424l6.19 5.238C42.418 34.569 44 29.625 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>
+                Continuar com Google
+            </button>
+            <div class="my-4 flex items-center"><span class="flex-grow bg-gray-200 h-px"></span><span class="mx-4 text-gray-500 text-sm">ou</span><span class="flex-grow bg-gray-200 h-px"></span></div>
+            
             <form id="signup-form" class="space-y-4">
                 <div>
                     <label for="signup-name" class="block text-sm font-medium text-gray-700">Seu nome (de guardião)</label>
@@ -136,7 +153,7 @@
             <div id="screen-map" class="flex flex-col h-full hidden fade-in">
                 <div id="map-container" class="flex-grow bg-gray-300 relative">
                     <div class="arvoreco-avatar" id="arvoreco-mapa">
-                        <div class="speech-bubble speech-bubble-bottom-right">
+                        <div class="speech-bubble speech-bubble-left">
                             Aqui você pode ver se a árvore que encontrou está perdida ou já foi abraçada!
                         </div>
                         <img src="https://cdn.prod.website-files.com/68c9b59ad35a897b62c3262c/68c9baa2c06920a9e64b5588_logoarborizacolor.png" alt="Arvoreco" class="avatar-img">
@@ -237,10 +254,16 @@
                     <div id="tree-profile-history" class="space-y-2 text-sm text-gray-700 max-h-32 overflow-y-auto border p-2 rounded-lg bg-gray-50"></div>
 
                     <h4 class="font-bold text-lg mb-2 mt-6">Mural de Mensagens</h4>
-                    <div class="flex gap-2 mb-4">
+                    <div class="flex gap-2 mb-4 items-center">
+                        <label for="tree-comment-photo-input" class="cursor-pointer text-gray-500 p-3 rounded-lg hover:bg-gray-200">
+                            <i data-lucide="paperclip" class="w-5 h-5"></i>
+                        </label>
+                        <input type="file" id="tree-comment-photo-input" accept="image/*" class="hidden">
                         <input type="text" id="tree-comment-input" class="w-full p-2 border rounded-lg bg-cinza" placeholder="Deixar uma mensagem...">
                         <button id="btn-post-comment" class="bg-verde-principal text-white rounded-lg p-3 flex-shrink-0"><i data-lucide="send" class="w-5 h-5"></i></button>
                     </div>
+                    <img id="tree-comment-photo-preview" class="w-1/2 h-auto rounded-lg mb-2 hidden object-cover">
+                    
                     <div id="tree-profile-timeline" class="space-y-4"></div>
 
                     <h4 class="font-bold text-lg mb-2 mt-6">Adoram essa árvore:</h4>
@@ -321,6 +344,21 @@
                 <p class="text-gray-600 mt-2">Para te mostrar as árvores pertinho de você, o Arboriza precisa da sua localização.</p>
                 <p class="text-sm text-gray-500 mt-4">Nós só usamos isso para centralizar o mapa onde você está.</p>
                 <button id="btn-grant-location" class="w-full mt-6 bg-verde-principal text-white font-bold py-3 px-4 rounded-xl shadow-lg">Entendido, permitir localização</button>
+            </div>
+        </div>
+        
+        <div id="forgot-password-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[2000] p-4">
+            <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-2xl font-bold text-verde-principal">Redefinir Senha</h3>
+                    <button id="btn-close-forgot-modal"><i data-lucide="x"></i></button>
+                </div>
+                <p class="text-gray-600 mb-4">Digite seu email e enviaremos um link para você criar uma nova senha.</p>
+                <form id="forgot-password-form">
+                    <label for="forgot-email" class="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" id="forgot-email" required class="w-full p-3 mt-1 border rounded-lg bg-cinza" placeholder="seu@email.com">
+                    <button type="submit" class="w-full mt-4 bg-verde-principal text-white font-bold py-3 px-4 rounded-xl shadow-lg">Enviar link</button>
+                </form>
             </div>
         </div>
 

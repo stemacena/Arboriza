@@ -157,14 +157,17 @@ input[type="file"] { display: none; }
     transform: rotate(-45deg);
 }
 
-.speech-bubble-bottom-right {
+/* ATUALIZAÇÃO: Balão para o Arvoreco do Mapa */
+.speech-bubble-left {
     margin-right: 10px;
     margin-bottom: 8px;
 }
-.speech-bubble-bottom-right::after {
+/* Seta apontando para a esquerda */
+.speech-bubble-left::after {
+    border-left-color: var(--branco);
     border-top-color: var(--branco);
-    border-right-color: var(--branco);
-    bottom: -8px;
-    right: 10px;
+    top: 50%;
+    right: -8px;
+    margin-top: -8px;
     transform: rotate(45deg);
 }

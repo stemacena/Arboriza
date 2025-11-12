@@ -1,11 +1,13 @@
-// MUDANÇAS: Adicionada lógica de upload de avatar e postagem de comentário.
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
     getAuth,
     onAuthStateChanged,
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
-    signOut
+    signOut,
+    GoogleAuthProvider, // NOVO
+    signInWithPopup,      // NOVO
+    sendPasswordResetEmail // NOVO
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
     getFirestore,
@@ -63,7 +65,7 @@ const appState = {
 // --- 3. FUNÇÕES PRINCIPAIS (Ciclo de Vida da App) ---
 
 const initializeAppCore = () => {
-    console.log("Arboriza 1.0.3 iniciando...");
+    console.log("Arboriza 1.0.4 iniciando...");
     setAppHeight();
     window.addEventListener('resize', setAppHeight);
     lucide.createIcons();
@@ -71,7 +73,7 @@ const initializeAppCore = () => {
     onAuthStateChanged(auth, (user) => {
         if (user) {
             console.log("Usuário logado:", user.uid);
-            fetchUserProfile(user.uid);
+            fetchUserProfile(user.uid, user); // Passa o 'user' do Auth
         } else {
             console.log("Nenhum usuário logado.");
             appState.currentUser = null;
@@ -84,25 +86,48 @@ const initializeAppCore = () => {
     setupEventListeners();
 };
 
-const fetchUserProfile = async (uid) => {
+// ATUALIZAÇÃO: Checa se o perfil existe; se não, cria (para Login Google)
+const fetchUserProfile = async (uid, authUser) => {
     showLoadingModal(true, "Carregando seu perfil...");
     const userRef = doc(db, "users", uid);
     const userSnap = await getDoc(userRef);
 
     if (userSnap.exists()) {
+        // Perfil existe, carrega
         appState.currentUser = { uid: uid, ...userSnap.data() };
         console.log("Perfil do usuário carregado:", appState.currentUser);
-        
-        document.querySelector('main').classList.remove('hidden');
-        document.querySelector('nav').classList.remove('hidden');
-        
-        promptForLocation(); 
-
+    } else if (authUser) {
+        // Perfil NÃO existe (provavelmente é um Login Google novo)
+        // Cria um perfil para ele
+        console.log("Perfil não encontrado, criando um novo para usuário do Google...");
+        const newUserProfile = {
+            name: authUser.displayName || "Guardião Anônimo",
+            email: authUser.email,
+            photoURL: authUser.photoURL || `https://placehold.co/128x128/cccccc/FFFFFF?text=${(authUser.displayName || 'A').charAt(0)}`,
+            level: 1,
+            levelName: "Semente",
+            points: 0,
+            treesCared: 0,
+            treesIdentified: 0,
+            treesAdded: 0,
+            createdAt: serverTimestamp()
+        };
+        await setDoc(userRef, newUserProfile);
+        appState.currentUser = { uid: uid, ...newUserProfile };
+        console.log("Novo perfil criado e carregado.");
     } else {
-        console.error("Usuário logado, mas sem perfil no Firestore!");
+        // Erro: não tem authUser e não tem perfil
+        console.error("Usuário logado, mas sem perfil no Firestore e sem dados do Auth!");
         showToast("Erro ao carregar seu perfil. Tente logar novamente.");
         handleLogout();
+        showLoadingModal(false);
+        return;
     }
+    
+    // Continua para a app
+    document.querySelector('main').classList.remove('hidden');
+    document.querySelector('nav').classList.remove('hidden');
+    promptForLocation(); 
     showLoadingModal(false);
 };
 
@@ -115,7 +140,6 @@ const loadingMessage = document.getElementById('loading-message');
 const showPage = (pageId) => {
     const publicPages = ['onboarding', 'login', 'signup'];
     if (!appState.currentUser && !publicPages.includes(pageId)) {
-        console.warn(`Acesso bloqueado à página ${pageId}. Redirecionando para login.`);
         showPage('login');
         return;
     }
@@ -205,7 +229,7 @@ const handleSignup = async (e) => {
         };
         
         await setDoc(userRef, newUserProfile);
-        
+        // O onAuthStateChanged vai cuidar do resto
         console.log("Conta e perfil criados com sucesso!");
         
     } catch (error) {
@@ -228,6 +252,7 @@ const handleLogin = async (e) => {
 
     try {
         await signInWithEmailAndPassword(auth, email, password);
+        // O onAuthStateChanged vai cuidar do resto
         console.log("Login com sucesso!");
 
     } catch (error) {
@@ -238,6 +263,41 @@ const handleLogin = async (e) => {
         showLoadingModal(false);
     }
 };
+
+// NOVO: Login com Google
+const handleGoogleLogin = async () => {
+    const provider = new GoogleAuthProvider();
+    showLoadingModal(true, "Conectando com Google...");
+    try {
+        await signInWithPopup(auth, provider);
+        // Sucesso! O onAuthStateChanged vai rodar e chamar o fetchUserProfile,
+        // que por sua vez vai criar o perfil no DB se não existir.
+        console.log("Login com Google com sucesso!");
+    } catch (error) {
+        console.error("Erro no Login Google:", error);
+        showToast(getFirebaseErrorMessage(error));
+        showLoadingModal(false);
+    }
+    // O modal de loading é fechado pelo fetchUserProfile
+};
+
+// NOVO: Esqueci minha Senha
+const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('forgot-email').value;
+    showLoadingModal(true, "Enviando email...");
+    try {
+        await sendPasswordResetEmail(auth, email);
+        showLoadingModal(false);
+        document.getElementById('forgot-password-modal').classList.add('hidden');
+        showToast("Email de redefinição enviado! Verifique sua caixa de entrada.");
+    } catch (error) {
+        console.error("Erro ao redefinir senha:", error);
+        showLoadingModal(false);
+        showToast(getFirebaseErrorMessage(error));
+    }
+};
+
 
 const handleLogout = async () => {
     try {
@@ -251,6 +311,7 @@ const handleLogout = async () => {
 };
 
 const getFirebaseErrorMessage = (error) => {
+    // Códigos de erro do Firebase Auth
     switch (error.code) {
         case 'auth/email-already-in-use':
             return 'Este email já está em uso.';
@@ -264,6 +325,8 @@ const getFirebaseErrorMessage = (error) => {
             return 'Email ou senha incorretos.';
         case 'auth/configuration-not-found':
              return 'Configuração de login não encontrada. (Ative Email/Senha no Firebase).';
+        case 'auth/popup-closed-by-user':
+             return 'Você fechou a janela do Google antes de terminar.';
         default:
             return 'Ocorreu um erro. Tente novamente.';
     }
@@ -272,7 +335,6 @@ const getFirebaseErrorMessage = (error) => {
 
 // --- 6. GAMIFICAÇÃO E PERFIL ---
 
-// NOVO: Função de Upload de Foto de Perfil
 const handleProfilePicUpload = async (e) => {
     const file = e.target.files[0];
     if (!file || !appState.currentUser) return;
@@ -280,21 +342,18 @@ const handleProfilePicUpload = async (e) => {
     showLoadingModal(true, "Atualizando sua foto...");
     
     try {
-        // 1. Caminho seguro no Storage
+        // Caminho seguro no Storage: /user-avatars/UID_DO_USUARIO/avatar.jpg
         const filePath = `user-avatars/${appState.currentUser.uid}/avatar.jpg`;
         const fileRef = ref(storage, filePath);
         
-        // 2. Faz o upload
         const snapshot = await uploadBytes(fileRef, file);
         const downloadURL = await getDownloadURL(snapshot.ref);
         
-        // 3. Atualiza o documento do usuário no Firestore
         const userRef = doc(db, "users", appState.currentUser.uid);
         await updateDoc(userRef, {
             photoURL: downloadURL
         });
         
-        // 4. Atualiza o estado local e a UI
         appState.currentUser.photoURL = downloadURL;
         document.getElementById('profile-avatar').src = downloadURL;
         
@@ -332,7 +391,7 @@ const awardPoints = async (action) => {
             points = 20;
             break;
         case 'comment_tree':
-            points = 5; // Dá 5 pontos por um comentário
+            points = 5;
             break;
     }
 
@@ -344,7 +403,6 @@ const awardPoints = async (action) => {
         
         const userRef = doc(db, "users", appState.currentUser.uid);
         try {
-            // Atualiza apenas os campos que mudam
             await updateDoc(userRef, {
                 points: newStats.points,
                 treesAdded: newStats.treesAdded,
@@ -499,14 +557,17 @@ const initializeMap = () => {
     
     const initialCoords = [appState.lastUserLocation.latitude, appState.lastUserLocation.longitude];
     
+    // ATUALIZAÇÃO: Zoom máximo do mapa para 22
     appState.map = L.map('map-container', { 
         zoomControl: false,
-        maxZoom: 20
+        maxZoom: 22
     }).setView(initialCoords, 17); 
     
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles &copy; Esri',
-        maxZoom: 20
+    // ATUALIZAÇÃO: Trocado para o mapa Satélite do Google, que tem mais zoom
+    L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
+        maxZoom: 22,
+        subdomains:['mt0','mt1','mt2','mt3'],
+        attribution: 'Map data &copy; Google'
     }).addTo(appState.map);
     
     L.control.zoom({ position: 'topright' }).addTo(appState.map);
@@ -604,6 +665,12 @@ const showTreeProfile = async (treeId) => {
         else if (tree.status === 'needs-care') { statusBadge.className = 'bg-alerta text-yellow-800 text-center font-bold p-2 rounded-lg my-4'; statusBadge.textContent = 'Precisa de Cuidado'; }
         else { statusBadge.className = 'bg-erro text-white text-center font-bold p-2 rounded-lg my-4'; statusBadge.textContent = 'Em Estado Crítico'; }
 
+        // Limpa o preview de foto do comentário
+        document.getElementById('tree-comment-photo-preview').classList.add('hidden');
+        document.getElementById('tree-comment-photo-preview').src = '';
+        document.getElementById('tree-comment-photo-input').value = null;
+
+
         loadTreeSubcollection(treeId, 'careEvents', 'tree-profile-history', renderHistoryEvent);
         loadTreeSubcollection(treeId, 'careEvents', 'tree-profile-timeline', renderTimelineEvent, true);
         loadTreeSubcollection(treeId, 'adopters', 'tree-profile-adopters', renderAdopter);
@@ -620,7 +687,7 @@ const showTreeProfile = async (treeId) => {
     }
 };
 
-const loadTreeSubcollection = (treeId, subcollection, containerId, renderFunction, filterByMessage = false) => {
+const loadTreeSubcollection = (treeId, subcollection, containerId, renderFunction, filterByMessageOrPhoto = false) => {
     const container = document.getElementById(containerId);
     container.innerHTML = `<p class="text-gray-500 text-sm">Carregando...</p>`;
 
@@ -642,7 +709,8 @@ const loadTreeSubcollection = (treeId, subcollection, containerId, renderFunctio
         snapshot.forEach(doc => {
             const item = doc.data();
             
-            if (filterByMessage && !item.message) {
+            // ATUALIZAÇÃO: Filtro para o mural (só mostra se tiver mensagem OU foto)
+            if (filterByMessageOrPhoto && !item.message && !item.photoUrl) {
                 return;
             }
             
@@ -650,7 +718,7 @@ const loadTreeSubcollection = (treeId, subcollection, containerId, renderFunctio
             itemsFound++;
         });
 
-        if (itemsFound === 0 && filterByMessage) {
+        if (itemsFound === 0 && filterByMessageOrPhoto) {
             container.innerHTML = `<p class="text-gray-500 text-sm text-center italic">Nenhuma mensagem no mural.</p>`;
         }
         
@@ -679,7 +747,8 @@ const renderTimelineEvent = (event) => {
                 <p class="ml-auto text-xs text-gray-500">${eventDate}</p>
             </div>
             ${event.photoUrl ? `<img src="${event.photoUrl}" class="w-full h-auto rounded-lg object-cover my-2">` : ''}
-            <p class="text-sm text-gray-700 italic">"${event.message}"</p>
+            ${event.message ? `<p class="text-sm text-gray-700 italic">"${event.message}"</p>` : ''}
+            
             ${isFirst ? '<span class="absolute -top-2 -right-2 text-xs bg-alerta text-yellow-800 font-semibold px-2 py-0.5 rounded-full shadow-md">✨ Primeira Mensagem</span>' : ''}
         </div>`;
 };
@@ -766,26 +835,38 @@ const handleAdoptTree = async () => {
     }
 };
 
-// NOVO: Função para postar comentário rápido
 const handlePostComment = async () => {
     const tree = appState.currentTree;
     const user = appState.currentUser;
     const input = document.getElementById('tree-comment-input');
+    const photoInput = document.getElementById('tree-comment-photo-input');
+    const photoPreview = document.getElementById('tree-comment-photo-preview');
+    
     const message = input.value;
+    const photoFile = photoInput.files[0];
 
-    if (!tree || !user || !message) {
-        showToast("Escreva uma mensagem primeiro!");
+    // Precisa ter PELO MENOS uma mensagem ou uma foto
+    if (!tree || !user || (!message && !photoFile)) {
+        showToast("Escreva uma mensagem ou anexe uma foto!");
         return;
     }
     
     const btn = document.getElementById('btn-post-comment');
     btn.disabled = true;
+    showLoadingModal(true, "Postando no mural...");
 
     try {
+        // 1. Faz upload da foto (se houver)
+        let photoUrl = null;
+        if (photoFile) {
+            photoUrl = await uploadImage(photoFile, 'photos'); // Reusa a função de upload
+        }
+
+        // 2. Cria o objeto do evento
         const commentEvent = {
-            action: "comentou.", // Ação diferente de "cuidou"
-            message: message,
-            photoUrl: null, // Sem foto para um comentário rápido
+            action: "comentou.",
+            message: message || '', // Deixa a mensagem ser vazia se tiver foto
+            photoUrl: photoUrl,
             user: { 
                 id: user.uid, 
                 name: user.name, 
@@ -794,11 +875,18 @@ const handlePostComment = async () => {
             timestamp: serverTimestamp()
         };
         
+        // 3. Salva no Firestore
         const eventsCollectionRef = collection(db, "trees", tree.id, "careEvents");
         await addDoc(eventsCollectionRef, commentEvent);
         
-        awardPoints('comment_tree'); // Dá pontos por comentar
-        input.value = ''; // Limpa o campo
+        awardPoints('comment_tree');
+        
+        // 4. Limpa os campos
+        input.value = '';
+        photoInput.value = null;
+        photoPreview.src = '';
+        photoPreview.classList.add('hidden');
+        
         showToast("Mensagem postada no mural!");
 
     } catch (error) {
@@ -806,17 +894,19 @@ const handlePostComment = async () => {
         showToast("Erro ao enviar sua mensagem.");
     } finally {
         btn.disabled = false;
+        showLoadingModal(false);
     }
 };
 
 
 // --- 9. FLUXO DE CUIDADO E CADASTRO ---
 
-// Esta função é para fotos de CUIDADO e de ÁRVORE (pasta /photos/)
-const uploadImage = async (file) => {
+// ATUALIZAÇÃO: `uploadImage` agora pode receber a pasta
+const uploadImage = async (file, folder = 'photos') => {
     if (!file) return null;
     
-    const filePath = `photos/${Date.now()}_${file.name}`; 
+    // Define o caminho (pasta)
+    const filePath = `${folder}/${Date.now()}_${file.name}`; 
     const fileRef = ref(storage, filePath);
     
     try {
@@ -844,8 +934,7 @@ const handleFinishCare = async () => {
     const photoFile = document.getElementById('care-photo-input').files[0];
     
     try {
-        // A função 'uploadImage' já funciona para isso!
-        const photoUrl = await uploadImage(photoFile);
+        const photoUrl = await uploadImage(photoFile, 'photos');
         
         const careEvent = {
             action: "cuidou da planta.",
@@ -899,6 +988,7 @@ const loadFeedPosts = async () => {
         
         snapshot.forEach(doc => {
             const event = doc.data();
+            // Mostra se tiver foto OU mensagem
             if (event.photoUrl || event.message) {
                 feedContainer.innerHTML += renderTimelineEvent(event);
             }
@@ -907,6 +997,7 @@ const loadFeedPosts = async () => {
     } catch (error) {
         console.error("Não foi possível carregar o feed:", error);
         feedContainer.innerHTML = `<p class="text-erro text-center">Erro ao carregar o feed.</p>`;
+        // O log do erro de índice vai aparecer no console
     }
 };
 
@@ -1047,8 +1138,7 @@ const handleRegisterNewTree = async () => {
     const photoFile = document.getElementById('add-tree-photo-input').files[0];
 
     try {
-        // A função 'uploadImage' já funciona para isso!
-        const photoUrl = await uploadImage(photoFile);
+        const photoUrl = await uploadImage(photoFile, 'photos');
         
         const newTree = {
             commonName: appState.currentPlantInfo.commonName,
@@ -1145,15 +1235,28 @@ const setupEventListeners = () => {
         }
     });
 
-    // Autenticação
+    // --- Autenticação ---
     document.getElementById('login-form').addEventListener('submit', handleLogin);
     document.getElementById('signup-form').addEventListener('submit', handleSignup);
     document.getElementById('btn-logout').addEventListener('click', handleLogout);
+    
+    // Google Login
+    document.getElementById('btn-google-login-main').addEventListener('click', handleGoogleLogin);
+    document.getElementById('btn-google-login-signup').addEventListener('click', handleGoogleLogin);
+    
+    // Esqueci Senha
+    document.getElementById('btn-show-forgot-password').addEventListener('click', () => {
+        document.getElementById('forgot-password-modal').classList.remove('hidden');
+    });
+    document.getElementById('btn-close-forgot-modal').addEventListener('click', () => {
+        document.getElementById('forgot-password-modal').classList.add('hidden');
+    });
+    document.getElementById('forgot-password-form').addEventListener('submit', handleForgotPassword);
 
-    // NOVO: Perfil
+    // --- Perfil ---
     document.getElementById('profile-avatar-input').addEventListener('change', handleProfilePicUpload);
 
-    // Identificação
+    // --- Identificação ---
     document.getElementById('plant-photo-input').addEventListener('change', (e) => {
         if (e.target.files && e.target.files.length > 0) {
             handlePlantIdentification(e.target.files[0]);
@@ -1167,7 +1270,7 @@ const setupEventListeners = () => {
     });
     document.getElementById('btn-initiate-care').addEventListener('click', initiateCareFlow);
 
-    // Cadastro
+    // --- Cadastro ---
     document.getElementById('btn-finish-add-tree').addEventListener('click', handleRegisterNewTree);
     document.getElementById('add-tree-photo-input').addEventListener('change', (e) => {
         if (e.target.files && e.target.files[0]) {
@@ -1177,22 +1280,21 @@ const setupEventListeners = () => {
         }
     });
 
-    // Mapa
+    // --- Mapa ---
     document.getElementById('btn-locate-me').addEventListener('click', centerMapOnUserLocation);
 
-    // Cuidado
+    // --- Cuidado ---
     document.getElementById('btn-finish-care').addEventListener('click', handleFinishCare);
     document.querySelectorAll('.care-action-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             if (e.currentTarget.id === 'action-prune') return; 
-            
             if (!btn.disabled) {
                 document.getElementById('care-confirmation-section').classList.remove('hidden');
             }
         });
     });
 
-    // Perfil da Árvore
+    // --- Perfil da Árvore ---
     document.getElementById('btn-care-from-profile').addEventListener('click', () => {
         if (appState.currentTree) {
             showPage('care');
@@ -1207,11 +1309,21 @@ const setupEventListeners = () => {
         }
     });
     document.getElementById('btn-adopt-tree').addEventListener('click', handleAdoptTree);
-    // NOVO: Comentário Rápido
+    
+    // Comentário Rápido com Foto
     document.getElementById('btn-post-comment').addEventListener('click', handlePostComment);
+    document.getElementById('tree-comment-photo-input').addEventListener('change', (e) => {
+        const preview = document.getElementById('tree-comment-photo-preview');
+        if (e.target.files && e.target.files[0]) {
+            preview.src = URL.createObjectURL(e.target.files[0]);
+            preview.classList.remove('hidden');
+        } else {
+            preview.classList.add('hidden');
+        }
+    });
 
 
-    // Saber Mais
+    // --- Saber Mais ---
     document.querySelectorAll('.suggested-question-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const query = btn.textContent;
@@ -1224,7 +1336,7 @@ const setupEventListeners = () => {
         handleLearnSearch(query);
     });
 
-    // Modais
+    // --- Modais ---
     document.getElementById('btn-show-help').addEventListener('click', () => document.getElementById('help-modal').classList.remove('hidden'));
     document.getElementById('btn-close-help-modal').addEventListener('click', () => document.getElementById('help-modal').classList.add('hidden'));
 };
