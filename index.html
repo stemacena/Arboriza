@@ -89,9 +89,9 @@
             <div id="screen-camera" class="p-6 flex flex-col h-full hidden fade-in relative">
                 <div class="arvoreco-avatar" id="arvoreco-camera">
                     <div class="speech-bubble speech-bubble-bottom-left">
-                        Tire a foto bem de perto da folha ou flor! Se não der certo, tente outro ângulo.
+                        Arvoreco na área! Tire a foto bem de perto da folha ou flor! Se não der certo, tente outro ângulo.
                     </div>
-                    <img src="https://cdn.prod.website-files.com/68c9b59ad35a897b62c3262c/68c9baa2c06920a9e64b5588_logoarborizacolor.png" alt="Arvoreco" class="avatar-img">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Eo_circle_green_tree.svg/512px-Eo_circle_green_tree.svg.png" alt="Arvoreco" class="avatar-img">
                 </div>
 
                 <h3 class="text-2xl font-bold text-center mb-4">Identificar Planta</h3>
@@ -153,10 +153,10 @@
             <div id="screen-map" class="flex flex-col h-full hidden fade-in">
                 <div id="map-container" class="flex-grow bg-gray-300 relative">
                     <div class="arvoreco-avatar" id="arvoreco-mapa">
-                        <div class="speech-bubble speech-bubble-left">
-                            Aqui você pode ver se a árvore que encontrou está perdida ou já foi abraçada!
+                        <div class="speech-bubble speech-bubble-right">
+                            Arvoreco na área! Aqui você pode ver se a árvore que encontrou está perdida ou já foi abraçada!
                         </div>
-                        <img src="https://cdn.prod.website-files.com/68c9b59ad35a897b62c3262c/68c9baa2c06920a9e64b5588_logoarborizacolor.png" alt="Arvoreco" class="avatar-img">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Eo_circle_green_tree.svg/512px-Eo_circle_green_tree.svg.png" alt="Arvoreco" class="avatar-img">
                     </div>
 
                     <button id="btn-locate-me" class="absolute bottom-4 left-4 w-12 h-12 bg-white text-verde-principal rounded-full shadow-lg flex items-center justify-center z-[1000]">
@@ -202,6 +202,7 @@
                          <p class="text-gray-500 text-center italic">Nenhuma árvore adotada ainda.</p>
                     </div>
                 </div>
+                <p class="text-center text-xs text-gray-400 mt-8">Dúvidas, parcerias ou feedback? <br> <a href="mailto:arborizarj@gmail.com" class="font-semibold text-verde-principal">arborizarj@gmail.com</a></p>
             </div>
 
             <div id="screen-achievements" class="p-6 hidden fade-in">
@@ -221,8 +222,8 @@
                     </div>
                 </div>
                 <div class="mt-8">
-                    <h4 class="font-bold text-lg mb-2">Recompensas com Parceiros</h4>
-                    <p class="text-gray-600 mb-4">Complete emblemas e desbloqueie descontos!</p>
+                    <h4 class="font-bold text-lg mb-2">Exemplos de Futuros Parceiros</h4>
+                    <p class="text-gray-600 mb-4">Complete emblemas para desbloquear descontos em lojas parceiras!</p>
                     <div class="space-y-3">
                         <div class="bg-white p-4 rounded-lg border flex items-center"><div><p class="font-semibold">Sucos do Marcão</p><p class="text-sm text-gray-500">Rua Fonseca, 240 - Bangu</p></div><a href="#" class="ml-auto text-sm text-blue-600 font-semibold">Ver no mapa</a></div>
                         <div class="bg-white p-4 rounded-lg border flex items-center"><div><p class="font-semibold">Floricultura Pense Verde</p><p class="text-sm text-gray-500">Estrada da Posse, 123 - Campo Grande</p></div><a href="#" class="ml-auto text-sm text-blue-600 font-semibold">Ver no mapa</a></div>
@@ -277,8 +278,7 @@
                 <div class="mt-6">
                     <label for="add-tree-photo-input" class="w-full bg-white text-verde-principal font-semibold py-3 px-4 rounded-xl shadow-sm flex items-center justify-center gap-2 cursor-pointer border-2 border-dashed">
                         <i data-lucide="camera"></i>
-                        <span>Foto da Árvore (Opcional)</span>
-                    </label>
+                        <span>Foto da Árvore (Obrigatória)</span> </label>
                     <input type="file" id="add-tree-photo-input" accept="image/*" capture="environment">
                     <img id="add-tree-photo-preview" class="w-full h-auto rounded-lg mt-2 hidden object-cover">
                 </div>
@@ -299,7 +299,7 @@
             
             <div id="screen-learn" class="p-6 hidden fade-in">
                 <div class="text-center">
-                    <i data-lucide="bot" class="w-16 h-16 mx-auto text-verde-principal"></i>
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Eo_circle_green_tree.svg/512px-Eo_circle_green_tree.svg.png" alt="Arvoreco" class="w-16 h-16 mx-auto arvoreco-bounce">
                     <h3 class="text-2xl font-bold mt-2">Pergunta pro Arvoreco!</h3>
                     <p class="text-gray-600 mt-1">O que você quer saber sobre o universo das plantas?</p>
                 </div>
@@ -316,6 +316,7 @@
                     </div>
                 </div>
                 <div id="learn-results-container" class="mt-6 hidden"></div>
+                <p class="text-center text-xs text-gray-400 mt-8">Dúvidas, parcerias ou feedback? <br> <a href="mailto:arborizarj@gmail.com" class="font-semibold text-verde-principal">arborizarj@gmail.com</a></p>
             </div>
 
         </main>
@@ -365,11 +366,12 @@
         <div id="help-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[2000] p-4">
             <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
                 <div class="flex justify-between items-center mb-4">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Eo_circle_green_tree.svg/512px-Eo_circle_green_tree.svg.png" alt="Arvoreco" class="w-10 h-10 arvoreco-bounce">
                     <h3 class="text-2xl font-bold text-verde-principal">Dicas do Arvoreco</h3>
                     <button id="btn-close-help-modal"><i data-lucide="x"></i></button>
                 </div>
                 <div class="space-y-4 text-gray-700">
-                    <p><strong>1. Identificando:</strong> Para ter uma boa identificação, chegue bem perto da **folha** 🍃 ou **flor** 🌸. Evite fotos da árvore inteira de longe!</p>
+                    <p><strong>1. Identificando:</strong> Para ter uma boa identificação, chegue bem perto da folha 🍃 ou flor 🌸. Evite fotos da árvore inteira de longe!</p>
                     <p><strong>2. Cadastrando:</strong> Se a árvore não está no mapa, você pode cadastrá-la! Vá para a tela de "Cuidar" após a identificação e escolha "Cadastrar Nova Árvore".</p>
                     <p><strong>3. Cuidando:</strong> Você pode "Cuidar" 💧 de qualquer árvore já cadastrada, registrando suas ações e deixando mensagens para a comunidade.</p>
                 </div>
@@ -382,6 +384,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js" type="module"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js" type="module"></script>
     
-    <script src="script.js" type="module"></script>
+    <script src="script.js" type: "module"></script>
 </body>
 </html>

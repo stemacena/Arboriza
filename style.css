@@ -84,10 +84,11 @@ input[type="file"] { display: none; }
 #arvoreco-mapa {
     bottom: 24px;
     right: 88px;
-    flex-direction: row-reverse;
+    /* ATUALIZAÇÃO: Removido 'flex-direction: row-reverse;' 
+       para o balão ficar à direita do avatar */
 }
 #arvoreco-mapa .avatar-img {
-    transform: scaleX(-1);
+    /* ATUALIZAÇÃO: Removido 'transform: scaleX(-1);' */
 }
 
 #arvoreco-camera {
@@ -103,19 +104,18 @@ input[type="file"] { display: none; }
     animation: bounceAvatar 2s ease-in-out infinite;
 }
 
+/* ATUALIZAÇÃO: Classe de bounce genérica */
+.arvoreco-bounce {
+    animation: bounceAvatar 2s ease-in-out infinite;
+}
+
 @keyframes bounceAvatar {
     0%, 100% { transform: translateY(0) scaleX(1); }
     50% { transform: translateY(-8px) scaleX(1); }
     55% { transform: translateY(0) scaleX(1); }
 }
-#arvoreco-mapa .avatar-img {
-    animation: bounceAvatarMap 2s ease-in-out infinite;
-}
-@keyframes bounceAvatarMap {
-    0%, 100% { transform: translateY(0) scaleX(-1); }
-    50% { transform: translateY(-8px) scaleX(-1); }
-    55% { transform: translateY(0) scaleX(-1); }
-}
+/* Keyframe antigo do mapa, agora unificado */
+/* @keyframes bounceAvatarMap { ... } */
 
 
 .speech-bubble {
@@ -157,17 +157,16 @@ input[type="file"] { display: none; }
     transform: rotate(-45deg);
 }
 
-/* ATUALIZAÇÃO: Balão para o Arvoreco do Mapa */
-.speech-bubble-left {
-    margin-right: 10px;
+/* ATUALIZAÇÃO: Balão para o Arvoreco do Mapa (aponta para a direita) */
+.speech-bubble-right {
+    margin-left: 10px;
     margin-bottom: 8px;
 }
-/* Seta apontando para a esquerda */
-.speech-bubble-left::after {
+.speech-bubble-right::after {
     border-left-color: var(--branco);
     border-top-color: var(--branco);
     top: 50%;
-    right: -8px;
+    left: -8px; /* Coloca a seta no lado esquerdo do balão */
     margin-top: -8px;
-    transform: rotate(45deg);
+    transform: rotate(135deg); /* Aponta para a direita */
 }
