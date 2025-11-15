@@ -65,7 +65,7 @@ const appState = {
 // --- 3. FUNÇÕES PRINCIPAIS (Ciclo de Vida da App) ---
 
 const initializeAppCore = () => {
-    console.log("Arboriza 1.0.4 iniciando..."); // Deixei 1.0.4 de propósito
+    console.log("Arboriza 1.0.4 iniciando...");
     setAppHeight();
     window.addEventListener('resize', setAppHeight);
     lucide.createIcons();
@@ -289,7 +289,7 @@ const handleForgotPassword = async (e) => {
 const handleLogout = async () => {
     try {
         await signOut(auth);
-        // O onAuthStateChanged vai pegar isso e redirecionar
+        // Sem reload, como você preferiu!
     } catch (error) {
         console.error("Erro ao sair:", error);
         showToast("Erro ao tentar sair.");
@@ -642,7 +642,10 @@ const showTreeProfile = async (treeId) => {
         document.getElementById('tree-profile-name').textContent = tree.commonName || 'Nome não definido';
         document.getElementById('tree-profile-scientific-name').textContent = tree.scientificName || '';
         document.getElementById('tree-profile-address').querySelector('span').textContent = tree.address || (tree.location ? `${tree.location.latitude.toFixed(5)}, ${tree.location.longitude.toFixed(5)}` : "Localização não disponível");
-        document.getElementById('tree-profile-image').src = tree.coverPhoto || 'https://placehold.co/600x300/81C784/FFFFFF?text=Árvore';
+        
+        // **PERGUNTA DO CADASTRO DA FOTO:** Sim! Esta linha pega a 'coverPhoto'
+        // que foi salva durante o cadastro.
+        document.getElementById('tree-profile-image').src = tree.coverPhoto;
 
         const statusBadge = document.getElementById('tree-profile-status-badge');
         if (tree.status === 'healthy') { statusBadge.className = 'bg-sucesso text-white text-center font-bold p-2 rounded-lg my-4'; statusBadge.textContent = 'Saudável'; }
@@ -1109,7 +1112,8 @@ const handleRegisterNewTree = async () => {
     const message = document.getElementById('add-tree-message').value;
     const photoFile = document.getElementById('add-tree-photo-input').files[0];
 
-    // ATUALIZAÇÃO: Foto de cadastro agora é obrigatória
+    // **PERGUNTA DO CADASTRO DA FOTO:** Sim! Esta checagem garante
+    // que a foto é obrigatória.
     if (!photoFile) {
         showToast("Por favor, anexe uma foto da árvore para cadastrá-la.");
         return;
@@ -1120,11 +1124,9 @@ const handleRegisterNewTree = async () => {
     try {
         const photoUrl = await uploadImage(photoFile, 'photos');
         
-        // Se o upload falhar, photoUrl será null, mas como checamos o file,
-        // o erro já terá sido mostrado ao usuário pela função uploadImage.
         if (!photoUrl) {
              showLoadingModal(false);
-             return; // Para a execução
+             return;
         }
         
         const newTree = {
@@ -1132,7 +1134,9 @@ const handleRegisterNewTree = async () => {
             scientificName: appState.currentPlantInfo.scientificName,
             status: health,
             location: new GeoPoint(appState.lastUserLocation.latitude, appState.lastUserLocation.longitude),
-            coverPhoto: photoUrl, // A foto é obrigatória
+            // **PERGUNTA DO CADASTRO DA FOTO:** Sim! A 'photoUrl'
+            // é salva aqui como 'coverPhoto'.
+            coverPhoto: photoUrl,
             createdAt: serverTimestamp(),
             createdBy: {
                 uid: appState.currentUser.uid,
@@ -1142,7 +1146,6 @@ const handleRegisterNewTree = async () => {
         
         const docRef = await addDoc(collection(db, "trees"), newTree);
         
-        // Adiciona a primeira mensagem (com a foto de cadastro)
         const firstMessage = {
             action: "cadastrou esta árvore.",
             message: message || "Adicionei esta nova amiga!",
@@ -1152,7 +1155,7 @@ const handleRegisterNewTree = async () => {
                 photoURL: appState.currentUser.photoURL 
             },
             timestamp: serverTimestamp(),
-            photoUrl: photoUrl // Usa a mesma foto do cadastro
+            photoUrl: photoUrl // E a foto também vai para o primeiro post do mural
         };
         await addDoc(collection(db, "trees", docRef.id, "careEvents"), firstMessage);
         

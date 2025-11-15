@@ -84,11 +84,12 @@ input[type="file"] { display: none; }
 #arvoreco-mapa {
     bottom: 24px;
     right: 88px;
-    /* ATUALIZAÇÃO: Removido 'flex-direction: row-reverse;' 
-       para o balão ficar à direita do avatar */
+    /* ATUALIZAÇÃO v1.0.7: Avatar volta para a esquerda */
+    flex-direction: row-reverse; 
 }
 #arvoreco-mapa .avatar-img {
-    /* ATUALIZAÇÃO: Removido 'transform: scaleX(-1);' */
+    /* ATUALIZAÇÃO v1.0.7: Imagem não é mais espelhada */
+    animation: bounceAvatar 2s ease-in-out infinite;
 }
 
 #arvoreco-camera {
@@ -104,19 +105,15 @@ input[type="file"] { display: none; }
     animation: bounceAvatar 2s ease-in-out infinite;
 }
 
-/* ATUALIZAÇÃO: Classe de bounce genérica */
 .arvoreco-bounce {
     animation: bounceAvatar 2s ease-in-out infinite;
 }
 
 @keyframes bounceAvatar {
-    0%, 100% { transform: translateY(0) scaleX(1); }
-    50% { transform: translateY(-8px) scaleX(1); }
-    55% { transform: translateY(0) scaleX(1); }
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+    55% { transform: translateY(0); }
 }
-/* Keyframe antigo do mapa, agora unificado */
-/* @keyframes bounceAvatarMap { ... } */
-
 
 .speech-bubble {
     position: relative;
@@ -145,6 +142,7 @@ input[type="file"] { display: none; }
     border: 8px solid transparent;
 }
 
+/* Balão da Câmera (aponta para baixo-esquerda) */
 .speech-bubble-bottom-left {
     margin-left: 10px;
     margin-bottom: 8px;
@@ -157,16 +155,16 @@ input[type="file"] { display: none; }
     transform: rotate(-45deg);
 }
 
-/* ATUALIZAÇÃO: Balão para o Arvoreco do Mapa (aponta para a direita) */
-.speech-bubble-right {
+/* Balão do Mapa (Avatar à esquerda, Balão à direita, Seta aponta para esquerda) */
+.speech-bubble-left {
     margin-left: 10px;
     margin-bottom: 8px;
 }
-.speech-bubble-right::after {
-    border-left-color: var(--branco);
+.speech-bubble-left::after {
+    border-right-color: var(--branco); /* Seta na direita do balão */
     border-top-color: var(--branco);
     top: 50%;
-    left: -8px; /* Coloca a seta no lado esquerdo do balão */
+    left: -8px; /* Posição da seta (para fora, à esquerda) */
     margin-top: -8px;
-    transform: rotate(135deg); /* Aponta para a direita */
+    transform: rotate(225deg); /* Aponta para a esquerda */
 }
