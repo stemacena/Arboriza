@@ -70,37 +70,44 @@ nav {
 }
 input[type="file"] { display: none; }
 
-#btn-locate-me { z-index: 1000; }
-#screen-map button[data-page="camera"] { z-index: 1000; }
+/* Remove o z-index dos botões, pois o container pai (#map-bottom-bar) já tem */
+#btn-locate-me { /* z-index: 1000; */ }
+#screen-map button[data-page="camera"] { /* z-index: 1000; */ }
 
 
 .arvoreco-avatar {
-    position: absolute;
+    position: relative; /* ATUALIZAÇÃO: Posição relativa para o Arvoreco do Mapa */
     z-index: 1001;
     display: flex;
     align-items: flex-end;
 }
 
+/* Container do Arvoreco do Mapa (não é mais absolute) */
 #arvoreco-mapa {
-    bottom: 24px;
-    right: 88px;
-    flex-direction: row-reverse; 
+    /* bottom: 24px; */
+    /* right: 88px; */
+    flex-direction: row; /* Avatar à esquerda, Balão à direita */
 }
 #arvoreco-mapa .avatar-img {
     animation: bounceAvatar 2s ease-in-out infinite;
 }
 
+/* Container do Arvoreco da Câmera (continua absolute) */
 #arvoreco-camera {
+    position: absolute;
     top: 70px;
     left: 16px;
+    flex-direction: row; /* Avatar à esquerda, Balão à direita */
 }
 
+/* ATUALIZAÇÃO: Avatar aumentado para 64px */
 .arvoreco-avatar .avatar-img {
-    width: 56px;
-    height: 56px;
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
     object-fit: contain;
     animation: bounceAvatar 2s ease-in-out infinite;
+    flex-shrink: 0; /* Impede que o avatar encolha */
 }
 
 .arvoreco-bounce {
@@ -140,6 +147,21 @@ input[type="file"] { display: none; }
     border: 8px solid transparent;
 }
 
+/* Seta para o balão da CÂMERA (Avatar à esquerda, Seta aponta p/ esquerda) */
+.speech-bubble-left {
+    margin-left: 10px;
+    margin-bottom: 8px;
+}
+.speech-bubble-left::after {
+    border-right-color: var(--branco); /* Seta na direita do balão */
+    border-top-color: var(--branco);
+    top: 50%;
+    left: -8px; /* Posição da seta (para fora, à esquerda) */
+    margin-top: -8px;
+    transform: rotate(225deg); /* Aponta para a esquerda */
+}
+
+/* Seta para o balão do MODAL (Avatar à esquerda, Seta aponta p/ baixo) */
 .speech-bubble-bottom-left {
     margin-left: 10px;
     margin-bottom: 8px;
@@ -150,17 +172,4 @@ input[type="file"] { display: none; }
     bottom: -8px;
     left: 10px;
     transform: rotate(-45deg);
-}
-
-.speech-bubble-left {
-    margin-left: 10px;
-    margin-bottom: 8px;
-}
-.speech-bubble-left::after {
-    border-right-color: var(--branco); 
-    border-top-color: var(--branco);
-    top: 50%;
-    left: -8px; 
-    margin-top: -8px;
-    transform: rotate(225deg); 
 }
