@@ -1,3 +1,9 @@
+// Este é o script.js completo.
+// MUDANÇA v1.0.10: 
+// Corrigido o bug 'Unsupported file type' (400)
+// ao adicionar um nome de arquivo padrão para fotos
+// tiradas pela câmera (canvas blob).
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
     getAuth,
@@ -65,7 +71,7 @@ const appState = {
 // --- 3. FUNÇÕES PRINCIPAIS (Ciclo de Vida da App) ---
 
 const initializeAppCore = () => {
-    console.log("Arboriza 1.0.4 iniciando...");
+    console.log("Arboriza 1.0.10 iniciando..."); // Versão atualizada
     setAppHeight();
     window.addEventListener('resize', setAppHeight);
     lucide.createIcons();
@@ -643,8 +649,6 @@ const showTreeProfile = async (treeId) => {
         document.getElementById('tree-profile-scientific-name').textContent = tree.scientificName || '';
         document.getElementById('tree-profile-address').querySelector('span').textContent = tree.address || (tree.location ? `${tree.location.latitude.toFixed(5)}, ${tree.location.longitude.toFixed(5)}` : "Localização não disponível");
         
-        // **PERGUNTA DO CADASTRO DA FOTO:** Sim! Esta linha pega a 'coverPhoto'
-        // que foi salva durante o cadastro.
         document.getElementById('tree-profile-image').src = tree.coverPhoto;
 
         const statusBadge = document.getElementById('tree-profile-status-badge');
@@ -1032,7 +1036,13 @@ const handlePlantIdentification = async (file) => {
     showLoadingModal(true, "Identificando a planta...");
 
     const formData = new FormData();
-    formData.append('images', file);
+    // =======================================================
+    // ## A CORREÇÃO ESTÁ AQUI (v1.0.10) ##
+    // =======================================================
+    // Se o 'file' for um Blob da câmera, ele não tem nome.
+    // Damos a ele um nome padrão. Se for um 'File' (do upload),
+    // ele usará o nome original do arquivo.
+    formData.append('images', file, file.name || 'camera-capture.jpg');
     
     try {
         const response = await fetch('/.netlify/functions/identify', { 
@@ -1112,8 +1122,6 @@ const handleRegisterNewTree = async () => {
     const message = document.getElementById('add-tree-message').value;
     const photoFile = document.getElementById('add-tree-photo-input').files[0];
 
-    // **PERGUNTA DO CADASTRO DA FOTO:** Sim! Esta checagem garante
-    // que a foto é obrigatória.
     if (!photoFile) {
         showToast("Por favor, anexe uma foto da árvore para cadastrá-la.");
         return;
@@ -1134,8 +1142,6 @@ const handleRegisterNewTree = async () => {
             scientificName: appState.currentPlantInfo.scientificName,
             status: health,
             location: new GeoPoint(appState.lastUserLocation.latitude, appState.lastUserLocation.longitude),
-            // **PERGUNTA DO CADASTRO DA FOTO:** Sim! A 'photoUrl'
-            // é salva aqui como 'coverPhoto'.
             coverPhoto: photoUrl,
             createdAt: serverTimestamp(),
             createdBy: {
@@ -1155,7 +1161,7 @@ const handleRegisterNewTree = async () => {
                 photoURL: appState.currentUser.photoURL 
             },
             timestamp: serverTimestamp(),
-            photoUrl: photoUrl // E a foto também vai para o primeiro post do mural
+            photoUrl: photoUrl
         };
         await addDoc(collection(db, "trees", docRef.id, "careEvents"), firstMessage);
         

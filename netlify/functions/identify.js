@@ -1,23 +1,10 @@
-// ===================================================================
-// ## IDENTIFY.JS - VERSÃO FINAL (LÊ A CHAVE DO AMBIENTE) ##
-// ===================================================================
-//
-// Olá! Este arquivo é sua Função Netlify.
-// Ele já está CORRETO e SEGURO. Você não precisa mudar nada aqui.
-// A chave `process.env.PLANTNET_API_KEY` é lida das variáveis
-// de ambiente do seu site no painel do Netlify.
-//
-// ===================================================================
-
 const fetch = require('node-fetch');
 const FormData = require('form-data');
 const Busboy = require('busboy');
 
-// Função para tratar o upload de ficheiros multipart/form-data
 const parseMultipartForm = (event) => {
     return new Promise((resolve, reject) => {
         try {
-            // Verifica se headers existem e se content-type está presente
             if (!event.headers || !event.headers['content-type']) {
                 throw new Error('Cabeçalho Content-Type em falta ou inválido.');
             }
@@ -35,7 +22,6 @@ const parseMultipartForm = (event) => {
                         contentType: mimeType
                     };
                 });
-                // Adiciona tratamento de erro para o stream do ficheiro
                  file.on('error', err => {
                      console.error('Erro no stream do ficheiro:', err);
                      reject(new Error(`Erro ao ler o ficheiro: ${err.message}`));
@@ -55,13 +41,23 @@ const parseMultipartForm = (event) => {
                  reject(new Error(`Erro ao processar form-data: ${err.message}`));
             });
             
-            // Converte o corpo da requisição (que pode estar em base64) para buffer
-            // Garante que event.body existe antes de tentar converter
             if (!event.body) {
                  throw new Error('Corpo da requisição está vazio.');
             }
-            const requestBodyBuffer = Buffer.from(event.body, event.isBase64Encoded ? 'base64' : 'binary');
-            busboy.end(requestBodyBuffer);
+
+            // =======================================================
+            // ## A CORREÇÃO ESTÁ AQUI (v1.0.9) ##
+            // =======================================================
+            // Em vez de criar um novo buffer, passamos a string
+            // e a codificação correta diretamente para o busboy.
+            
+            if (event.isBase64Encoded) {
+                const requestBodyBuffer = Buffer.from(event.body, 'base64');
+                busboy.end(requestBodyBuffer);
+            } else {
+                // Passa a string e a codificação 'binary' (latin1)
+                busboy.end(event.body, 'binary');
+            }
 
         } catch (error) {
              console.error('Erro geral no parseMultipartForm:', error);
@@ -72,19 +68,17 @@ const parseMultipartForm = (event) => {
 
 exports.handler = async (event) => {
     // Permite CORS
-    const origin = event.headers.origin || "*"; // Permite a origem ou todas para teste
+    const origin = event.headers.origin || "*";
     const headers = {
         'Access-Control-Allow-Origin': origin, 
         'Access-Control-Allow-Headers': 'Content-Type',
         'Access-Control-Allow-Methods': 'POST, OPTIONS'
     };
 
-    // Responde a OPTIONS
     if (event.httpMethod === 'OPTIONS') {
         return { statusCode: 204, headers };
     }
 
-    // Processa POST
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, headers, body: 'Método não permitido' };
     }
@@ -97,32 +91,28 @@ exports.handler = async (event) => {
             return { statusCode: 400, headers, body: JSON.stringify({ error: 'Nenhuma imagem enviada ou imagem vazia.' }) };
         }
 
-        // ## ALTERAÇÃO CRUCIAL: Lê a chave das variáveis de ambiente ##
         const apiKey = process.env.PLANTNET_API_KEY; 
         if (!apiKey) {
              console.error("Erro Crítico: Variável de ambiente PLANTNET_API_KEY não definida no Netlify.");
              return { statusCode: 500, headers, body: JSON.stringify({ error: 'Erro de configuração do servidor (chave API em falta).' }) };
         }
 
-        // Pede os resultados em Português
         const apiUrl = `https://my-api.plantnet.org/v2/identify/all?api-key=${apiKey}&lang=pt`;
         
         const formData = new FormData();
-        formData.append('organs', 'leaf'); // Pode ajustar se necessário
+        formData.append('organs', 'leaf');
         formData.append('images', imageFile.content, { filename: imageFile.filename || 'upload.jpg', contentType: imageFile.contentType || 'image/jpeg' });
 
         const plantnetResponse = await fetch(apiUrl, {
             method: 'POST',
             body: formData,
-            headers: formData.getHeaders() // Importante para multipart/form-data com node-fetch@2
+            headers: formData.getHeaders()
         });
 
         const data = await plantnetResponse.json();
 
-        // Verifica se a resposta do PlantNet foi OK
         if (!plantnetResponse.ok) {
              console.error('Erro da API PlantNet:', plantnetResponse.status, data);
-             // Tenta retornar a mensagem de erro do PlantNet, se houver
              const errorMessage = data.message || `Erro ${plantnetResponse.status} do PlantNet`;
              return { statusCode: plantnetResponse.status, headers, body: JSON.stringify({ error: errorMessage }) };
         }
@@ -130,7 +120,7 @@ exports.handler = async (event) => {
         console.log("Resposta do PlantNet recebida com sucesso.");
         return {
             statusCode: 200,
-            headers: { ...headers, "Content-Type": "application/json" }, // Garante o Content-Type correto
+            headers: { ...headers, "Content-Type": "application/json" },
             body: JSON.stringify(data)
         };
 
@@ -138,7 +128,7 @@ exports.handler = async (event) => {
         console.error("Erro na função Netlify identify:", error);
         return {
             statusCode: 500,
-            headers, // Inclui cabeçalhos CORS no erro também
+            headers,
             body: JSON.stringify({ error: `Falha interna no servidor: ${error.message}` })
         };
     }
