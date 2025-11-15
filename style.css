@@ -84,11 +84,9 @@ input[type="file"] { display: none; }
 #arvoreco-mapa {
     bottom: 24px;
     right: 88px;
-    /* ATUALIZAÇÃO v1.0.7: Avatar volta para a esquerda */
     flex-direction: row-reverse; 
 }
 #arvoreco-mapa .avatar-img {
-    /* ATUALIZAÇÃO v1.0.7: Imagem não é mais espelhada */
     animation: bounceAvatar 2s ease-in-out infinite;
 }
 
@@ -142,7 +140,6 @@ input[type="file"] { display: none; }
     border: 8px solid transparent;
 }
 
-/* Balão da Câmera (aponta para baixo-esquerda) */
 .speech-bubble-bottom-left {
     margin-left: 10px;
     margin-bottom: 8px;
@@ -155,16 +152,15 @@ input[type="file"] { display: none; }
     transform: rotate(-45deg);
 }
 
-/* Balão do Mapa (Avatar à esquerda, Balão à direita, Seta aponta para esquerda) */
 .speech-bubble-left {
     margin-left: 10px;
     margin-bottom: 8px;
 }
 .speech-bubble-left::after {
-    border-right-color: var(--branco); /* Seta na direita do balão */
+    border-right-color: var(--branco); 
     border-top-color: var(--branco);
     top: 50%;
-    left: -8px; /* Posição da seta (para fora, à esquerda) */
+    left: -8px; 
     margin-top: -8px;
-    transform: rotate(225deg); /* Aponta para a esquerda */
+    transform: rotate(225deg); 
 }

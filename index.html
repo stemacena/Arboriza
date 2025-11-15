@@ -1,32 +1,4 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="referrer" content="unsafe-url">
-    <title>Arboriza</title>
-    
-    <link rel="icon" href="https://cdn.prod.website-files.com/68c9b59ad35a897b62c3262c/68c9baa2c06920a9e64b5588_logoarborizacolor.png" type="image/png">
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merienda:wght@700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@0.378.0/dist/umd/lucide.min.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <link rel="stylesheet" href="style.css"> 
-</head>
-<body class="bg-cinza">
-    <div id="app-container" class="max-w-md mx-auto bg-branco shadow-lg">
-        
-        <div id="screen-onboarding" class="p-8 flex flex-col h-full text-center items-center justify-center fade-in">
-            <img src="https://cdn.prod.website-files.com/68c9b59ad35a897b62c3262c/68c9baa2c06920a9e64b5588_logoarborizacolor.png" alt="Logo Arboriza" class="w-48 h-48 mx-auto object-contain"> 
-            <p class="text-gray-600 mt-8 text-xl">Tá perdido? abraça uma árvore e</p>
-            <h2 class="text-6xl font-bold text-verde-principal font-logo mt-2">Arboriza</h2>
-            <div class="mt-auto w-full">
-                <button data-page="signup" class="nav-to-btn w-full bg-verde-principal text-white font-bold py-4 px-4 rounded-xl shadow-lg hover:bg-opacity-90 transition-all">COMEÇAR</button>
-                <button data-page="login" class="nav-to-btn w-full text-gray-600 font-semibold py-4 px-4 mt-2">Já tem conta? Entrar</button>
+utton data-page="login" class="nav-to-btn w-full text-gray-600 font-semibold py-4 px-4 mt-2">Já tem conta? Entrar</button>
             </div>
         </div>
 
@@ -88,10 +60,10 @@
         <main class="hidden">
             <div id="screen-camera" class="p-6 flex flex-col h-full hidden fade-in relative">
                 <div class="arvoreco-avatar" id="arvoreco-camera">
-                    <div class="speech-bubble speech-bubble-bottom-left">
+                    <img src="https://firebasestorage.googleapis.com/v0/b/arboriza-bd.firebasestorage.app/o/%C3%81rvore%20Tropical%20Amiga%20do%20Brasil.png?alt=media&token=1bf9e356-e2a7-4571-aa4c-3b7af0ba7c2b" alt="Arvoreco" class="avatar-img">
+                    <div class="speech-bubble speech-bubble-left">
                         Arvoreco na área! Tire a foto bem de perto da folha ou flor! Se não der certo, tente outro ângulo.
                     </div>
-                    <img src="https://firebasestorage.googleapis.com/v0/b/arboriza-bd.firebasestorage.app/o/%C3%81rvore%20Tropical%20Amiga%20do%20Brasil.png?alt=media&token=1bf9e356-e2a7-4571-aa4c-3b7af0ba7c2b" alt="Arvoreco" class="avatar-img">
                 </div>
 
                 <h3 class="text-2xl font-bold text-center mb-4">Identificar Planta</h3>
@@ -155,7 +127,7 @@
                     <div class="arvoreco-avatar" id="arvoreco-mapa">
                         <img src="https://firebasestorage.googleapis.com/v0/b/arboriza-bd.firebasestorage.app/o/%C3%81rvore%20Tropical%20Amiga%20do%20Brasil.png?alt=media&token=1bf9e356-e2a7-4571-aa4c-3b7af0ba7c2b" alt="Arvoreco" class="avatar-img">
                         <div class="speech-bubble speech-bubble-left">
-                            Arvoreco na área! Aqui você pode ver se a árvore que encontrou está perdida ou já foi abraçada!
+                            Arvoreco na área! (...) já foi abraçada! <i data-lucide="arrow-right" class="inline-block w-4 h-4 ml-1"></i>
                         </div>
                     </div>
 
@@ -300,7 +272,7 @@
             
             <div id="screen-learn" class="p-6 hidden fade-in">
                 <div class="text-center">
-                    <img src="https://firebasestorage.googleapis.com/v0/b/arboriza-bd.firebasestorage.app/o/%C3%81rvore%20Tropical%20Amiga%20do%20Brasil.png?alt=media&token=1bf9e356-e2a7-4571-aa4c-3b7af0ba7c2b" alt="Arvoreco" class="w-16 h-16 mx-auto arvoreco-bounce">
+                    <img src="https://firebasestorage.googleapis.com/v0/b/arboriza-bd.firebasestorage.app/o/%C3%81rvore%20Tropical%20Amiga%20do%20Brasil.png?alt=media&token=1bf9e356-e2a7-4571-aa4c-3b7af0ba7c2b" alt="Arvoreco" class="w-20 h-20 object-contain mx-auto arvoreco-bounce">
                     <h3 class="text-2xl font-bold mt-2">Pergunta pro Arvoreco!</h3>
                     <p class="text-gray-600 mt-1">O que você quer saber sobre o universo das plantas?</p>
                 </div>
@@ -367,7 +339,7 @@
         <div id="help-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[2000] p-4">
             <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
                 <div class="flex justify-between items-center mb-4">
-                    <img src="https://firebasestorage.googleapis.com/v0/b/arboriza-bd.firebasestorage.app/o/%C3%81rvore%20Tropical%20Amiga%20do%20Brasil.png?alt=media&token=1bf9e356-e2a7-4571-aa4c-3b7af0ba7c2b" alt="Arvoreco" class="w-10 h-10 arvoreco-bounce">
+                    <img src="https://firebasestorage.googleapis.com/v0/b/arboriza-bd.firebasestorage.app/o/%C3%81rvore%20Tropical%20Amiga%20do%20Brasil.png?alt=media&token=1bf9e356-e2a7-4571-aa4c-3b7af0ba7c2b" alt="Arvoreco" class="w-14 h-14 object-contain arvoreco-bounce">
                     <h3 class="text-2xl font-bold text-verde-principal">Dicas do Arvoreco</h3>
                     <button id="btn-close-help-modal"><i data-lucide="x"></i></button>
                 </div>
