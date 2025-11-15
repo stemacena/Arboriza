@@ -5,9 +5,9 @@ import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     signOut,
-    GoogleAuthProvider, // NOVO
-    signInWithPopup,      // NOVO
-    sendPasswordResetEmail // NOVO
+    GoogleAuthProvider,
+    signInWithPopup,
+    sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
     getFirestore,
@@ -65,7 +65,7 @@ const appState = {
 // --- 3. FUNÇÕES PRINCIPAIS (Ciclo de Vida da App) ---
 
 const initializeAppCore = () => {
-    console.log("Arboriza 1.0.4 iniciando...");
+    console.log("Arboriza 1.0.4 iniciando..."); // Deixei 1.0.4 de propósito
     setAppHeight();
     window.addEventListener('resize', setAppHeight);
     lucide.createIcons();
@@ -73,7 +73,7 @@ const initializeAppCore = () => {
     onAuthStateChanged(auth, (user) => {
         if (user) {
             console.log("Usuário logado:", user.uid);
-            fetchUserProfile(user.uid, user); // Passa o 'user' do Auth
+            fetchUserProfile(user.uid, user);
         } else {
             console.log("Nenhum usuário logado.");
             appState.currentUser = null;
@@ -86,20 +86,16 @@ const initializeAppCore = () => {
     setupEventListeners();
 };
 
-// ATUALIZAÇÃO: Checa se o perfil existe; se não, cria (para Login Google)
 const fetchUserProfile = async (uid, authUser) => {
     showLoadingModal(true, "Carregando seu perfil...");
     const userRef = doc(db, "users", uid);
     const userSnap = await getDoc(userRef);
 
     if (userSnap.exists()) {
-        // Perfil existe, carrega
         appState.currentUser = { uid: uid, ...userSnap.data() };
         console.log("Perfil do usuário carregado:", appState.currentUser);
     } else if (authUser) {
-        // Perfil NÃO existe (provavelmente é um Login Google novo)
-        // Cria um perfil para ele
-        console.log("Perfil não encontrado, criando um novo para usuário do Google...");
+        console.log("Perfil não encontrado, criando um novo...");
         const newUserProfile = {
             name: authUser.displayName || "Guardião Anônimo",
             email: authUser.email,
@@ -116,7 +112,6 @@ const fetchUserProfile = async (uid, authUser) => {
         appState.currentUser = { uid: uid, ...newUserProfile };
         console.log("Novo perfil criado e carregado.");
     } else {
-        // Erro: não tem authUser e não tem perfil
         console.error("Usuário logado, mas sem perfil no Firestore e sem dados do Auth!");
         showToast("Erro ao carregar seu perfil. Tente logar novamente.");
         handleLogout();
@@ -124,7 +119,6 @@ const fetchUserProfile = async (uid, authUser) => {
         return;
     }
     
-    // Continua para a app
     document.querySelector('main').classList.remove('hidden');
     document.querySelector('nav').classList.remove('hidden');
     promptForLocation(); 
@@ -229,7 +223,6 @@ const handleSignup = async (e) => {
         };
         
         await setDoc(userRef, newUserProfile);
-        // O onAuthStateChanged vai cuidar do resto
         console.log("Conta e perfil criados com sucesso!");
         
     } catch (error) {
@@ -252,7 +245,6 @@ const handleLogin = async (e) => {
 
     try {
         await signInWithEmailAndPassword(auth, email, password);
-        // O onAuthStateChanged vai cuidar do resto
         console.log("Login com sucesso!");
 
     } catch (error) {
@@ -264,24 +256,19 @@ const handleLogin = async (e) => {
     }
 };
 
-// NOVO: Login com Google
 const handleGoogleLogin = async () => {
     const provider = new GoogleAuthProvider();
     showLoadingModal(true, "Conectando com Google...");
     try {
         await signInWithPopup(auth, provider);
-        // Sucesso! O onAuthStateChanged vai rodar e chamar o fetchUserProfile,
-        // que por sua vez vai criar o perfil no DB se não existir.
         console.log("Login com Google com sucesso!");
     } catch (error) {
         console.error("Erro no Login Google:", error);
         showToast(getFirebaseErrorMessage(error));
         showLoadingModal(false);
     }
-    // O modal de loading é fechado pelo fetchUserProfile
 };
 
-// NOVO: Esqueci minha Senha
 const handleForgotPassword = async (e) => {
     e.preventDefault();
     const email = document.getElementById('forgot-email').value;
@@ -302,8 +289,7 @@ const handleForgotPassword = async (e) => {
 const handleLogout = async () => {
     try {
         await signOut(auth);
-        appState.map = null;
-        showPage('onboarding');
+        // O onAuthStateChanged vai pegar isso e redirecionar
     } catch (error) {
         console.error("Erro ao sair:", error);
         showToast("Erro ao tentar sair.");
@@ -311,7 +297,6 @@ const handleLogout = async () => {
 };
 
 const getFirebaseErrorMessage = (error) => {
-    // Códigos de erro do Firebase Auth
     switch (error.code) {
         case 'auth/email-already-in-use':
             return 'Este email já está em uso.';
@@ -327,6 +312,8 @@ const getFirebaseErrorMessage = (error) => {
              return 'Configuração de login não encontrada. (Ative Email/Senha no Firebase).';
         case 'auth/popup-closed-by-user':
              return 'Você fechou a janela do Google antes de terminar.';
+        case 'auth/unauthorized-domain':
+             return 'Este domínio não está autorizado para login. (Adicione-o no Firebase).';
         default:
             return 'Ocorreu um erro. Tente novamente.';
     }
@@ -342,7 +329,6 @@ const handleProfilePicUpload = async (e) => {
     showLoadingModal(true, "Atualizando sua foto...");
     
     try {
-        // Caminho seguro no Storage: /user-avatars/UID_DO_USUARIO/avatar.jpg
         const filePath = `user-avatars/${appState.currentUser.uid}/avatar.jpg`;
         const fileRef = ref(storage, filePath);
         
@@ -557,13 +543,11 @@ const initializeMap = () => {
     
     const initialCoords = [appState.lastUserLocation.latitude, appState.lastUserLocation.longitude];
     
-    // ATUALIZAÇÃO: Zoom máximo do mapa para 22
     appState.map = L.map('map-container', { 
         zoomControl: false,
         maxZoom: 22
     }).setView(initialCoords, 17); 
     
-    // ATUALIZAÇÃO: Trocado para o mapa Satélite do Google, que tem mais zoom
     L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
         maxZoom: 22,
         subdomains:['mt0','mt1','mt2','mt3'],
@@ -665,7 +649,6 @@ const showTreeProfile = async (treeId) => {
         else if (tree.status === 'needs-care') { statusBadge.className = 'bg-alerta text-yellow-800 text-center font-bold p-2 rounded-lg my-4'; statusBadge.textContent = 'Precisa de Cuidado'; }
         else { statusBadge.className = 'bg-erro text-white text-center font-bold p-2 rounded-lg my-4'; statusBadge.textContent = 'Em Estado Crítico'; }
 
-        // Limpa o preview de foto do comentário
         document.getElementById('tree-comment-photo-preview').classList.add('hidden');
         document.getElementById('tree-comment-photo-preview').src = '';
         document.getElementById('tree-comment-photo-input').value = null;
@@ -709,7 +692,6 @@ const loadTreeSubcollection = (treeId, subcollection, containerId, renderFunctio
         snapshot.forEach(doc => {
             const item = doc.data();
             
-            // ATUALIZAÇÃO: Filtro para o mural (só mostra se tiver mensagem OU foto)
             if (filterByMessageOrPhoto && !item.message && !item.photoUrl) {
                 return;
             }
@@ -845,7 +827,6 @@ const handlePostComment = async () => {
     const message = input.value;
     const photoFile = photoInput.files[0];
 
-    // Precisa ter PELO MENOS uma mensagem ou uma foto
     if (!tree || !user || (!message && !photoFile)) {
         showToast("Escreva uma mensagem ou anexe uma foto!");
         return;
@@ -856,16 +837,14 @@ const handlePostComment = async () => {
     showLoadingModal(true, "Postando no mural...");
 
     try {
-        // 1. Faz upload da foto (se houver)
         let photoUrl = null;
         if (photoFile) {
-            photoUrl = await uploadImage(photoFile, 'photos'); // Reusa a função de upload
+            photoUrl = await uploadImage(photoFile, 'photos');
         }
 
-        // 2. Cria o objeto do evento
         const commentEvent = {
             action: "comentou.",
-            message: message || '', // Deixa a mensagem ser vazia se tiver foto
+            message: message || '',
             photoUrl: photoUrl,
             user: { 
                 id: user.uid, 
@@ -875,13 +854,11 @@ const handlePostComment = async () => {
             timestamp: serverTimestamp()
         };
         
-        // 3. Salva no Firestore
         const eventsCollectionRef = collection(db, "trees", tree.id, "careEvents");
         await addDoc(eventsCollectionRef, commentEvent);
         
         awardPoints('comment_tree');
         
-        // 4. Limpa os campos
         input.value = '';
         photoInput.value = null;
         photoPreview.src = '';
@@ -901,11 +878,9 @@ const handlePostComment = async () => {
 
 // --- 9. FLUXO DE CUIDADO E CADASTRO ---
 
-// ATUALIZAÇÃO: `uploadImage` agora pode receber a pasta
 const uploadImage = async (file, folder = 'photos') => {
     if (!file) return null;
     
-    // Define o caminho (pasta)
     const filePath = `${folder}/${Date.now()}_${file.name}`; 
     const fileRef = ref(storage, filePath);
     
@@ -988,7 +963,6 @@ const loadFeedPosts = async () => {
         
         snapshot.forEach(doc => {
             const event = doc.data();
-            // Mostra se tiver foto OU mensagem
             if (event.photoUrl || event.message) {
                 feedContainer.innerHTML += renderTimelineEvent(event);
             }
@@ -997,7 +971,6 @@ const loadFeedPosts = async () => {
     } catch (error) {
         console.error("Não foi possível carregar o feed:", error);
         feedContainer.innerHTML = `<p class="text-erro text-center">Erro ao carregar o feed.</p>`;
-        // O log do erro de índice vai aparecer no console
     }
 };
 
@@ -1131,21 +1104,35 @@ const handleRegisterNewTree = async () => {
         showToast("Localização exata necessária. Tente se localizar no mapa primeiro.");
         return;
     }
-    showLoadingModal(true, "Cadastrando nova árvore...");
-
+    
     const health = document.getElementById('add-tree-health').value;
     const message = document.getElementById('add-tree-message').value;
     const photoFile = document.getElementById('add-tree-photo-input').files[0];
 
+    // ATUALIZAÇÃO: Foto de cadastro agora é obrigatória
+    if (!photoFile) {
+        showToast("Por favor, anexe uma foto da árvore para cadastrá-la.");
+        return;
+    }
+
+    showLoadingModal(true, "Cadastrando nova árvore...");
+
     try {
         const photoUrl = await uploadImage(photoFile, 'photos');
+        
+        // Se o upload falhar, photoUrl será null, mas como checamos o file,
+        // o erro já terá sido mostrado ao usuário pela função uploadImage.
+        if (!photoUrl) {
+             showLoadingModal(false);
+             return; // Para a execução
+        }
         
         const newTree = {
             commonName: appState.currentPlantInfo.commonName,
             scientificName: appState.currentPlantInfo.scientificName,
             status: health,
             location: new GeoPoint(appState.lastUserLocation.latitude, appState.lastUserLocation.longitude),
-            coverPhoto: photoUrl || 'https://placehold.co/600x300/81C784/FFFFFF?text=🌳',
+            coverPhoto: photoUrl, // A foto é obrigatória
             createdAt: serverTimestamp(),
             createdBy: {
                 uid: appState.currentUser.uid,
@@ -1155,20 +1142,19 @@ const handleRegisterNewTree = async () => {
         
         const docRef = await addDoc(collection(db, "trees"), newTree);
         
-        if (message || photoUrl) {
-            const firstMessage = {
-                action: "cadastrou esta árvore.",
-                message: message || "Adicionei esta nova amiga!",
-                user: { 
-                    id: appState.currentUser.uid, 
-                    name: appState.currentUser.name, 
-                    photoURL: appState.currentUser.photoURL 
-                },
-                timestamp: serverTimestamp(),
-                photoUrl: photoUrl
-            };
-            await addDoc(collection(db, "trees", docRef.id, "careEvents"), firstMessage);
-        }
+        // Adiciona a primeira mensagem (com a foto de cadastro)
+        const firstMessage = {
+            action: "cadastrou esta árvore.",
+            message: message || "Adicionei esta nova amiga!",
+            user: { 
+                id: appState.currentUser.uid, 
+                name: appState.currentUser.name, 
+                photoURL: appState.currentUser.photoURL 
+            },
+            timestamp: serverTimestamp(),
+            photoUrl: photoUrl // Usa a mesma foto do cadastro
+        };
+        await addDoc(collection(db, "trees", docRef.id, "careEvents"), firstMessage);
         
         awardPoints('add_tree');
         showToast("Árvore cadastrada com sucesso!");
@@ -1240,11 +1226,9 @@ const setupEventListeners = () => {
     document.getElementById('signup-form').addEventListener('submit', handleSignup);
     document.getElementById('btn-logout').addEventListener('click', handleLogout);
     
-    // Google Login
     document.getElementById('btn-google-login-main').addEventListener('click', handleGoogleLogin);
     document.getElementById('btn-google-login-signup').addEventListener('click', handleGoogleLogin);
     
-    // Esqueci Senha
     document.getElementById('btn-show-forgot-password').addEventListener('click', () => {
         document.getElementById('forgot-password-modal').classList.remove('hidden');
     });
@@ -1310,7 +1294,6 @@ const setupEventListeners = () => {
     });
     document.getElementById('btn-adopt-tree').addEventListener('click', handleAdoptTree);
     
-    // Comentário Rápido com Foto
     document.getElementById('btn-post-comment').addEventListener('click', handlePostComment);
     document.getElementById('tree-comment-photo-input').addEventListener('change', (e) => {
         const preview = document.getElementById('tree-comment-photo-preview');
