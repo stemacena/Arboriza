@@ -70,13 +70,13 @@ nav {
 }
 input[type="file"] { display: none; }
 
-/* Remove o z-index dos botões, pois o container pai (#map-bottom-bar) já tem */
+/* Remove o z-index dos botões individuais, o container pai (#map-bottom-bar) já o tem */
 #btn-locate-me { /* z-index: 1000; */ }
 #screen-map button[data-page="camera"] { /* z-index: 1000; */ }
 
 
 .arvoreco-avatar {
-    position: relative; /* ATUALIZAÇÃO: Posição relativa para o Arvoreco do Mapa */
+    position: relative; /* Posição relativa para o Arvoreco do Mapa */
     z-index: 1001;
     display: flex;
     align-items: flex-end;
@@ -84,8 +84,6 @@ input[type="file"] { display: none; }
 
 /* Container do Arvoreco do Mapa (não é mais absolute) */
 #arvoreco-mapa {
-    /* bottom: 24px; */
-    /* right: 88px; */
     flex-direction: row; /* Avatar à esquerda, Balão à direita */
 }
 #arvoreco-mapa .avatar-img {
@@ -96,7 +94,7 @@ input[type="file"] { display: none; }
 #arvoreco-camera {
     position: absolute;
     top: 70px;
-    left: 16px;
+    left: 24px; /* ATUALIZAÇÃO: Movido "para dentro" (era 16px) */
     flex-direction: row; /* Avatar à esquerda, Balão à direita */
 }
 
@@ -128,11 +126,18 @@ input[type="file"] { display: none; }
     font-size: 13px;
     font-weight: 500;
     color: #333;
-    max-width: 200px;
+    /* ATUALIZAÇÃO: max-width removido para o balão do mapa poder crescer */
+    /* max-width: 200px; */ 
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     animation: fadeInBubble 0.5s ease-out 0.2s forwards;
     opacity: 0;
 }
+
+/* Garante que o balão da câmera ainda tenha um max-width */
+#arvoreco-camera .speech-bubble {
+    max-width: 200px;
+}
+
 
 @keyframes fadeInBubble {
     from { opacity: 0; transform: scale(0.8); }
