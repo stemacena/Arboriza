@@ -70,10 +70,6 @@ nav {
 }
 input[type="file"] { display: none; }
 
-/* Remove o z-index dos botões individuais, o container pai (#map-bottom-bar) já o tem */
-#btn-locate-me { /* z-index: 1000; */ }
-#screen-map button[data-page="camera"] { /* z-index: 1000; */ }
-
 
 .arvoreco-avatar {
     position: relative; /* Posição relativa para o Arvoreco do Mapa */
@@ -82,7 +78,7 @@ input[type="file"] { display: none; }
     align-items: flex-end;
 }
 
-/* Container do Arvoreco do Mapa (não é mais absolute) */
+/* Container do Arvoreco do Mapa (dentro da barra inferior) */
 #arvoreco-mapa {
     flex-direction: row; /* Avatar à esquerda, Balão à direita */
 }
@@ -94,14 +90,14 @@ input[type="file"] { display: none; }
 #arvoreco-camera {
     position: absolute;
     top: 70px;
-    left: 24px; /* ATUALIZAÇÃO: Movido "para dentro" (era 16px) */
+    left: 32px; /* ATUALIZAÇÃO: Movido "para dentro" (era 24px) */
     flex-direction: row; /* Avatar à esquerda, Balão à direita */
 }
 
-/* ATUALIZAÇÃO: Avatar aumentado para 64px */
+/* ATUALIZAÇÃO: Avatar aumentado para 72px */
 .arvoreco-avatar .avatar-img {
-    width: 64px;
-    height: 64px;
+    width: 72px;
+    height: 72px;
     border-radius: 50%;
     object-fit: contain;
     animation: bounceAvatar 2s ease-in-out infinite;
@@ -126,16 +122,16 @@ input[type="file"] { display: none; }
     font-size: 13px;
     font-weight: 500;
     color: #333;
-    /* ATUALIZAÇÃO: max-width removido para o balão do mapa poder crescer */
-    /* max-width: 200px; */ 
+    max-width: 200px; /* Define um máximo padrão */
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     animation: fadeInBubble 0.5s ease-out 0.2s forwards;
     opacity: 0;
 }
 
-/* Garante que o balão da câmera ainda tenha um max-width */
-#arvoreco-camera .speech-bubble {
-    max-width: 200px;
+/* ATUALIZAÇÃO v1.0.9: Garante que o balão do mapa não estique demais */
+#arvoreco-mapa .speech-bubble {
+    max-width: 170px; /* Reduz de 200px para 170px para não encostar no botão */
+    flex-shrink: 1; /* Permite que o balão encolha se necessário */
 }
 
 
