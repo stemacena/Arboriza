@@ -1,9 +1,3 @@
-// Este é o script.js completo.
-// MUDANÇA v1.0.10: 
-// Corrigido o bug 'Unsupported file type' (400)
-// ao adicionar um nome de arquivo padrão para fotos
-// tiradas pela câmera (canvas blob).
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
     getAuth,

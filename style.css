@@ -1,3 +1,11 @@
+/* Este é o style.css completo. */
+/* MUDANÇAS v1.0.9: 
+    1. Aumenta o tamanho do avatar para 72px.
+    2. Reposiciona o Arvoreco do Mapa (Avatar à esquerda, Balão à direita).
+    3. Posição do Arvoreco na Câmera "mais para dentro" (left: 32px).
+    4. Adiciona max-width ao balão do mapa para não encostar no botão.
+    5. Garante que o Arvoreco do mapa não seja "espremido" (flex-shrink: 0).
+*/
 :root {
     --verde-principal: #2E7D32;
     --verde-claro: #81C784;
@@ -81,6 +89,7 @@ input[type="file"] { display: none; }
 /* Container do Arvoreco do Mapa (dentro da barra inferior) */
 #arvoreco-mapa {
     flex-direction: row; /* Avatar à esquerda, Balão à direita */
+    flex-shrink: 0; /* NÃO deixa o Arvoreco ser espremido */
 }
 #arvoreco-mapa .avatar-img {
     animation: bounceAvatar 2s ease-in-out infinite;
@@ -90,7 +99,7 @@ input[type="file"] { display: none; }
 #arvoreco-camera {
     position: absolute;
     top: 70px;
-    left: 32px; /* ATUALIZAÇÃO: Movido "para dentro" (era 24px) */
+    left: 32px; /* ATUALIZAÇÃO: Movido "para dentro" */
     flex-direction: row; /* Avatar à esquerda, Balão à direita */
 }
 
@@ -148,7 +157,7 @@ input[type="file"] { display: none; }
     border: 8px solid transparent;
 }
 
-/* Seta para o balão da CÂMERA (Avatar à esquerda, Seta aponta p/ esquerda) */
+/* Seta para o balão da CÂMERA e MAPA (Avatar à esquerda, Seta aponta p/ esquerda) */
 .speech-bubble-left {
     margin-left: 10px;
     margin-bottom: 8px;
