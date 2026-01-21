@@ -65,7 +65,7 @@ const appState = {
 // --- 3. FUNÇÕES PRINCIPAIS (Ciclo de Vida da App) ---
 
 const initializeAppCore = () => {
-    console.log("Arboriza 1.0.10 iniciando..."); // Versão atualizada
+    console.log("Arboriza 1.0.11 iniciando... (Correção de Mapa)"); 
     setAppHeight();
     window.addEventListener('resize', setAppHeight);
     lucide.createIcons();
@@ -88,41 +88,49 @@ const initializeAppCore = () => {
 
 const fetchUserProfile = async (uid, authUser) => {
     showLoadingModal(true, "Carregando seu perfil...");
-    const userRef = doc(db, "users", uid);
-    const userSnap = await getDoc(userRef);
+    try {
+        const userRef = doc(db, "users", uid);
+        const userSnap = await getDoc(userRef);
 
-    if (userSnap.exists()) {
-        appState.currentUser = { uid: uid, ...userSnap.data() };
-        console.log("Perfil do usuário carregado:", appState.currentUser);
-    } else if (authUser) {
-        console.log("Perfil não encontrado, criando um novo...");
-        const newUserProfile = {
-            name: authUser.displayName || "Guardião Anônimo",
-            email: authUser.email,
-            photoURL: authUser.photoURL || `https://placehold.co/128x128/cccccc/FFFFFF?text=${(authUser.displayName || 'A').charAt(0)}`,
-            level: 1,
-            levelName: "Semente",
-            points: 0,
-            treesCared: 0,
-            treesIdentified: 0,
-            treesAdded: 0,
-            createdAt: serverTimestamp()
-        };
-        await setDoc(userRef, newUserProfile);
-        appState.currentUser = { uid: uid, ...newUserProfile };
-        console.log("Novo perfil criado e carregado.");
-    } else {
-        console.error("Usuário logado, mas sem perfil no Firestore e sem dados do Auth!");
-        showToast("Erro ao carregar seu perfil. Tente logar novamente.");
-        handleLogout();
+        if (userSnap.exists()) {
+            appState.currentUser = { uid: uid, ...userSnap.data() };
+            console.log("Perfil do usuário carregado:", appState.currentUser);
+        } else if (authUser) {
+            console.log("Perfil não encontrado, criando um novo...");
+            const newUserProfile = {
+                name: authUser.displayName || "Guardião Anônimo",
+                email: authUser.email,
+                photoURL: authUser.photoURL || `https://placehold.co/128x128/cccccc/FFFFFF?text=${(authUser.displayName || 'A').charAt(0)}`,
+                level: 1,
+                levelName: "Semente",
+                points: 0,
+                treesCared: 0,
+                treesIdentified: 0,
+                treesAdded: 0,
+                createdAt: serverTimestamp()
+            };
+            await setDoc(userRef, newUserProfile);
+            appState.currentUser = { uid: uid, ...newUserProfile };
+            console.log("Novo perfil criado e carregado.");
+        } else {
+            console.error("Usuário logado, mas sem perfil no Firestore e sem dados do Auth!");
+            showToast("Erro ao carregar seu perfil. Tente logar novamente.");
+            handleLogout();
+            showLoadingModal(false);
+            return;
+        }
+        
+        document.querySelector('main').classList.remove('hidden');
+        document.querySelector('nav').classList.remove('hidden');
+        // Chama updateGamificationUI aqui para garantir que a barra carregue certa logo de início
+        updateGamificationUI();
+        promptForLocation(); 
+    } catch (error) {
+        console.error("Erro crítico ao buscar perfil:", error);
+        showToast("Erro de conexão. Verifique sua internet.");
+    } finally {
         showLoadingModal(false);
-        return;
     }
-    
-    document.querySelector('main').classList.remove('hidden');
-    document.querySelector('nav').classList.remove('hidden');
-    promptForLocation(); 
-    showLoadingModal(false);
 };
 
 // --- 4. LÓGICA DE NAVEGAÇÃO E UI ---
@@ -181,9 +189,11 @@ const showLoadingModal = (show, message = "Carregando...") => {
 
 const showToast = (message) => {
     const toast = document.getElementById('toast-notification');
-    toast.querySelector('p').textContent = message;
-    toast.classList.remove('hidden');
-    setTimeout(() => toast.classList.add('hidden'), 3500);
+    if (toast) {
+        toast.querySelector('p').textContent = message;
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 3500);
+    }
 };
 
 // --- 5. LÓGICA DE AUTENTICAÇÃO ---
@@ -289,7 +299,6 @@ const handleForgotPassword = async (e) => {
 const handleLogout = async () => {
     try {
         await signOut(auth);
-        // Sem reload, como você preferiu!
     } catch (error) {
         console.error("Erro ao sair:", error);
         showToast("Erro ao tentar sair.");
@@ -298,24 +307,16 @@ const handleLogout = async () => {
 
 const getFirebaseErrorMessage = (error) => {
     switch (error.code) {
-        case 'auth/email-already-in-use':
-            return 'Este email já está em uso.';
-        case 'auth/invalid-email':
-            return 'Email inválido.';
-        case 'auth/weak-password':
-            return 'A senha precisa ter pelo menos 6 caracteres.';
+        case 'auth/email-already-in-use': return 'Este email já está em uso.';
+        case 'auth/invalid-email': return 'Email inválido.';
+        case 'auth/weak-password': return 'A senha precisa ter pelo menos 6 caracteres.';
         case 'auth/user-not-found':
         case 'auth/wrong-password':
-        case 'auth/invalid-credential':
-            return 'Email ou senha incorretos.';
-        case 'auth/configuration-not-found':
-             return 'Configuração de login não encontrada. (Ative Email/Senha no Firebase).';
-        case 'auth/popup-closed-by-user':
-             return 'Você fechou a janela do Google antes de terminar.';
-        case 'auth/unauthorized-domain':
-             return 'Este domínio não está autorizado para login. (Adicione-o no Firebase).';
-        default:
-            return 'Ocorreu um erro. Tente novamente.';
+        case 'auth/invalid-credential': return 'Email ou senha incorretos.';
+        case 'auth/configuration-not-found': return 'Configuração de login não encontrada. (Ative Email/Senha no Firebase).';
+        case 'auth/popup-closed-by-user': return 'Você fechou a janela do Google antes de terminar.';
+        case 'auth/unauthorized-domain': return 'Este domínio não está autorizado para login. (Adicione-o no Firebase).';
+        default: return 'Ocorreu um erro. Tente novamente.';
     }
 };
 
@@ -403,6 +404,9 @@ const awardPoints = async (action) => {
     updateGamificationUI();
 };
 
+// =======================================================
+// ## CORREÇÃO BARRA DE PROGRESSO (v1.0.11) ##
+// =======================================================
 const updateGamificationUI = () => {
     const user = appState.currentUser;
     if (!user) return;
@@ -411,13 +415,23 @@ const updateGamificationUI = () => {
     document.getElementById('profile-avatar').src = user.photoURL || `https://placehold.co/128x128/cccccc/FFFFFF?text=${user.name.charAt(0)}`;
     document.getElementById('profile-level').textContent = user.levelName || 'Nível 1: Semente';
     
+    // Cálculo seguro da porcentagem
     const pointsToLevelUp = 1000;
-    const currentPoints = Number(user.points) || 0; 
-    const progress = Math.min((currentPoints / pointsToLevelUp) * 100, 100);
+    const currentPoints = parseFloat(user.points) || 0; 
+    
+    // Garante que o cálculo seja (Pontos / Meta) * 100
+    let progress = (currentPoints / pointsToLevelUp) * 100;
+    
+    // Limites de segurança (0% a 100%)
+    if (progress > 100) progress = 100;
+    if (progress < 0) progress = 0;
 
     document.getElementById('profile-points-text').textContent = currentPoints;
+    
+    // A largura da barra deve ser EXATAMENTE a porcentagem de progresso
     document.getElementById('profile-progress-bar').style.width = `${progress}%`;
     document.getElementById('profile-progress-text').textContent = `${Math.round(progress)}%`;
+    
     document.getElementById('profile-stat-cared').textContent = `🌳 ${user.treesCared || 0}`;
     document.getElementById('profile-stat-identified').textContent = `🌿 ${user.treesIdentified || 0}`;
     document.getElementById('profile-stat-added').textContent = `📍 ${user.treesAdded || 0}`;
@@ -514,7 +528,8 @@ const promptForLocation = () => {
         } catch (error) {
             console.error("Erro de Geolocalização:", error);
             showToast("Não foi possível obter sua localização. O mapa será centralizado no Rio.");
-            appState.lastUserLocation = { latitude: -22.894744, longitude: -43.294099 };
+            // Fallback para Rio de Janeiro
+            appState.lastUserLocation = { latitude: -22.9068, longitude: -43.1729 };
             appState.locationPermissionGranted = false;
             
             showPage('map');
@@ -541,12 +556,14 @@ const initializeMap = () => {
         return;
     }
     
-    const initialCoords = [appState.lastUserLocation.latitude, appState.lastUserLocation.longitude];
+    // Fallback de segurança se lastUserLocation for null (embora promptForLocation tente garantir)
+    const initialLat = appState.lastUserLocation?.latitude || -22.9068;
+    const initialLng = appState.lastUserLocation?.longitude || -43.1729;
     
     appState.map = L.map('map-container', { 
         zoomControl: false,
         maxZoom: 22
-    }).setView(initialCoords, 17); 
+    }).setView([initialLat, initialLng], 17); 
     
     L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
         maxZoom: 22,
@@ -557,7 +574,7 @@ const initializeMap = () => {
     L.control.zoom({ position: 'topright' }).addTo(appState.map);
 
     if (appState.locationPermissionGranted && appState.lastUserLocation) {
-        appState.userMarker = L.marker(initialCoords)
+        appState.userMarker = L.marker([initialLat, initialLng])
             .addTo(appState.map)
             .bindPopup("Você está aqui!")
             .openPopup();
@@ -578,11 +595,19 @@ const centerMapOnUserLocation = async () => {
 };
 
 const addTreeMarkerToMap = (tree) => {
-    if (!tree.location || !tree.location.latitude || !tree.location.longitude) {
-        console.warn("Árvore sem dados de localização válidos:", tree.id);
+    // 1. Validação de segurança: Se não tiver localizacao válida, para aqui.
+    if (!tree.location) return;
+
+    // Normaliza coordenadas (GeoPoint usa latitude, mas JSON puro pode usar lat)
+    const lat = typeof tree.location.latitude === 'number' ? tree.location.latitude : tree.location.lat;
+    const lng = typeof tree.location.longitude === 'number' ? tree.location.longitude : tree.location.lng;
+
+    if (typeof lat !== 'number' || typeof lng !== 'number') {
+        console.warn("Árvore ignorada por coordenadas inválidas:", tree.id);
         return;
     }
-    const latLng = [tree.location.latitude, tree.location.longitude];
+
+    const latLng = [lat, lng];
 
     if (appState.treeMarkers[tree.id]) {
         appState.treeMarkers[tree.id].setLatLng(latLng);
@@ -611,18 +636,28 @@ const addTreeMarkerToMap = (tree) => {
     appState.treeMarkers[tree.id] = marker;
 };
 
+// =======================================================
+// ## CORREÇÃO PRINCIPAL DO MAPA (v1.0.11) ##
+// =======================================================
 const loadTreesOnMap = () => {
     const q = query(collection(db, "trees"));
     
     onSnapshot(q, (querySnapshot) => {
         console.log("Recebendo atualização das árvores...");
+        
         querySnapshot.forEach((doc) => {
-            const tree = { id: doc.id, ...doc.data() };
-            addTreeMarkerToMap(tree);
+            // "Blindamos" o carregamento. Se uma árvore falhar, as outras continuam.
+            try {
+                const tree = { id: doc.id, ...doc.data() };
+                addTreeMarkerToMap(tree);
+            } catch (err) {
+                console.error("Erro ao processar árvore específica (Ignorada):", doc.id, err);
+            }
         });
+
     }, (error) => {
-        console.error("Erro ao carregar árvores em tempo real:", error);
-        showToast("Erro ao carregar as árvores do mapa.");
+        console.error("Erro geral no Snapshot (verifique dados sujos no banco):", error);
+        // Não mostramos Toast de erro aqui para não interromper a experiência se for um erro silencioso de rede
     });
 };
 
@@ -641,7 +676,15 @@ const showTreeProfile = async (treeId) => {
 
         document.getElementById('tree-profile-name').textContent = tree.commonName || 'Nome não definido';
         document.getElementById('tree-profile-scientific-name').textContent = tree.scientificName || '';
-        document.getElementById('tree-profile-address').querySelector('span').textContent = tree.address || (tree.location ? `${tree.location.latitude.toFixed(5)}, ${tree.location.longitude.toFixed(5)}` : "Localização não disponível");
+        
+        // Tratamento seguro para location na exibição
+        let locText = "Localização não disponível";
+        if (tree.location) {
+             const lat = tree.location.latitude || tree.location.lat;
+             const lng = tree.location.longitude || tree.location.lng;
+             if (lat && lng) locText = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        }
+        document.getElementById('tree-profile-address').querySelector('span').textContent = tree.address || locText;
         
         document.getElementById('tree-profile-image').src = tree.coverPhoto;
 
@@ -1030,12 +1073,6 @@ const handlePlantIdentification = async (file) => {
     showLoadingModal(true, "Identificando a planta...");
 
     const formData = new FormData();
-    // =======================================================
-    // ## A CORREÇÃO ESTÁ AQUI (v1.0.10) ##
-    // =======================================================
-    // Se o 'file' for um Blob da câmera, ele não tem nome.
-    // Damos a ele um nome padrão. Se for um 'File' (do upload),
-    // ele usará o nome original do arquivo.
     formData.append('images', file, file.name || 'camera-capture.jpg');
     
     try {
