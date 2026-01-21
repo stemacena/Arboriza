@@ -595,25 +595,36 @@ const centerMapOnUserLocation = async () => {
 };
 
 const addTreeMarkerToMap = (tree) => {
-    // 1. Validação de segurança: Se não tiver localizacao válida, para aqui.
-    if (!tree.location) return;
+    // 1. Validação de segurança básica
+    if (!tree.location) {
+        console.warn(`[Arboriza Debug] Árvore ${tree.id} ignorada: Sem campo location.`);
+        return;
+    }
 
-    // Normaliza coordenadas (GeoPoint usa latitude, mas JSON puro pode usar lat)
-    const lat = typeof tree.location.latitude === 'number' ? tree.location.latitude : tree.location.lat;
-    const lng = typeof tree.location.longitude === 'number' ? tree.location.longitude : tree.location.lng;
+    // 2. Tenta obter as coordenadas de todas as formas possíveis (latitude, lat, string, number)
+    // O operador '??' pega o primeiro que não for nulo/undefined
+    let rawLat = tree.location.latitude ?? tree.location.lat ?? tree.location._lat;
+    let rawLng = tree.location.longitude ?? tree.location.lng ?? tree.location._long;
 
-    if (typeof lat !== 'number' || typeof lng !== 'number') {
-        console.warn("Árvore ignorada por coordenadas inválidas:", tree.id);
+    // 3. Força a conversão para Número (corrige o problema de coordenadas salvas como texto)
+    const lat = parseFloat(rawLat);
+    const lng = parseFloat(rawLng);
+
+    // 4. Se a conversão falhou (deu NaN), avisa e para.
+    if (isNaN(lat) || isNaN(lng)) {
+        console.warn(`[Arboriza Debug] Árvore ${tree.id} ignorada: Coordenadas inválidas (NaN). Recebido: lat=${rawLat}, lng=${rawLng}`);
         return;
     }
 
     const latLng = [lat, lng];
 
+    // Se o marcador já existe, apenas move ele (atualiza)
     if (appState.treeMarkers[tree.id]) {
         appState.treeMarkers[tree.id].setLatLng(latLng);
         return;
     }
 
+    // Escolhe o ícone baseando-se na saúde
     let iconUrl;
     switch (tree.status) {
         case 'healthy': iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png'; break;
@@ -621,6 +632,7 @@ const addTreeMarkerToMap = (tree) => {
         case 'critical': iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png'; break;
         default: iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png';
     }
+    
     const treeIcon = L.icon({
         iconUrl: iconUrl,
         shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
@@ -630,10 +642,15 @@ const addTreeMarkerToMap = (tree) => {
     const marker = L.marker(latLng, { icon: treeIcon });
     marker.treeData = tree;
 
+    // Adiciona evento de clique e coloca no mapa
     marker.on('click', () => showTreeProfile(tree.id));
     marker.addTo(appState.map);
 
+    // Salva referência para atualizar depois se precisar
     appState.treeMarkers[tree.id] = marker;
+    
+    // Log de sucesso para você confirmar no console
+    console.log(`[Arboriza Debug] Árvore ${tree.id} desenhada em: ${lat}, ${lng}`);
 };
 
 // =======================================================
