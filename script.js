@@ -594,37 +594,48 @@ const centerMapOnUserLocation = async () => {
     }
 };
 
-const addTreeMarkerToMap = (tree) => {
-    // 1. Validação de segurança básica
-    if (!tree.location) {
-        console.warn(`[Arboriza Debug] Árvore ${tree.id} ignorada: Sem campo location.`);
-        return;
-    }
+// =======================================================
+// SUBSTITUA APENAS A FUNÇÃO addTreeMarkerToMap POR ESTA:
+// =======================================================
 
-    // 2. Tenta obter as coordenadas de todas as formas possíveis (latitude, lat, string, number)
-    // O operador '??' pega o primeiro que não for nulo/undefined
+const addTreeMarkerToMap = (tree) => {
+    // 1. Proteção: Se não tiver localizacao, ignora sem quebrar o app
+    if (!tree.location) return;
+
+    // 2. Normalização: Tenta ler lat/lng de todas as formas possíveis e CONVERTE para número
     let rawLat = tree.location.latitude ?? tree.location.lat ?? tree.location._lat;
     let rawLng = tree.location.longitude ?? tree.location.lng ?? tree.location._long;
+    
+    // O segredo: parseFloat garante que texto virou número
+    let lat = parseFloat(rawLat);
+    let lng = parseFloat(rawLng);
 
-    // 3. Força a conversão para Número (corrige o problema de coordenadas salvas como texto)
-    const lat = parseFloat(rawLat);
-    const lng = parseFloat(rawLng);
+    // Se a conversão falhou (deu NaN), aborta
+    if (isNaN(lat) || isNaN(lng)) return;
 
-    // 4. Se a conversão falhou (deu NaN), avisa e para.
-    if (isNaN(lat) || isNaN(lng)) {
-        console.warn(`[Arboriza Debug] Árvore ${tree.id} ignorada: Coordenadas inválidas (NaN). Recebido: lat=${rawLat}, lng=${rawLng}`);
-        return;
-    }
+    // 3. Efeito Dispersão (Jitter):
+    // Se várias árvores tiverem a MESMA coordenada, adiciona um desvio minúsculo 
+    // baseado no ID da árvore para que elas não fiquem empilhadas visualmente.
+    const jitterAmount = 0.00015; // Aprox 10-15 metros
+    
+    // Usa o ID para gerar um "número aleatório fixo" (para o pino não ficar dançando)
+    const pseudoRandom = tree.id.charCodeAt(0) + (tree.id.length * 5);
+    
+    const offsetLat = ((pseudoRandom % 10) - 5) * (jitterAmount / 5);
+    const offsetLng = ((pseudoRandom % 8) - 4) * (jitterAmount / 4);
+
+    lat += offsetLat;
+    lng += offsetLng;
 
     const latLng = [lat, lng];
 
-    // Se o marcador já existe, apenas move ele (atualiza)
+    // Se o marcador já existe, apenas move ele
     if (appState.treeMarkers[tree.id]) {
         appState.treeMarkers[tree.id].setLatLng(latLng);
         return;
     }
 
-    // Escolhe o ícone baseando-se na saúde
+    // Define a cor do ícone
     let iconUrl;
     switch (tree.status) {
         case 'healthy': iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png'; break;
@@ -640,17 +651,12 @@ const addTreeMarkerToMap = (tree) => {
     });
 
     const marker = L.marker(latLng, { icon: treeIcon });
-    marker.treeData = tree;
-
-    // Adiciona evento de clique e coloca no mapa
+    
+    // Adiciona evento de clique
     marker.on('click', () => showTreeProfile(tree.id));
     marker.addTo(appState.map);
 
-    // Salva referência para atualizar depois se precisar
     appState.treeMarkers[tree.id] = marker;
-    
-    // Log de sucesso para você confirmar no console
-    console.log(`[Arboriza Debug] Árvore ${tree.id} desenhada em: ${lat}, ${lng}`);
 };
 
 // =======================================================
