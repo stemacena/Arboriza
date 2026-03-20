@@ -1181,16 +1181,52 @@ const handleRegisterNewTree = async () => {
         return;
     }
 
-    showLoadingModal(true, "Cadastrando nova árvore...");
+    showLoadingModal(true, "Cadastrando no Servidor e no Mapa...");
 
     try {
+        // 1. Upload da foto (Continua no Firebase Storage)
         const photoUrl = await uploadImage(photoFile, 'photos');
         
         if (!photoUrl) {
              showLoadingModal(false);
              return;
         }
-        
+
+        // =================================================================
+        // 🚀 PASSO 1: ENVIANDO PARA O NOVO CÉREBRO EM PYTHON (POSTGIS)
+        // =================================================================
+        const arvoreParaPython = {
+            common_name: appState.currentPlantInfo.commonName,
+            scientific_name: appState.currentPlantInfo.scientificName,
+            lat: appState.lastUserLocation.latitude,
+            lng: appState.lastUserLocation.longitude,
+            status: health
+        };
+
+        // ⚠️ ATENÇÃO: Troque a URL abaixo pelo seu link real do Render!
+        // Não esqueça de manter o /trees/ no final
+        const urlPython = "https://arboriza-backend.onrender.com/trees/";
+
+        try {
+            const respostaPython = await fetch(urlPython, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(arvoreParaPython)
+            });
+            
+            if (respostaPython.ok) {
+                console.log("Sucesso: Árvore enviada para o banco científico (PostGIS)!");
+            } else {
+                console.error("Aviso: Falha ao enviar para o Python.");
+            }
+        } catch (erroPython) {
+            // Se o Render estiver dormindo (cold start), não travamos o app do usuário
+            console.error("Servidor Python demorou a responder, mas o app continua:", erroPython);
+        }
+
+        // =================================================================
+        // 🌳 PASSO 2: SALVANDO NO FIREBASE (Para manter o visual do App)
+        // =================================================================
         const newTree = {
             commonName: appState.currentPlantInfo.commonName,
             scientificName: appState.currentPlantInfo.scientificName,
