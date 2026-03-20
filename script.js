@@ -35,6 +35,8 @@ import {
     getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
+console.log("Forçando o cache do Netlify para ler a chave do PlantNet!");
+
 // --- 1. CONFIGURAÇÃO E INICIALIZAÇÃO ---
 const firebaseConfig = {
     apiKey: "AIzaSyDz5FUlrXC07aQDMJ4XzomdT4gkyKZVKgg",
