@@ -1202,7 +1202,8 @@ const handleRegisterNewTree = async () => {
             scientific_name: appState.currentPlantInfo.scientificName,
             lat: appState.lastUserLocation.latitude,
             lng: appState.lastUserLocation.longitude,
-            status: health
+            status: health,
+            user_uid: appState.currentUser.uid
         };
 
         // ⚠️ ATENÇÃO: Troque a URL abaixo pelo seu link real do Render!
