@@ -1203,7 +1203,8 @@ const handleRegisterNewTree = async () => {
             lat: appState.lastUserLocation.latitude,
             lng: appState.lastUserLocation.longitude,
             status: health,
-            user_uid: appState.currentUser.uid
+            user_uid: appState.currentUser.uid,
+            cover_photo: photoUrl
         };
 
         // ⚠️ ATENÇÃO: Troque a URL abaixo pelo seu link real do Render!
