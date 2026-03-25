@@ -1197,6 +1197,9 @@ const handleRegisterNewTree = async () => {
         showToast("Localização exata necessária. Tente se localizar no mapa primeiro.");
         return;
     }
+    // 🛑 TRUQUE DE TESTE: Forçar GPS para a Floresta da Tijuca
+    appState.lastUserLocation.latitude = -22.9480;
+    appState.lastUserLocation.longitude = -43.2880;
     
     const health = document.getElementById('add-tree-health').value;
     const message = document.getElementById('add-tree-message').value;
