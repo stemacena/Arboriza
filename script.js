@@ -1212,7 +1212,7 @@ const handleRegisterNewTree = async () => {
         };
 
         // ⚠️ ATENÇÃO: COLOQUE SEU LINK DO RENDER AQUI (mantenha o /trees/ no final)
-        const urlPython = "https://arboriza-backend-SEULINK.onrender.com/trees/";
+        const urlPython = "https://arboriza-backend-https://arboriza-backend.onrender.com/trees/";
 
         try {
             const respostaPython = await fetch(urlPython, {
