@@ -558,23 +558,47 @@ const initializeMap = () => {
         return;
     }
     
-    // Fallback de segurança se lastUserLocation for null (embora promptForLocation tente garantir)
     const initialLat = appState.lastUserLocation?.latitude || -22.9068;
     const initialLng = appState.lastUserLocation?.longitude || -43.1729;
     
+    // 1. Inicializa o "esqueleto" do mapa
     appState.map = L.map('map-container', { 
         zoomControl: false,
         maxZoom: 22
     }).setView([initialLat, initialLng], 17); 
     
-    L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
+    // 2. Criamos a Camada de Satélite (A que você já usava)
+    const googleSat = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
         maxZoom: 22,
         subdomains:['mt0','mt1','mt2','mt3'],
-        attribution: 'Map data &copy; Google'
-    }).addTo(appState.map);
+        attribution: 'Google'
+    });
+
+    // 3. Criamos a Camada de Ruas (Estilo mapa de GPS/Waze)
+    const streetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap'
+    });
+
+    // Inicia o mapa mostrando o Satélite por padrão
+    googleSat.addTo(appState.map);
     
+    // 4. Cria o menu interativo de Camadas (Layer Control)
+    const baseMaps = {
+        "Visão Satélite": googleSat,
+        "Visão Mapa de Ruas": streetMap
+    };
+    
+    const overlayMaps = {
+        // Espaço reservado: Aqui vai entrar a nossa camada do MapBiomas que virá do Python!
+        // "Uso do Solo (MapBiomas)": camadaMapBiomas 
+    };
+
+    // Adiciona o botão de camadas no canto superior esquerdo e o zoom na direita
+    L.control.layers(baseMaps, overlayMaps, { position: 'topleft' }).addTo(appState.map);
     L.control.zoom({ position: 'topright' }).addTo(appState.map);
 
+    // Marca o usuário no mapa
     if (appState.locationPermissionGranted && appState.lastUserLocation) {
         appState.userMarker = L.marker([initialLat, initialLng])
             .addTo(appState.map)
