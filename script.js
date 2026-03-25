@@ -598,12 +598,27 @@ const initializeMap = () => {
     L.control.layers(baseMaps, overlayMaps, { position: 'topleft' }).addTo(appState.map);
     L.control.zoom({ position: 'topright' }).addTo(appState.map);
 
-    // Marca o usuário no mapa
+    // Marca o usuário no mapa (AGORA ARRASTÁVEL!)
     if (appState.locationPermissionGranted && appState.lastUserLocation) {
-        appState.userMarker = L.marker([initialLat, initialLng])
+        
+        // 1. Adicionamos o { draggable: true }
+        appState.userMarker = L.marker([initialLat, initialLng], { draggable: true })
             .addTo(appState.map)
-            .bindPopup("Você está aqui!")
+            .bindPopup("Arraste este pino para o local exato da árvore! 📍")
             .openPopup();
+
+        // 2. Quando o usuário soltar o pino, atualizamos a coordenada no sistema!
+        appState.userMarker.on('dragend', function(event) {
+            const position = event.target.getLatLng();
+            
+            // Atualiza a memória do app com a nova posição do pino
+            appState.lastUserLocation = {
+                latitude: position.lat,
+                longitude: position.lng
+            };
+            
+            appState.userMarker.bindPopup("Local escolhido! Pode cadastrar.").openPopup();
+        });
     }
 
     loadTreesOnMap();
@@ -1197,9 +1212,6 @@ const handleRegisterNewTree = async () => {
         showToast("Localização exata necessária. Tente se localizar no mapa primeiro.");
         return;
     }
-    // 🛑 TRUQUE DE TESTE: Forçar GPS para a Floresta da Tijuca
-    appState.lastUserLocation.latitude = -22.9480;
-    appState.lastUserLocation.longitude = -43.2880;
     
     const health = document.getElementById('add-tree-health').value;
     const message = document.getElementById('add-tree-message').value;
@@ -1210,7 +1222,6 @@ const handleRegisterNewTree = async () => {
         return;
     }
 
-    // 1. TRAVA DO BOTÃO: Desabilita o clique duplo
     const btnSubmit = document.getElementById('btn-finish-add-tree');
     if (btnSubmit) btnSubmit.disabled = true;
 
@@ -1225,9 +1236,6 @@ const handleRegisterNewTree = async () => {
              return;
         }
 
-        // ==========================================
-        // ENVIANDO PARA O PYTHON (POSTGIS)
-        // ==========================================
         const arvoreParaPython = {
             common_name: appState.currentPlantInfo.commonName,
             scientific_name: appState.currentPlantInfo.scientificName,
@@ -1238,8 +1246,8 @@ const handleRegisterNewTree = async () => {
             cover_photo: photoUrl
         };
 
-        // ⚠️ ATENÇÃO: COLOQUE SEU LINK DO RENDER AQUI (mantenha o /trees/ no final)
-        const urlPython = "https://arboriza-backend-https://arboriza-backend.onrender.com/trees/";
+        // ⚠️ ATENÇÃO: COLOQUE SEU LINK DO RENDER AQUI
+        const urlPython = "https://arboriza-backend-SEULINK.onrender.com/trees/";
 
         try {
             const respostaPython = await fetch(urlPython, {
@@ -1249,16 +1257,11 @@ const handleRegisterNewTree = async () => {
             });
             
             if (respostaPython.ok) {
-                // Lemos a resposta inteligente do Python
                 const dadosCerebro = await respostaPython.json();
                 console.log("Sucesso no PostGIS!", dadosCerebro);
                 
-                // Se o Python encontrou o dado do MapBiomas, mostramos pro usuário!
-                if (dadosCerebro.mapbiomas_classe !== "Área ainda não mapeada") {
-                    setTimeout(() => {
-                        showToast(`Solo analisado: Esta área era ${dadosCerebro.mapbiomas_classe}! 🌳`);
-                    }, 4000); // Mostra 4 segundos depois do aviso de "Árvore cadastrada"
-                }
+                // Salvamos a classe do bioma globalmente para o Toast final
+                appState.ultimoBioma = dadosCerebro.mapbiomas_classe;
             } else {
                 console.error("Aviso: Falha ao enviar para o Python.");
             }
@@ -1266,9 +1269,6 @@ const handleRegisterNewTree = async () => {
             console.error("Servidor Python demorou a responder, mas o app continua:", erroPython);
         }
 
-        // ==========================================
-        // SALVANDO NO FIREBASE (MAPA DO APP)
-        // ==========================================
         const newTree = {
             commonName: appState.currentPlantInfo.commonName,
             scientificName: appState.currentPlantInfo.scientificName,
@@ -1298,10 +1298,20 @@ const handleRegisterNewTree = async () => {
         await addDoc(collection(db, "trees", docRef.id, "careEvents"), firstMessage);
         
         awardPoints('add_tree');
-        showToast("Árvore cadastrada com sucesso!");
         
-        // 2. DESTRAVA A TELA: Limpa os dados e força a volta pro mapa
+        // ==========================================
+        // AQUI ESTÁ A MENSAGEM INTELIGENTE FINAL!
+        // ==========================================
+        if (appState.ultimoBioma && appState.ultimoBioma !== "Área ainda não mapeada") {
+            showToast(`Árvore salva! Histórico do solo: ${appState.ultimoBioma} 🌳`);
+        } else {
+            showToast("Árvore cadastrada com sucesso no mapa!");
+        }
+        
+        // Limpa a memória para o próximo cadastro
+        appState.ultimoBioma = null;
         appState.currentPlantInfo = null;
+        
         showPage('map');
         
         document.getElementById('add-tree-photo-input').value = null;
@@ -1313,7 +1323,6 @@ const handleRegisterNewTree = async () => {
         showToast("Ocorreu um erro ao cadastrar a árvore.");
     } finally {
         showLoadingModal(false);
-        // 3. DESTRAVA O BOTÃO: Para o próximo uso
         if (btnSubmit) btnSubmit.disabled = false;
     }
 };
