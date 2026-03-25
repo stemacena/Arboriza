@@ -1183,20 +1183,24 @@ const handleRegisterNewTree = async () => {
         return;
     }
 
+    // 1. TRAVA DO BOTÃO: Desabilita o clique duplo
+    const btnSubmit = document.getElementById('btn-finish-add-tree');
+    if (btnSubmit) btnSubmit.disabled = true;
+
     showLoadingModal(true, "Cadastrando no Servidor e no Mapa...");
 
     try {
-        // 1. Upload da foto (Continua no Firebase Storage)
         const photoUrl = await uploadImage(photoFile, 'photos');
         
         if (!photoUrl) {
              showLoadingModal(false);
+             if (btnSubmit) btnSubmit.disabled = false;
              return;
         }
 
-        // =================================================================
-        // 🚀 PASSO 1: ENVIANDO PARA O NOVO CÉREBRO EM PYTHON (POSTGIS)
-        // =================================================================
+        // ==========================================
+        // ENVIANDO PARA O PYTHON (POSTGIS)
+        // ==========================================
         const arvoreParaPython = {
             common_name: appState.currentPlantInfo.commonName,
             scientific_name: appState.currentPlantInfo.scientificName,
@@ -1207,9 +1211,8 @@ const handleRegisterNewTree = async () => {
             cover_photo: photoUrl
         };
 
-        // ⚠️ ATENÇÃO: Troque a URL abaixo pelo seu link real do Render!
-        // Não esqueça de manter o /trees/ no final
-        const urlPython = "https://arboriza-backend.onrender.com/trees/";
+        // ⚠️ ATENÇÃO: COLOQUE SEU LINK DO RENDER AQUI (mantenha o /trees/ no final)
+        const urlPython = "https://arboriza-backend-SEULINK.onrender.com/trees/";
 
         try {
             const respostaPython = await fetch(urlPython, {
@@ -1224,13 +1227,12 @@ const handleRegisterNewTree = async () => {
                 console.error("Aviso: Falha ao enviar para o Python.");
             }
         } catch (erroPython) {
-            // Se o Render estiver dormindo (cold start), não travamos o app do usuário
             console.error("Servidor Python demorou a responder, mas o app continua:", erroPython);
         }
 
-        // =================================================================
-        // 🌳 PASSO 2: SALVANDO NO FIREBASE (Para manter o visual do App)
-        // =================================================================
+        // ==========================================
+        // SALVANDO NO FIREBASE (MAPA DO APP)
+        // ==========================================
         const newTree = {
             commonName: appState.currentPlantInfo.commonName,
             scientificName: appState.currentPlantInfo.scientificName,
@@ -1262,6 +1264,8 @@ const handleRegisterNewTree = async () => {
         awardPoints('add_tree');
         showToast("Árvore cadastrada com sucesso!");
         
+        // 2. DESTRAVA A TELA: Limpa os dados e força a volta pro mapa
+        appState.currentPlantInfo = null;
         showPage('map');
         
         document.getElementById('add-tree-photo-input').value = null;
@@ -1273,6 +1277,8 @@ const handleRegisterNewTree = async () => {
         showToast("Ocorreu um erro ao cadastrar a árvore.");
     } finally {
         showLoadingModal(false);
+        // 3. DESTRAVA O BOTÃO: Para o próximo uso
+        if (btnSubmit) btnSubmit.disabled = false;
     }
 };
 
