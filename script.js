@@ -1246,7 +1246,16 @@ const handleRegisterNewTree = async () => {
             });
             
             if (respostaPython.ok) {
-                console.log("Sucesso: Árvore enviada para o banco científico (PostGIS)!");
+                // Lemos a resposta inteligente do Python
+                const dadosCerebro = await respostaPython.json();
+                console.log("Sucesso no PostGIS!", dadosCerebro);
+                
+                // Se o Python encontrou o dado do MapBiomas, mostramos pro usuário!
+                if (dadosCerebro.mapbiomas_classe !== "Área ainda não mapeada") {
+                    setTimeout(() => {
+                        showToast(`Solo analisado: Esta área era ${dadosCerebro.mapbiomas_classe}! 🌳`);
+                    }, 4000); // Mostra 4 segundos depois do aviso de "Árvore cadastrada"
+                }
             } else {
                 console.error("Aviso: Falha ao enviar para o Python.");
             }
