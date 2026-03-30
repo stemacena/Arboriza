@@ -37,6 +37,17 @@ import {
 
 console.log("Forçando o cache do Netlify para ler a chave do PlantNet!");
 
+// ==========================================
+// DESPERTADOR DO SERVIDOR (Acorda o Render em Background)
+// ==========================================
+const acordarServidorPython = () => {
+    console.log("⏰ Mandando um 'Bom dia' para acordar o servidor Render...");
+    // Bate na porta principal (a home que retorna "Arboriza Backend: Online e Protegido!")
+    fetch("https://arboriza-backend.onrender.com/")
+        .then(res => console.log("🚀 Servidor Python está 100% acordado e pronto!"))
+        .catch(err => console.log("Tentativa de despertar falhou, mas a vida segue."));
+};
+
 // --- 1. CONFIGURAÇÃO E INICIALIZAÇÃO ---
 const firebaseConfig = {
     apiKey: "AIzaSyDz5FUlrXC07aQDMJ4XzomdT4gkyKZVKgg",
@@ -76,6 +87,7 @@ const initializeAppCore = () => {
         if (user) {
             console.log("Usuário logado:", user.uid);
             fetchUserProfile(user.uid, user);
+            acordarServidorPython();
         } else {
             console.log("Nenhum usuário logado.");
             appState.currentUser = null;
@@ -274,6 +286,7 @@ const handleGoogleLogin = async () => {
     try {
         await signInWithPopup(auth, provider);
         console.log("Login com Google com sucesso!");
+        
     } catch (error) {
         console.error("Erro no Login Google:", error);
         showToast(getFirebaseErrorMessage(error));
@@ -1259,6 +1272,18 @@ const handleRegisterNewTree = async () => {
 
     showLoadingModal(true, "Plantando árvore...");
 
+    // ==========================================
+    // 🛑 A LEI DO PINO: Pega a posição exata visual do mapa!
+    // ==========================================
+    let latExata = appState.lastUserLocation.latitude;
+    let lngExata = appState.lastUserLocation.longitude;
+    
+    if (appState.userMarker) {
+        const posicaoPino = appState.userMarker.getLatLng();
+        latExata = posicaoPino.lat;
+        lngExata = posicaoPino.lng;
+    }
+
     try {
         // 1. SALVA NO FIREBASE E NO STORAGE
         const photoUrl = await uploadImage(photoFile, 'photos');
@@ -1268,7 +1293,7 @@ const handleRegisterNewTree = async () => {
             commonName: appState.currentPlantInfo.commonName,
             scientificName: appState.currentPlantInfo.scientificName,
             status: health,
-            location: new GeoPoint(appState.lastUserLocation.latitude, appState.lastUserLocation.longitude),
+            location: new GeoPoint(latExata, lngExata), // <-- Usa a coordenada exata do pino
             coverPhoto: photoUrl,
             createdAt: serverTimestamp(),
             createdBy: { uid: appState.currentUser.uid, name: appState.currentUser.name }
@@ -1299,8 +1324,8 @@ const handleRegisterNewTree = async () => {
         const arvoreParaPython = {
             common_name: appState.currentPlantInfo.commonName,
             scientific_name: appState.currentPlantInfo.scientificName,
-            lat: appState.lastUserLocation.latitude,
-            lng: appState.lastUserLocation.longitude,
+            lat: latExata, // <-- Usa a coordenada exata do pino
+            lng: lngExata, // <-- Usa a coordenada exata do pino
             status: health,
             user_uid: appState.currentUser.uid,
             cover_photo: photoUrl
@@ -1340,7 +1365,7 @@ const handleRegisterNewTree = async () => {
         });
 
         // ==========================================
-        // 4. LIMPEZA DA MEMÓRIA (Agora no lugar certo!)
+        // 4. LIMPEZA DA MEMÓRIA
         // ==========================================
         appState.currentPlantInfo = null;
         document.getElementById('add-tree-photo-input').value = null;
