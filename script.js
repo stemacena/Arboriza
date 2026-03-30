@@ -1188,6 +1188,57 @@ const initiateCareFlow = async () => {
     }
 };
 
+// ==========================================
+// Feedback do MapBiomas
+// ==========================================
+function updateSoilAnalysisUI(state, text) {
+    let container = document.getElementById('soil-analysis-ui');
+    
+    // Se o card não existir, criamos ele dinamicamente
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'soil-analysis-ui';
+        // Estilo moderno: card branco com sombra flutuando no topo
+        container.style.cssText = 'position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; background: white; padding: 12px 24px; border-radius: 50px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 12px; font-family: sans-serif; font-size: 14px; max-width: 90%; width: max-content; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); opacity: 0; transform: translate(-50%, -20px);';
+        document.body.appendChild(container);
+        
+        // Animação suave de entrada
+        setTimeout(() => {
+            container.style.opacity = '1';
+            container.style.transform = 'translate(-50%, 0)';
+        }, 10);
+    }
+
+    if (state === 'loading') {
+        container.innerHTML = `
+            <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
+            <div style="width: 18px; height: 18px; border: 3px solid #e0e0e0; border-top: 3px solid #4CAF50; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            <span style="color: #333; font-weight: 500;">${text}</span>
+        `;
+    } else if (state === 'success') {
+        container.innerHTML = `
+            <div style="font-size: 18px;">🌳</div>
+            <span style="color: #2e7d32; font-weight: bold;">${text}</span>
+        `;
+        // Remove o card suavemente após 6 segundos
+        setTimeout(() => {
+            container.style.opacity = '0';
+            container.style.transform = 'translate(-50%, -20px)';
+            setTimeout(() => container.remove(), 400);
+        }, 6000);
+    } else if (state === 'info' || state === 'error') {
+        container.innerHTML = `
+            <div style="font-size: 18px;">📍</div>
+            <span style="color: #555; font-weight: 500;">${text}</span>
+        `;
+        setTimeout(() => {
+            container.style.opacity = '0';
+            container.style.transform = 'translate(-50%, -20px)';
+            setTimeout(() => container.remove(), 400);
+        }, 4000);
+    }
+}
+
 const handleRegisterNewTree = async () => {
     if (!appState.currentPlantInfo || !appState.lastUserLocation) {
         showToast("Localização exata necessária. Tente se localizar no mapa primeiro.");
@@ -1209,10 +1260,10 @@ const handleRegisterNewTree = async () => {
     showLoadingModal(true, "Plantando árvore...");
 
     try {
+        // 1. SALVA NO FIREBASE E NO STORAGE (Rápido)
         const photoUrl = await uploadImage(photoFile, 'photos');
         if (!photoUrl) throw new Error("Erro no upload da foto");
 
-        // 1. SALVA NO FIREBASE PRIMEIRO (Para o app nunca mais travar)
         const newTree = {
             commonName: appState.currentPlantInfo.commonName,
             scientificName: appState.currentPlantInfo.scientificName,
@@ -1234,53 +1285,59 @@ const handleRegisterNewTree = async () => {
         await addDoc(collection(db, "trees", docRef.id, "careEvents"), firstMessage);
         awardPoints('add_tree');
 
-        // 2. COMUNICAÇÃO COM O PYTHON (Sem quebrar o app)
-        let biomaSolo = null;
-        try {
-            const urlPython = "https://arboriza-backend.onrender.com/trees/";
-            const arvoreParaPython = {
-                common_name: appState.currentPlantInfo.commonName,
-                scientific_name: appState.currentPlantInfo.scientificName,
-                lat: appState.lastUserLocation.latitude,
-                lng: appState.lastUserLocation.longitude,
-                status: health,
-                user_uid: appState.currentUser.uid,
-                cover_photo: photoUrl
-            };
-            
-            const respostaPython = await fetch(urlPython, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(arvoreParaPython)
-            });
-            
-            if (respostaPython.ok) {
-                const dadosCerebro = await respostaPython.json();
-                biomaSolo = dadosCerebro.mapbiomas_classe;
-            }
-        } catch (erroPython) {
-            console.error("Python demorou ou falhou, mas a árvore foi salva:", erroPython);
-        }
-
-        // 3. FINALIZAÇÃO: MENSAGEM E MUDANÇA DE TELA GARANTIDA
+        // ==========================================
+        // 2. MUDANÇA IMEDIATA DE TELA (O APP NÃO TRAVA MAIS!)
+        // ==========================================
+        showLoadingModal(false);
         showPage('map');
         
-        if (biomaSolo && biomaSolo !== "Área ainda não mapeada") {
-            alert(`🌳 INCRÍVEL! Solo analisado: Esta área era ${biomaSolo}!`);
-        } else {
-            showToast("Árvore cadastrada com sucesso no mapa!");
-        }
+        // CHAMA NOSSO NOVO CARD DE LOADING! ⏳
+        updateSoilAnalysisUI('loading', 'Árvore salva! Analisando solo no MapBiomas...');
         
-        // Limpa o formulário
+        // Limpa o formulário para o próximo uso
         appState.currentPlantInfo = null;
         document.getElementById('add-tree-photo-input').value = null;
         document.getElementById('add-tree-photo-preview').classList.add('hidden');
         document.getElementById('add-tree-message').value = '';
 
+        // ==========================================
+        // 3. PYTHON EM SEGUNDO PLANO (Fire and Forget)
+        // ==========================================
+        const urlPython = "https://arboriza-backend.onrender.com/trees/";
+        const arvoreParaPython = {
+            common_name: appState.currentPlantInfo.commonName,
+            scientific_name: appState.currentPlantInfo.scientificName,
+            lat: appState.lastUserLocation.latitude,
+            lng: appState.lastUserLocation.longitude,
+            status: health,
+            user_uid: appState.currentUser.uid,
+            cover_photo: photoUrl
+        };
+        
+        fetch(urlPython, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(arvoreParaPython)
+        })
+        .then(res => res.json())
+        .then(dadosCerebro => {
+            const biomaSolo = dadosCerebro.mapbiomas_classe;
+            if (biomaSolo && biomaSolo !== "Área ainda não mapeada") {
+                // SUCESSO! Transforma o loading no card verde! 🌳
+                updateSoilAnalysisUI('success', `Histórico do solo: ${biomaSolo}!`);
+            } else {
+                // DADO NÃO ENCONTRADO 
+                updateSoilAnalysisUI('info', 'Árvore registrada no mapa com sucesso.');
+            }
+        })
+        .catch(erroPython => {
+            console.error("Python falhou em background:", erroPython);
+            updateSoilAnalysisUI('error', 'Árvore salva. (Análise de solo indisponível no momento)');
+        });
+
     } catch (error) {
         console.error("Erro ao cadastrar árvore:", error);
         showToast("Ocorreu um erro ao cadastrar a árvore.");
-    } finally {
         showLoadingModal(false);
         if (btnSubmit) btnSubmit.disabled = false;
     }
