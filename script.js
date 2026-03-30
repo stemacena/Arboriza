@@ -561,63 +561,63 @@ const initializeMap = () => {
     const initialLat = appState.lastUserLocation?.latitude || -22.9068;
     const initialLng = appState.lastUserLocation?.longitude || -43.1729;
     
-    // 1. Inicializa o "esqueleto" do mapa
     appState.map = L.map('map-container', { 
         zoomControl: false,
         maxZoom: 22
     }).setView([initialLat, initialLng], 17); 
     
-    // 2. Criamos a Camada de Satélite (A que você já usava)
     const googleSat = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
         maxZoom: 22,
         subdomains:['mt0','mt1','mt2','mt3'],
         attribution: 'Google'
     });
 
-    // 3. Criamos a Camada de Ruas (Estilo mapa de GPS/Waze)
     const streetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '© OpenStreetMap'
     });
 
-    // Inicia o mapa mostrando o Satélite por padrão
     googleSat.addTo(appState.map);
     
-    // 4. Cria o menu interativo de Camadas (Layer Control)
     const baseMaps = {
         "Visão Satélite": googleSat,
         "Visão Mapa de Ruas": streetMap
     };
     
-    const overlayMaps = {
-        // Espaço reservado: Aqui vai entrar a nossa camada do MapBiomas que virá do Python!
-        // "Uso do Solo (MapBiomas)": camadaMapBiomas 
-    };
+    const overlayMaps = {};
 
-    // Adiciona o botão de camadas no canto superior esquerdo e o zoom na direita
     L.control.layers(baseMaps, overlayMaps, { position: 'topleft' }).addTo(appState.map);
     L.control.zoom({ position: 'topright' }).addTo(appState.map);
 
-    // Marca o usuário no mapa (AGORA ARRASTÁVEL!)
+    // Marca o usuário no mapa (AGORA ARRASTÁVEL E CLICÁVEL!)
     if (appState.locationPermissionGranted && appState.lastUserLocation) {
         
-        // 1. Adicionamos o { draggable: true }
         appState.userMarker = L.marker([initialLat, initialLng], { draggable: true })
             .addTo(appState.map)
-            .bindPopup("Arraste este pino para o local exato da árvore! 📍")
+            .bindPopup("Arraste o pino ou clique no mapa para escolher o local! 📍")
             .openPopup();
 
-        // 2. Quando o usuário soltar o pino, atualizamos a coordenada no sistema!
+        // Se o usuário arrastar o pino:
         appState.userMarker.on('dragend', function(event) {
             const position = event.target.getLatLng();
-            
-            // Atualiza a memória do app com a nova posição do pino
             appState.lastUserLocation = {
                 latitude: position.lat,
                 longitude: position.lng
             };
-            
             appState.userMarker.bindPopup("Local escolhido! Pode cadastrar.").openPopup();
+        });
+
+        // NOVO: Se o usuário CLICAR em qualquer lugar do mapa:
+        appState.map.on('click', function(event) {
+            const novaPosicao = event.latlng;
+            appState.userMarker.setLatLng(novaPosicao); // Move o pino para onde clicou
+            
+            // Atualiza a memória
+            appState.lastUserLocation = {
+                latitude: novaPosicao.lat,
+                longitude: novaPosicao.lng
+            };
+            appState.userMarker.bindPopup("Novo local escolhido! 📍").openPopup();
         });
     }
 
@@ -634,10 +634,6 @@ const centerMapOnUserLocation = async () => {
         promptForLocation();
     }
 };
-
-// =======================================================
-// SUBSTITUA APENAS A FUNÇÃO addTreeMarkerToMap POR ESTA:
-// =======================================================
 
 const addTreeMarkerToMap = (tree) => {
     // 1. Proteção: Se não tiver localizacao, ignora sem quebrar o app
@@ -1246,7 +1242,6 @@ const handleRegisterNewTree = async () => {
             cover_photo: photoUrl
         };
 
-        // ⚠️ ATENÇÃO: COLOQUE SEU LINK DO RENDER AQUI
         const urlPython = "https://arboriza-backend.onrender.com/trees/";
 
         try {
@@ -1258,15 +1253,16 @@ const handleRegisterNewTree = async () => {
             
             if (respostaPython.ok) {
                 const dadosCerebro = await respostaPython.json();
-                console.log("Sucesso no PostGIS!", dadosCerebro);
                 
-                // Salvamos a classe do bioma globalmente para o Toast final
+                // 🛑 TRUQUE DO IPHONE: Joga a resposta na cara do usuário para podermos ler!
+                alert("RESPOSTA DO PYTHON:\n" + JSON.stringify(dadosCerebro));
+                
                 appState.ultimoBioma = dadosCerebro.mapbiomas_classe;
             } else {
-                console.error("Aviso: Falha ao enviar para o Python.");
+                alert("ERRO NO PYTHON! Status: " + respostaPython.status);
             }
         } catch (erroPython) {
-            console.error("Servidor Python demorou a responder, mas o app continua:", erroPython);
+            alert("O PYTHON NÃO RESPONDEU:\n" + erroPython.message);
         }
 
         const newTree = {
@@ -1299,16 +1295,12 @@ const handleRegisterNewTree = async () => {
         
         awardPoints('add_tree');
         
-        // ==========================================
-        // AQUI ESTÁ A MENSAGEM INTELIGENTE FINAL!
-        // ==========================================
         if (appState.ultimoBioma && appState.ultimoBioma !== "Área ainda não mapeada") {
             showToast(`Árvore salva! Histórico do solo: ${appState.ultimoBioma} 🌳`);
         } else {
             showToast("Árvore cadastrada com sucesso no mapa!");
         }
         
-        // Limpa a memória para o próximo cadastro
         appState.ultimoBioma = null;
         appState.currentPlantInfo = null;
         
