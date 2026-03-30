@@ -1260,7 +1260,7 @@ const handleRegisterNewTree = async () => {
     showLoadingModal(true, "Plantando árvore...");
 
     try {
-        // 1. SALVA NO FIREBASE E NO STORAGE (Rápido)
+        // 1. SALVA NO FIREBASE E NO STORAGE
         const photoUrl = await uploadImage(photoFile, 'photos');
         if (!photoUrl) throw new Error("Erro no upload da foto");
 
@@ -1286,22 +1286,14 @@ const handleRegisterNewTree = async () => {
         awardPoints('add_tree');
 
         // ==========================================
-        // 2. MUDANÇA IMEDIATA DE TELA (O APP NÃO TRAVA MAIS!)
+        // 2. MUDANÇA IMEDIATA DE TELA
         // ==========================================
         showLoadingModal(false);
         showPage('map');
-        
-        // CHAMA NOSSO NOVO CARD DE LOADING! ⏳
         updateSoilAnalysisUI('loading', 'Árvore salva! Analisando solo no MapBiomas...');
-        
-        // Limpa o formulário para o próximo uso
-        appState.currentPlantInfo = null;
-        document.getElementById('add-tree-photo-input').value = null;
-        document.getElementById('add-tree-photo-preview').classList.add('hidden');
-        document.getElementById('add-tree-message').value = '';
 
         // ==========================================
-        // 3. PYTHON EM SEGUNDO PLANO (Fire and Forget)
+        // 3. PYTHON EM SEGUNDO PLANO (Com Timeout Profissional!)
         // ==========================================
         const urlPython = "https://arboriza-backend.onrender.com/trees/";
         const arvoreParaPython = {
@@ -1314,26 +1306,46 @@ const handleRegisterNewTree = async () => {
             cover_photo: photoUrl
         };
         
+        // Configura um "cronômetro" de 12 segundos
+        const controladorTempo = new AbortController();
+        const timeoutId = setTimeout(() => controladorTempo.abort(), 12000);
+
         fetch(urlPython, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(arvoreParaPython)
+            body: JSON.stringify(arvoreParaPython),
+            signal: controladorTempo.signal // Conecta o cronômetro ao fetch
         })
-        .then(res => res.json())
+        .then(res => {
+            clearTimeout(timeoutId); // Cancela o cronômetro se respondeu rápido
+            return res.json();
+        })
         .then(dadosCerebro => {
             const biomaSolo = dadosCerebro.mapbiomas_classe;
             if (biomaSolo && biomaSolo !== "Área ainda não mapeada") {
-                // SUCESSO! Transforma o loading no card verde! 🌳
                 updateSoilAnalysisUI('success', `Histórico do solo: ${biomaSolo}!`);
             } else {
-                // DADO NÃO ENCONTRADO 
                 updateSoilAnalysisUI('info', 'Árvore registrada no mapa com sucesso.');
             }
         })
         .catch(erroPython => {
-            console.error("Python falhou em background:", erroPython);
-            updateSoilAnalysisUI('error', 'Árvore salva. (Análise de solo indisponível no momento)');
+            // Se o tempo esgotar, aborta com elegância
+            if (erroPython.name === 'AbortError') {
+                console.warn("Python demorou muito para acordar. Análise cancelada no Front-end.");
+                updateSoilAnalysisUI('info', 'Árvore salva! (Análise de solo operando em background)');
+            } else {
+                console.error("Erro no Python:", erroPython);
+                updateSoilAnalysisUI('error', 'Árvore salva no mapa com sucesso!');
+            }
         });
+
+        // ==========================================
+        // 4. LIMPEZA DA MEMÓRIA (Agora no lugar certo!)
+        // ==========================================
+        appState.currentPlantInfo = null;
+        document.getElementById('add-tree-photo-input').value = null;
+        document.getElementById('add-tree-photo-preview').classList.add('hidden');
+        document.getElementById('add-tree-message').value = '';
 
     } catch (error) {
         console.error("Erro ao cadastrar árvore:", error);
