@@ -558,68 +558,53 @@ const initializeMap = () => {
         return;
     }
     
-    const initialLat = appState.lastUserLocation?.latitude || -22.9068;
-    const initialLng = appState.lastUserLocation?.longitude || -43.1729;
+    // 🎯 O LOCAL EXATO DO NOSSO TESTE DO MAPBIOMAS (Pico da Tijuca)
+    const fallbackLat = -22.9490;
+    const fallbackLng = -43.2877;
+    
+    // Se o GPS falhar (como no seu PC), ele te joga direto pro local do teste!
+    if (!appState.lastUserLocation) {
+        appState.lastUserLocation = { latitude: fallbackLat, longitude: fallbackLng };
+    }
+
+    const initialLat = appState.lastUserLocation.latitude;
+    const initialLng = appState.lastUserLocation.longitude;
     
     appState.map = L.map('map-container', { 
         zoomControl: false,
         maxZoom: 22
-    }).setView([initialLat, initialLng], 17); 
+    }).setView([initialLat, initialLng], 16); 
     
     const googleSat = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
-        maxZoom: 22,
-        subdomains:['mt0','mt1','mt2','mt3'],
-        attribution: 'Google'
+        maxZoom: 22, subdomains:['mt0','mt1','mt2','mt3'], attribution: 'Google'
     });
 
     const streetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '© OpenStreetMap'
+        maxZoom: 19, attribution: '© OpenStreetMap'
     });
 
     googleSat.addTo(appState.map);
-    
-    const baseMaps = {
-        "Visão Satélite": googleSat,
-        "Visão Mapa de Ruas": streetMap
-    };
-    
-    const overlayMaps = {};
-
-    L.control.layers(baseMaps, overlayMaps, { position: 'topleft' }).addTo(appState.map);
+    L.control.layers({ "Satélite": googleSat, "Ruas": streetMap }, {}, { position: 'topleft' }).addTo(appState.map);
     L.control.zoom({ position: 'topright' }).addTo(appState.map);
 
-    // Marca o usuário no mapa (AGORA ARRASTÁVEL E CLICÁVEL!)
-    if (appState.locationPermissionGranted && appState.lastUserLocation) {
-        
-        appState.userMarker = L.marker([initialLat, initialLng], { draggable: true })
-            .addTo(appState.map)
-            .bindPopup("Arraste o pino ou clique no mapa para escolher o local! 📍")
-            .openPopup();
+    // 📍 AGORA O PINO SEMPRE APARECE, MESMO SEM GPS!
+    appState.userMarker = L.marker([initialLat, initialLng], { draggable: true })
+        .addTo(appState.map)
+        .bindPopup("Arraste o pino ou clique no mapa! 📍")
+        .openPopup();
 
-        // Se o usuário arrastar o pino:
-        appState.userMarker.on('dragend', function(event) {
-            const position = event.target.getLatLng();
-            appState.lastUserLocation = {
-                latitude: position.lat,
-                longitude: position.lng
-            };
-            appState.userMarker.bindPopup("Local escolhido! Pode cadastrar.").openPopup();
-        });
+    appState.userMarker.on('dragend', function(event) {
+        const position = event.target.getLatLng();
+        appState.lastUserLocation = { latitude: position.lat, longitude: position.lng };
+        appState.userMarker.bindPopup("Local escolhido!").openPopup();
+    });
 
-        // NOVO: Se o usuário CLICAR em qualquer lugar do mapa:
-        appState.map.on('click', function(event) {
-            const novaPosicao = event.latlng;
-            appState.userMarker.setLatLng(novaPosicao); // Move o pino para onde clicou
-            
-            // Atualiza a memória
-            appState.lastUserLocation = {
-                latitude: novaPosicao.lat,
-                longitude: novaPosicao.lng
-            };
-            appState.userMarker.bindPopup("Novo local escolhido! 📍").openPopup();
-        });
-    }
+    appState.map.on('click', function(event) {
+        const novaPosicao = event.latlng;
+        appState.userMarker.setLatLng(novaPosicao); 
+        appState.lastUserLocation = { latitude: novaPosicao.lat, longitude: novaPosicao.lng };
+        appState.userMarker.bindPopup("Novo local! 📍").openPopup();
+    });
 
     loadTreesOnMap();
 };
@@ -1214,37 +1199,55 @@ const handleRegisterNewTree = async () => {
     const photoFile = document.getElementById('add-tree-photo-input').files[0];
 
     if (!photoFile) {
-        showToast("Por favor, anexe uma foto da árvore para cadastrá-la.");
+        showToast("Por favor, anexe uma foto.");
         return;
     }
 
     const btnSubmit = document.getElementById('btn-finish-add-tree');
     if (btnSubmit) btnSubmit.disabled = true;
 
-    showLoadingModal(true, "Cadastrando no Servidor e no Mapa...");
+    showLoadingModal(true, "Plantando árvore...");
 
     try {
         const photoUrl = await uploadImage(photoFile, 'photos');
-        
-        if (!photoUrl) {
-             showLoadingModal(false);
-             if (btnSubmit) btnSubmit.disabled = false;
-             return;
-        }
+        if (!photoUrl) throw new Error("Erro no upload da foto");
 
-        const arvoreParaPython = {
-            common_name: appState.currentPlantInfo.commonName,
-            scientific_name: appState.currentPlantInfo.scientificName,
-            lat: appState.lastUserLocation.latitude,
-            lng: appState.lastUserLocation.longitude,
+        // 1. SALVA NO FIREBASE PRIMEIRO (Para o app nunca mais travar)
+        const newTree = {
+            commonName: appState.currentPlantInfo.commonName,
+            scientificName: appState.currentPlantInfo.scientificName,
             status: health,
-            user_uid: appState.currentUser.uid,
-            cover_photo: photoUrl
+            location: new GeoPoint(appState.lastUserLocation.latitude, appState.lastUserLocation.longitude),
+            coverPhoto: photoUrl,
+            createdAt: serverTimestamp(),
+            createdBy: { uid: appState.currentUser.uid, name: appState.currentUser.name }
         };
+        const docRef = await addDoc(collection(db, "trees"), newTree);
+        
+        const firstMessage = {
+            action: "cadastrou esta árvore.",
+            message: message || "Adicionei esta nova amiga!",
+            user: { id: appState.currentUser.uid, name: appState.currentUser.name, photoURL: appState.currentUser.photoURL },
+            timestamp: serverTimestamp(),
+            photoUrl: photoUrl
+        };
+        await addDoc(collection(db, "trees", docRef.id, "careEvents"), firstMessage);
+        awardPoints('add_tree');
 
-        const urlPython = "https://arboriza-backend.onrender.com/trees/";
-
+        // 2. COMUNICAÇÃO COM O PYTHON (Sem quebrar o app)
+        let biomaSolo = null;
         try {
+            const urlPython = "https://arboriza-backend.onrender.com/trees/";
+            const arvoreParaPython = {
+                common_name: appState.currentPlantInfo.commonName,
+                scientific_name: appState.currentPlantInfo.scientificName,
+                lat: appState.lastUserLocation.latitude,
+                lng: appState.lastUserLocation.longitude,
+                status: health,
+                user_uid: appState.currentUser.uid,
+                cover_photo: photoUrl
+            };
+            
             const respostaPython = await fetch(urlPython, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -1253,59 +1256,23 @@ const handleRegisterNewTree = async () => {
             
             if (respostaPython.ok) {
                 const dadosCerebro = await respostaPython.json();
-                
-                // 🛑 TRUQUE DO IPHONE: Joga a resposta na cara do usuário para podermos ler!
-                alert("RESPOSTA DO PYTHON:\n" + JSON.stringify(dadosCerebro));
-                
-                appState.ultimoBioma = dadosCerebro.mapbiomas_classe;
-            } else {
-                alert("ERRO NO PYTHON! Status: " + respostaPython.status);
+                biomaSolo = dadosCerebro.mapbiomas_classe;
             }
         } catch (erroPython) {
-            alert("O PYTHON NÃO RESPONDEU:\n" + erroPython.message);
+            console.error("Python demorou ou falhou, mas a árvore foi salva:", erroPython);
         }
 
-        const newTree = {
-            commonName: appState.currentPlantInfo.commonName,
-            scientificName: appState.currentPlantInfo.scientificName,
-            status: health,
-            location: new GeoPoint(appState.lastUserLocation.latitude, appState.lastUserLocation.longitude),
-            coverPhoto: photoUrl,
-            createdAt: serverTimestamp(),
-            createdBy: {
-                uid: appState.currentUser.uid,
-                name: appState.currentUser.name
-            }
-        };
+        // 3. FINALIZAÇÃO: MENSAGEM E MUDANÇA DE TELA GARANTIDA
+        showPage('map');
         
-        const docRef = await addDoc(collection(db, "trees"), newTree);
-        
-        const firstMessage = {
-            action: "cadastrou esta árvore.",
-            message: message || "Adicionei esta nova amiga!",
-            user: { 
-                id: appState.currentUser.uid, 
-                name: appState.currentUser.name, 
-                photoURL: appState.currentUser.photoURL 
-            },
-            timestamp: serverTimestamp(),
-            photoUrl: photoUrl
-        };
-        await addDoc(collection(db, "trees", docRef.id, "careEvents"), firstMessage);
-        
-        awardPoints('add_tree');
-        
-        if (appState.ultimoBioma && appState.ultimoBioma !== "Área ainda não mapeada") {
-            showToast(`Árvore salva! Histórico do solo: ${appState.ultimoBioma} 🌳`);
+        if (biomaSolo && biomaSolo !== "Área ainda não mapeada") {
+            alert(`🌳 INCRÍVEL! Solo analisado: Esta área era ${biomaSolo}!`);
         } else {
             showToast("Árvore cadastrada com sucesso no mapa!");
         }
         
-        appState.ultimoBioma = null;
+        // Limpa o formulário
         appState.currentPlantInfo = null;
-        
-        showPage('map');
-        
         document.getElementById('add-tree-photo-input').value = null;
         document.getElementById('add-tree-photo-preview').classList.add('hidden');
         document.getElementById('add-tree-message').value = '';
