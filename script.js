@@ -1253,128 +1253,118 @@ function updateSoilAnalysisUI(state, text) {
 }
 
 const handleRegisterNewTree = async () => {
-    if (!appState.currentPlantInfo || !appState.lastUserLocation) {
-        showToast("Localização exata necessária. Tente se localizar no mapa primeiro.");
+    // 1. Verificação básica
+    if (!appState.currentPlantInfo) {
+        showToast("Selecione uma planta primeiro.");
         return;
     }
+
+    // 🛑 A LEI DO PINO (Versão Definitiva)
+    // Forçamos a leitura do marcador visual agora, antes de qualquer outra lógica.
+    let latFinal, lngFinal;
     
+    if (appState.userMarker) {
+        const posicaoAtualNoMapa = appState.userMarker.getLatLng();
+        latFinal = posicaoAtualNoMapa.lat;
+        lngFinal = posicaoAtualNoMapa.lng;
+        console.log("📍 Coordenada capturada do Pino:", latFinal, lngFinal);
+    } else {
+        latFinal = appState.lastUserLocation.latitude;
+        lngFinal = appState.lastUserLocation.longitude;
+    }
+
     const health = document.getElementById('add-tree-health').value;
     const message = document.getElementById('add-tree-message').value;
     const photoFile = document.getElementById('add-tree-photo-input').files[0];
 
     if (!photoFile) {
-        showToast("Por favor, anexe uma foto.");
+        showToast("Anexe uma foto para continuar.");
         return;
     }
 
     const btnSubmit = document.getElementById('btn-finish-add-tree');
     if (btnSubmit) btnSubmit.disabled = true;
 
-    showLoadingModal(true, "Plantando árvore...");
-
-    // ==========================================
-    // 🛑 A LEI DO PINO: Pega a posição exata visual do mapa!
-    // ==========================================
-    let latExata = appState.lastUserLocation.latitude;
-    let lngExata = appState.lastUserLocation.longitude;
-    
-    if (appState.userMarker) {
-        const posicaoPino = appState.userMarker.getLatLng();
-        latExata = posicaoPino.lat;
-        lngExata = posicaoPino.lng;
-    }
+    showLoadingModal(true, "Processando registro...");
 
     try {
-        // 1. SALVA NO FIREBASE E NO STORAGE
+        // Envio da foto (Firebase)
         const photoUrl = await uploadImage(photoFile, 'photos');
-        if (!photoUrl) throw new Error("Erro no upload da foto");
+        if (!photoUrl) throw new Error("Falha no upload da imagem");
 
+        // Registro no Firestore
         const newTree = {
             commonName: appState.currentPlantInfo.commonName,
             scientificName: appState.currentPlantInfo.scientificName,
             status: health,
-            location: new GeoPoint(latExata, lngExata), // <-- Usa a coordenada exata do pino
+            location: new GeoPoint(latFinal, lngFinal), // <-- Usa a lat/lng do pino
             coverPhoto: photoUrl,
             createdAt: serverTimestamp(),
             createdBy: { uid: appState.currentUser.uid, name: appState.currentUser.name }
         };
+
         const docRef = await addDoc(collection(db, "trees"), newTree);
         
-        const firstMessage = {
+        await addDoc(collection(db, "trees", docRef.id, "careEvents"), {
             action: "cadastrou esta árvore.",
-            message: message || "Adicionei esta nova amiga!",
+            message: message || "Nova árvore no mapa!",
             user: { id: appState.currentUser.uid, name: appState.currentUser.name, photoURL: appState.currentUser.photoURL },
             timestamp: serverTimestamp(),
             photoUrl: photoUrl
-        };
-        await addDoc(collection(db, "trees", docRef.id, "careEvents"), firstMessage);
+        });
+
         awardPoints('add_tree');
 
-        // ==========================================
-        // 2. MUDANÇA IMEDIATA DE TELA
-        // ==========================================
+        // UI: Muda de tela na hora
         showLoadingModal(false);
         showPage('map');
-        updateSoilAnalysisUI('loading', 'Árvore salva! Analisando solo no MapBiomas...');
+        updateSoilAnalysisUI('loading', 'Árvore salva! Consultando MapBiomas...');
 
-        // ==========================================
-        // 3. PYTHON EM SEGUNDO PLANO (Com Timeout Profissional!)
-        // ==========================================
+        // Chamada ao Python (Background)
         const urlPython = "https://arboriza-backend.onrender.com/trees/";
-        const arvoreParaPython = {
-            common_name: appState.currentPlantInfo.commonName,
-            scientific_name: appState.currentPlantInfo.scientificName,
-            lat: latExata, // <-- Usa a coordenada exata do pino
-            lng: lngExata, // <-- Usa a coordenada exata do pino
-            status: health,
-            user_uid: appState.currentUser.uid,
-            cover_photo: photoUrl
-        };
         
-        // Configura um "cronômetro" de 12 segundos
-        const controladorTempo = new AbortController();
-        const timeoutId = setTimeout(() => controladorTempo.abort(), 12000);
+        // Aumentamos para 40s para vencer o "Cold Start" do Render
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 40000); 
 
         fetch(urlPython, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(arvoreParaPython),
-            signal: controladorTempo.signal // Conecta o cronômetro ao fetch
+            body: JSON.stringify({
+                common_name: appState.currentPlantInfo.commonName,
+                scientific_name: appState.currentPlantInfo.scientificName,
+                lat: latFinal,
+                lng: lngFinal,
+                status: health,
+                user_uid: appState.currentUser.uid,
+                cover_photo: photoUrl
+            }),
+            signal: controller.signal
         })
         .then(res => {
-            clearTimeout(timeoutId); // Cancela o cronômetro se respondeu rápido
+            clearTimeout(timeoutId);
             return res.json();
         })
-        .then(dadosCerebro => {
-            const biomaSolo = dadosCerebro.mapbiomas_classe;
-            if (biomaSolo && biomaSolo !== "Área ainda não mapeada") {
-                updateSoilAnalysisUI('success', `Histórico do solo: ${biomaSolo}!`);
+        .then(data => {
+            if (data.mapbiomas_classe && data.mapbiomas_classe !== "Área ainda não mapeada") {
+                updateSoilAnalysisUI('success', `Histórico: ${data.mapbiomas_classe}!`);
             } else {
-                updateSoilAnalysisUI('info', 'Árvore registrada no mapa com sucesso.');
+                updateSoilAnalysisUI('info', 'Árvore registrada com sucesso.');
             }
         })
-        .catch(erroPython => {
-            // Se o tempo esgotar, aborta com elegância
-            if (erroPython.name === 'AbortError') {
-                console.warn("Python demorou muito para acordar. Análise cancelada no Front-end.");
-                updateSoilAnalysisUI('info', 'Árvore salva! (Análise de solo operando em background)');
-            } else {
-                console.error("Erro no Python:", erroPython);
-                updateSoilAnalysisUI('error', 'Árvore salva no mapa com sucesso!');
-            }
+        .catch(err => {
+            console.error("Erro na integração:", err);
+            updateSoilAnalysisUI('error', 'Solo ainda em análise (servidor ocupado).');
         });
 
-        // ==========================================
-        // 4. LIMPEZA DA MEMÓRIA
-        // ==========================================
+        // Limpeza
         appState.currentPlantInfo = null;
         document.getElementById('add-tree-photo-input').value = null;
-        document.getElementById('add-tree-photo-preview').classList.add('hidden');
         document.getElementById('add-tree-message').value = '';
 
     } catch (error) {
-        console.error("Erro ao cadastrar árvore:", error);
-        showToast("Ocorreu um erro ao cadastrar a árvore.");
+        console.error("Erro geral:", error);
+        showToast("Erro ao cadastrar.");
         showLoadingModal(false);
         if (btnSubmit) btnSubmit.disabled = false;
     }
