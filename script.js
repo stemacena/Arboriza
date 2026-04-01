@@ -612,11 +612,22 @@ const initializeMap = () => {
         appState.userMarker.bindPopup("Local escolhido!").openPopup();
     });
 
+    // Clique no mapa com proteção contra "Pino Fantasma"
     appState.map.on('click', function(event) {
+        // Se o usuário tocou em um botão ou painel por cima do mapa, IGNORA!
+        const elementoClicado = event.originalEvent.target;
+        if (elementoClicado.closest('button') || elementoClicado.closest('.modal-content') || elementoClicado.closest('nav')) {
+            return; 
+        }
+
         const novaPosicao = event.latlng;
         appState.userMarker.setLatLng(novaPosicao); 
-        appState.lastUserLocation = { latitude: novaPosicao.lat, longitude: novaPosicao.lng };
-        appState.userMarker.bindPopup("Novo local! 📍").openPopup();
+        
+        appState.lastUserLocation = {
+            latitude: novaPosicao.lat,
+            longitude: novaPosicao.lng
+        };
+        appState.userMarker.bindPopup("Novo local escolhido! 📍").openPopup();
     });
 
     loadTreesOnMap();
