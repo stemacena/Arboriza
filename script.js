@@ -55,6 +55,7 @@ const appState = {
     currentUser: null,
     currentTree: null,
     currentPlantInfo: null,
+    tempTreePhotoFile: null, // NOVO: Guarda a foto da identificação para o cadastro!
     lastUserLocation: null,
     locationPermissionGranted: false,
     map: null,
@@ -64,8 +65,16 @@ const appState = {
 
 // --- 3. FUNÇÕES PRINCIPAIS (Ciclo de Vida da App) ---
 
+const acordarServidorPython = () => {
+    console.log("⏰ Mandando um 'Bom dia' para acordar o servidor Render...");
+    fetch("https://arboriza-backend.onrender.com/")
+        .then(res => res.json())
+        .then(data => console.log("🚀 Servidor Python está 100% acordado e pronto!"))
+        .catch(err => console.log("Servidor Python ainda acordando..."));
+};
+
 const initializeAppCore = () => {
-    console.log("Arboriza 1.0.11 iniciando... (Correção de Mapa)"); 
+    console.log("Arboriza 1.0.12 iniciando... (Mídia UI Fix + Python Restored)"); 
     setAppHeight();
     window.addEventListener('resize', setAppHeight);
     lucide.createIcons();
@@ -74,6 +83,7 @@ const initializeAppCore = () => {
         if (user) {
             console.log("Usuário logado:", user.uid);
             fetchUserProfile(user.uid, user);
+            acordarServidorPython(); // Restaura o nosso despertador do MapBiomas!
         } else {
             console.log("Nenhum usuário logado.");
             appState.currentUser = null;
@@ -122,7 +132,6 @@ const fetchUserProfile = async (uid, authUser) => {
         
         document.querySelector('main').classList.remove('hidden');
         document.querySelector('nav').classList.remove('hidden');
-        // Chama updateGamificationUI aqui para garantir que a barra carregue certa logo de início
         updateGamificationUI();
         promptForLocation(); 
     } catch (error) {
@@ -192,7 +201,7 @@ const showToast = (message) => {
     if (toast) {
         toast.querySelector('p').textContent = message;
         toast.classList.remove('hidden');
-        setTimeout(() => toast.classList.add('hidden'), 3500);
+        setTimeout(() => toast.classList.add('hidden'), 5000); // 5 seg para o Mapbiomas dar tempo de ler
     }
 };
 
@@ -404,9 +413,6 @@ const awardPoints = async (action) => {
     updateGamificationUI();
 };
 
-// =======================================================
-// ## CORREÇÃO BARRA DE PROGRESSO (v1.0.11) ##
-// =======================================================
 const updateGamificationUI = () => {
     const user = appState.currentUser;
     if (!user) return;
@@ -415,20 +421,14 @@ const updateGamificationUI = () => {
     document.getElementById('profile-avatar').src = user.photoURL || `https://placehold.co/128x128/cccccc/FFFFFF?text=${user.name.charAt(0)}`;
     document.getElementById('profile-level').textContent = user.levelName || 'Nível 1: Semente';
     
-    // Cálculo seguro da porcentagem
     const pointsToLevelUp = 1000;
     const currentPoints = parseFloat(user.points) || 0; 
     
-    // Garante que o cálculo seja (Pontos / Meta) * 100
     let progress = (currentPoints / pointsToLevelUp) * 100;
-    
-    // Limites de segurança (0% a 100%)
     if (progress > 100) progress = 100;
     if (progress < 0) progress = 0;
 
     document.getElementById('profile-points-text').textContent = currentPoints;
-    
-    // A largura da barra deve ser EXATAMENTE a porcentagem de progresso
     document.getElementById('profile-progress-bar').style.width = `${progress}%`;
     document.getElementById('profile-progress-text').textContent = `${Math.round(progress)}%`;
     
@@ -528,7 +528,6 @@ const promptForLocation = () => {
         } catch (error) {
             console.error("Erro de Geolocalização:", error);
             showToast("Não foi possível obter sua localização. O mapa será centralizado no Rio.");
-            // Fallback para Rio de Janeiro
             appState.lastUserLocation = { latitude: -22.9068, longitude: -43.1729 };
             appState.locationPermissionGranted = false;
             
@@ -556,7 +555,6 @@ const initializeMap = () => {
         return;
     }
     
-    // Fallback de segurança se lastUserLocation for null (embora promptForLocation tente garantir)
     const initialLat = appState.lastUserLocation?.latitude || -22.9068;
     const initialLng = appState.lastUserLocation?.longitude || -43.1729;
     
@@ -573,12 +571,28 @@ const initializeMap = () => {
     
     L.control.zoom({ position: 'topright' }).addTo(appState.map);
 
-    if (appState.locationPermissionGranted && appState.lastUserLocation) {
-        appState.userMarker = L.marker([initialLat, initialLng])
-            .addTo(appState.map)
-            .bindPopup("Você está aqui!")
-            .openPopup();
-    }
+    // O PINO: Blindado contra o 'pulo falso' que resolvemos ontem
+    appState.userMarker = L.marker([initialLat, initialLng], { draggable: true })
+        .addTo(appState.map)
+        .bindPopup("Arraste o pino ou clique no mapa! 📍")
+        .openPopup();
+
+    appState.userMarker.on('dragend', function(event) {
+        const position = event.target.getLatLng();
+        appState.lastUserLocation = { latitude: position.lat, longitude: position.lng };
+        appState.userMarker.bindPopup("Local escolhido!").openPopup();
+    });
+
+    appState.map.on('click', function(event) {
+        const elementoClicado = event.originalEvent.target;
+        if (elementoClicado.closest('button') || elementoClicado.closest('.modal-content') || elementoClicado.closest('nav')) {
+            return; 
+        }
+        const novaPosicao = event.latlng;
+        appState.userMarker.setLatLng(novaPosicao); 
+        appState.lastUserLocation = { latitude: novaPosicao.lat, longitude: novaPosicao.lng };
+        appState.userMarker.bindPopup("Novo local escolhido! 📍").openPopup();
+    });
 
     loadTreesOnMap();
 };
@@ -594,48 +608,31 @@ const centerMapOnUserLocation = async () => {
     }
 };
 
-// =======================================================
-// SUBSTITUA APENAS A FUNÇÃO addTreeMarkerToMap POR ESTA:
-// =======================================================
-
 const addTreeMarkerToMap = (tree) => {
-    // 1. Proteção: Se não tiver localizacao, ignora sem quebrar o app
     if (!tree.location) return;
 
-    // 2. Normalização: Tenta ler lat/lng de todas as formas possíveis e CONVERTE para número
     let rawLat = tree.location.latitude ?? tree.location.lat ?? tree.location._lat;
     let rawLng = tree.location.longitude ?? tree.location.lng ?? tree.location._long;
     
-    // O segredo: parseFloat garante que texto virou número
     let lat = parseFloat(rawLat);
     let lng = parseFloat(rawLng);
 
-    // Se a conversão falhou (deu NaN), aborta
     if (isNaN(lat) || isNaN(lng)) return;
 
-    // 3. Efeito Dispersão (Jitter):
-    // Se várias árvores tiverem a MESMA coordenada, adiciona um desvio minúsculo 
-    // baseado no ID da árvore para que elas não fiquem empilhadas visualmente.
-    const jitterAmount = 0.00015; // Aprox 10-15 metros
-    
-    // Usa o ID para gerar um "número aleatório fixo" (para o pino não ficar dançando)
     const pseudoRandom = tree.id.charCodeAt(0) + (tree.id.length * 5);
-    
-    const offsetLat = ((pseudoRandom % 10) - 5) * (jitterAmount / 5);
-    const offsetLng = ((pseudoRandom % 8) - 4) * (jitterAmount / 4);
+    const offsetLat = ((pseudoRandom % 10) - 5) * (0.00015 / 5);
+    const offsetLng = ((pseudoRandom % 8) - 4) * (0.00015 / 4);
 
     lat += offsetLat;
     lng += offsetLng;
 
     const latLng = [lat, lng];
 
-    // Se o marcador já existe, apenas move ele
     if (appState.treeMarkers[tree.id]) {
         appState.treeMarkers[tree.id].setLatLng(latLng);
         return;
     }
 
-    // Define a cor do ícone
     let iconUrl;
     switch (tree.status) {
         case 'healthy': iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png'; break;
@@ -651,25 +648,18 @@ const addTreeMarkerToMap = (tree) => {
     });
 
     const marker = L.marker(latLng, { icon: treeIcon });
-    
-    // Adiciona evento de clique
     marker.on('click', () => showTreeProfile(tree.id));
     marker.addTo(appState.map);
 
     appState.treeMarkers[tree.id] = marker;
 };
 
-// =======================================================
-// ## CORREÇÃO PRINCIPAL DO MAPA (v1.0.11) ##
-// =======================================================
 const loadTreesOnMap = () => {
     const q = query(collection(db, "trees"));
     
     onSnapshot(q, (querySnapshot) => {
         console.log("Recebendo atualização das árvores...");
-        
         querySnapshot.forEach((doc) => {
-            // "Blindamos" o carregamento. Se uma árvore falhar, as outras continuam.
             try {
                 const tree = { id: doc.id, ...doc.data() };
                 addTreeMarkerToMap(tree);
@@ -677,10 +667,8 @@ const loadTreesOnMap = () => {
                 console.error("Erro ao processar árvore específica (Ignorada):", doc.id, err);
             }
         });
-
     }, (error) => {
-        console.error("Erro geral no Snapshot (verifique dados sujos no banco):", error);
-        // Não mostramos Toast de erro aqui para não interromper a experiência se for um erro silencioso de rede
+        console.error("Erro geral no Snapshot:", error);
     });
 };
 
@@ -700,7 +688,6 @@ const showTreeProfile = async (treeId) => {
         document.getElementById('tree-profile-name').textContent = tree.commonName || 'Nome não definido';
         document.getElementById('tree-profile-scientific-name').textContent = tree.scientificName || '';
         
-        // Tratamento seguro para location na exibição
         let locText = "Localização não disponível";
         if (tree.location) {
              const lat = tree.location.latitude || tree.location.lat;
@@ -708,7 +695,6 @@ const showTreeProfile = async (treeId) => {
              if (lat && lng) locText = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
         }
         document.getElementById('tree-profile-address').querySelector('span').textContent = tree.address || locText;
-        
         document.getElementById('tree-profile-image').src = tree.coverPhoto;
 
         const statusBadge = document.getElementById('tree-profile-status-badge');
@@ -716,10 +702,15 @@ const showTreeProfile = async (treeId) => {
         else if (tree.status === 'needs-care') { statusBadge.className = 'bg-alerta text-yellow-800 text-center font-bold p-2 rounded-lg my-4'; statusBadge.textContent = 'Precisa de Cuidado'; }
         else { statusBadge.className = 'bg-erro text-white text-center font-bold p-2 rounded-lg my-4'; statusBadge.textContent = 'Em Estado Crítico'; }
 
-        document.getElementById('tree-comment-photo-preview').classList.add('hidden');
+        // Limpa o input de foto do comentário 
+        document.getElementById('tree-comment-photo-preview-container').classList.add('hidden');
         document.getElementById('tree-comment-photo-preview').src = '';
         document.getElementById('tree-comment-photo-input').value = null;
-
+        const commentLabel = document.getElementById('comment-media-label');
+        if(commentLabel) {
+            commentLabel.innerText = "Adicionar Foto";
+            commentLabel.classList.remove('text-verde-principal');
+        }
 
         loadTreeSubcollection(treeId, 'careEvents', 'tree-profile-history', renderHistoryEvent);
         loadTreeSubcollection(treeId, 'careEvents', 'tree-profile-timeline', renderTimelineEvent, true);
@@ -758,19 +749,14 @@ const loadTreeSubcollection = (treeId, subcollection, containerId, renderFunctio
 
         snapshot.forEach(doc => {
             const item = doc.data();
-            
-            if (filterByMessageOrPhoto && !item.message && !item.photoUrl) {
-                return;
-            }
-            
+            if (filterByMessageOrPhoto && !item.message && !item.photoUrl) return;
             container.innerHTML += renderFunction(item);
             itemsFound++;
         });
 
         if (itemsFound === 0 && filterByMessageOrPhoto) {
-            container.innerHTML = `<p class="text-gray-500 text-sm text-center italic">Nenhuma mensagem no mural.</p>`;
+            container.innerHTML = `<p class="text-gray-500 text-sm text-center italic">Ainda não há mensagens ou fotos. Seja o primeiro a adicionar!</p>`;
         }
-        
         lucide.createIcons();
     }, (error) => {
         console.error(`Erro ao carregar ${subcollection}:`, error);
@@ -786,19 +772,19 @@ const renderHistoryEvent = (event) => {
 
 const renderTimelineEvent = (event) => {
     if (!event || !event.user) return '';
-    const eventDate = event.timestamp ? event.timestamp.toDate().toLocaleDateString('pt-BR') : 'sem data';
+    const eventDate = event.timestamp ? event.timestamp.toDate().toLocaleDateString('pt-BR') : 'Agora mesmo';
     const isFirst = event.action.includes("cadastrou");
     return `
-        <div class="bg-cinza p-3 rounded-lg fade-in relative">
+        <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-100 fade-in relative">
             <div class="flex items-center mb-2">
                 <img src="${event.user.photoURL || 'https://placehold.co/32x32/cccccc/FFFFFF?text=?'}" class="w-8 h-8 rounded-full object-cover">
-                <p class="ml-2 font-semibold text-sm">${event.user.name || 'Anônimo'}</p>
-                <p class="ml-auto text-xs text-gray-500">${eventDate}</p>
+                <p class="ml-2 font-bold text-gray-700 text-xs">${event.user.name || 'Anônimo'}</p>
+                <p class="ml-auto text-[10px] text-gray-400">${eventDate}</p>
             </div>
-            ${event.photoUrl ? `<img src="${event.photoUrl}" class="w-full h-auto rounded-lg object-cover my-2">` : ''}
-            ${event.message ? `<p class="text-sm text-gray-700 italic">"${event.message}"</p>` : ''}
+            ${event.message ? `<p class="text-sm text-gray-600">"${event.message}"</p>` : ''}
+            ${event.photoUrl ? `<img src="${event.photoUrl}" class="w-full h-auto rounded-lg object-cover mt-2 border border-gray-200">` : ''}
             
-            ${isFirst ? '<span class="absolute -top-2 -right-2 text-xs bg-alerta text-yellow-800 font-semibold px-2 py-0.5 rounded-full shadow-md">✨ Primeira Mensagem</span>' : ''}
+            ${isFirst ? '<span class="absolute -top-2 -right-2 text-[10px] bg-verde-principal text-white px-2 py-0.5 rounded-full shadow-md">✨ Primeira Mensagem</span>' : ''}
         </div>`;
 };
 
@@ -825,7 +811,7 @@ const checkAdoptionStatus = async (treeId) => {
         btn.classList.replace('text-verde-principal', 'text-erro');
         btn.innerHTML = `
             <i data-lucide="heart-off" class="w-5 h-5"></i>
-            <span>Remover Adoção</span>
+            <span>Remover</span>
         `;
     } else {
         btn.classList.replace('text-erro', 'text-verde-principal');
@@ -854,7 +840,7 @@ const handleAdoptTree = async () => {
         if (docSnap.exists()) {
             await deleteDoc(treeAdoptRef);
             await deleteDoc(userAdoptRef);
-            showToast(`${tree.commonName} removida das suas adoções.`);
+            showToast(`${tree.commonName} removida das adoções.`);
         } else {
             const adoptionData = {
                 name: user.name,
@@ -889,7 +875,8 @@ const handlePostComment = async () => {
     const user = appState.currentUser;
     const input = document.getElementById('tree-comment-input');
     const photoInput = document.getElementById('tree-comment-photo-input');
-    const photoPreview = document.getElementById('tree-comment-photo-preview');
+    const previewContainer = document.getElementById('tree-comment-photo-preview-container');
+    const previewImg = document.getElementById('tree-comment-photo-preview');
     
     const message = input.value;
     const photoFile = photoInput.files[0];
@@ -906,7 +893,7 @@ const handlePostComment = async () => {
     try {
         let photoUrl = null;
         if (photoFile) {
-            photoUrl = await uploadImage(photoFile, 'photos');
+            photoUrl = await uploadImage(photoFile, 'comment_photos');
         }
 
         const commentEvent = {
@@ -926,12 +913,15 @@ const handlePostComment = async () => {
         
         awardPoints('comment_tree');
         
+        // Limpa tudo!
         input.value = '';
         photoInput.value = null;
-        photoPreview.src = '';
-        photoPreview.classList.add('hidden');
+        previewImg.src = '';
+        previewContainer.classList.add('hidden');
+        document.getElementById('comment-media-label').innerText = "Adicionar Foto";
+        document.getElementById('comment-media-label').classList.remove('text-verde-principal', 'font-bold');
         
-        showToast("Mensagem postada no mural!");
+        showToast("Mensagem postada!");
 
     } catch (error) {
         console.error("Erro ao postar comentário:", error);
@@ -952,7 +942,6 @@ const uploadImage = async (file, folder = 'photos') => {
     const fileRef = ref(storage, filePath);
     
     try {
-        showLoadingModal(true, "Enviando foto...");
         const snapshot = await uploadBytes(fileRef, file);
         const url = await getDownloadURL(snapshot.ref);
         console.log("Foto enviada com sucesso:", url);
@@ -961,8 +950,6 @@ const uploadImage = async (file, folder = 'photos') => {
         console.error("Erro no upload da imagem:", error);
         showToast("Erro ao enviar a foto. Tente novamente.");
         return null;
-    } finally {
-        showLoadingModal(false);
     }
 };
 
@@ -1000,6 +987,7 @@ const handleFinishCare = async () => {
         document.getElementById('care-message').value = '';
         document.getElementById('care-photo-input').value = null;
         document.getElementById('care-confirmation-section').classList.add('hidden');
+        document.getElementById('care-media-label').innerText = "Anexar Foto do Cuidado";
 
     } catch (error) {
         console.error("Erro ao finalizar cuidado:", error);
@@ -1090,6 +1078,9 @@ const capturePhotoFromFeed = () => {
 const handlePlantIdentification = async (file) => {
     if (!file) return;
 
+    // Guarda a foto no AppState para não perder na hora de cadastrar!
+    appState.tempTreePhotoFile = file;
+
     const resultImageEl = document.getElementById('result-plant-image');
     resultImageEl.src = URL.createObjectURL(file);
     showPage('result');
@@ -1153,17 +1144,25 @@ const initiateCareFlow = async () => {
     
     awardPoints('identify_tree'); 
     
-    const treeExists = false; 
+    // Mostra o formulário que permite a criação de nova árvore
+    showPage('care');
+    document.getElementById('care-title').textContent = "Árvore não cadastrada!";
+    document.getElementById('care-subtitle').textContent = `Gostaria de adicionar esta ${appState.currentPlantInfo.commonName} ao mapa?`;
+    document.getElementById('care-actions-container').classList.add('hidden');
+    document.getElementById('add-tree-button-container').classList.remove('hidden');
 
-    if (treeExists) {
-        // Lógica futura
-    } else {
-        showPage('care');
-        document.getElementById('care-title').textContent = "Árvore não cadastrada!";
-        document.getElementById('care-subtitle').textContent = `Gostaria de adicionar esta ${appState.currentPlantInfo.commonName} ao mapa?`;
-        document.getElementById('care-actions-container').classList.add('hidden');
-        document.getElementById('add-tree-button-container').classList.remove('hidden');
-    }
+    // Ao ir pra tela de cadastro, se já tiver a foto, joga no preview!
+    const btnNovoCadastro = document.querySelector('[data-page="add-tree"]');
+    btnNovoCadastro.onclick = () => {
+        showPage('add-tree');
+        if (appState.tempTreePhotoFile) {
+            const previewImg = document.getElementById('tree-registration-preview');
+            const placeholder = document.getElementById('preview-placeholder');
+            previewImg.src = URL.createObjectURL(appState.tempTreePhotoFile);
+            previewImg.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+        }
+    };
 };
 
 const handleRegisterNewTree = async () => {
@@ -1171,10 +1170,23 @@ const handleRegisterNewTree = async () => {
         showToast("Localização exata necessária. Tente se localizar no mapa primeiro.");
         return;
     }
+
+    // LER O PINO DO MAPA (A "LEI DO PINO")
+    let latFinal, lngFinal;
+    if (appState.userMarker) {
+        const posicaoAtualNoMapa = appState.userMarker.getLatLng();
+        latFinal = posicaoAtualNoMapa.lat;
+        lngFinal = posicaoAtualNoMapa.lng;
+    } else {
+        latFinal = appState.lastUserLocation.latitude;
+        lngFinal = appState.lastUserLocation.longitude;
+    }
     
     const health = document.getElementById('add-tree-health').value;
     const message = document.getElementById('add-tree-message').value;
-    const photoFile = document.getElementById('add-tree-photo-input').files[0];
+    
+    // Pega a foto do input NOVO ou pega a que foi tirada na identificação (appState)
+    let photoFile = document.getElementById('add-tree-photo-input').files[0] || appState.tempTreePhotoFile;
 
     if (!photoFile) {
         showToast("Por favor, anexe uma foto da árvore para cadastrá-la.");
@@ -1186,16 +1198,13 @@ const handleRegisterNewTree = async () => {
     try {
         const photoUrl = await uploadImage(photoFile, 'photos');
         
-        if (!photoUrl) {
-             showLoadingModal(false);
-             return;
-        }
+        if (!photoUrl) throw new Error("Falha no upload da imagem");
         
         const newTree = {
             commonName: appState.currentPlantInfo.commonName,
             scientificName: appState.currentPlantInfo.scientificName,
             status: health,
-            location: new GeoPoint(appState.lastUserLocation.latitude, appState.lastUserLocation.longitude),
+            location: new GeoPoint(latFinal, lngFinal),
             coverPhoto: photoUrl,
             createdAt: serverTimestamp(),
             createdBy: {
@@ -1207,7 +1216,7 @@ const handleRegisterNewTree = async () => {
         const docRef = await addDoc(collection(db, "trees"), newTree);
         
         const firstMessage = {
-            action: "cadastrou esta árvore.",
+            action: "cadastrou esta árvore no mapa.",
             message: message || "Adicionei esta nova amiga!",
             user: { 
                 id: appState.currentUser.uid, 
@@ -1220,12 +1229,39 @@ const handleRegisterNewTree = async () => {
         await addDoc(collection(db, "trees", docRef.id, "careEvents"), firstMessage);
         
         awardPoints('add_tree');
-        showToast("Árvore cadastrada com sucesso!");
+        showToast("Árvore salva! Consultando MapBiomas...");
         
         showPage('map');
         
+        // --- INTEGRAÇÃO COM MAPBIOMAS (PYTHON) RESTAURADA ---
+        const urlPython = "https://arboriza-backend.onrender.com/trees/";
+        fetch(urlPython, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                common_name: appState.currentPlantInfo.commonName,
+                scientific_name: appState.currentPlantInfo.scientificName,
+                lat: latFinal,
+                lng: lngFinal,
+                status: health,
+                user_uid: appState.currentUser.uid,
+                cover_photo: photoUrl
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.mapbiomas_classe && data.mapbiomas_classe !== "Área ainda não mapeada") {
+                showToast(`Histórico do Solo: ${data.mapbiomas_classe}!`);
+            }
+        })
+        .catch(err => console.error("Erro na integração MapBiomas:", err));
+        
+        // LIMPEZA DA TELA
+        appState.tempTreePhotoFile = null;
         document.getElementById('add-tree-photo-input').value = null;
-        document.getElementById('add-tree-photo-preview').classList.add('hidden');
+        document.getElementById('tree-registration-preview').src = '';
+        document.getElementById('tree-registration-preview').classList.add('hidden');
+        document.getElementById('preview-placeholder').classList.remove('hidden');
         document.getElementById('add-tree-message').value = '';
 
     } catch (error) {
@@ -1284,7 +1320,6 @@ const setupEventListeners = () => {
         }
     });
 
-    // --- Autenticação ---
     document.getElementById('login-form').addEventListener('submit', handleLogin);
     document.getElementById('signup-form').addEventListener('submit', handleSignup);
     document.getElementById('btn-logout').addEventListener('click', handleLogout);
@@ -1300,10 +1335,8 @@ const setupEventListeners = () => {
     });
     document.getElementById('forgot-password-form').addEventListener('submit', handleForgotPassword);
 
-    // --- Perfil ---
     document.getElementById('profile-avatar-input').addEventListener('change', handleProfilePicUpload);
 
-    // --- Identificação ---
     document.getElementById('plant-photo-input').addEventListener('change', (e) => {
         if (e.target.files && e.target.files.length > 0) {
             handlePlantIdentification(e.target.files[0]);
@@ -1313,25 +1346,40 @@ const setupEventListeners = () => {
     document.getElementById('btn-confirm-no').addEventListener('click', () => {
         showToast("Tente tirar uma foto de outro ângulo.");
         document.getElementById('plant-photo-input').value = null;
+        appState.tempTreePhotoFile = null;
         showPage('camera');
     });
     document.getElementById('btn-initiate-care').addEventListener('click', initiateCareFlow);
 
-    // --- Cadastro ---
     document.getElementById('btn-finish-add-tree').addEventListener('click', handleRegisterNewTree);
+    
+    // GATILHO DA FOTO NO CADASTRO (Câmera + Galeria)
+    document.getElementById('btn-trigger-media').addEventListener('click', () => document.getElementById('add-tree-photo-input').click());
     document.getElementById('add-tree-photo-input').addEventListener('change', (e) => {
         if (e.target.files && e.target.files[0]) {
-            const preview = document.getElementById('add-tree-photo-preview');
+            appState.tempTreePhotoFile = e.target.files[0]; // Sobrescreve com a foto nova
+            const preview = document.getElementById('tree-registration-preview');
+            const placeholder = document.getElementById('preview-placeholder');
             preview.src = URL.createObjectURL(e.target.files[0]);
             preview.classList.remove('hidden');
+            placeholder.classList.add('hidden');
         }
     });
 
-    // --- Mapa ---
     document.getElementById('btn-locate-me').addEventListener('click', centerMapOnUserLocation);
 
-    // --- Cuidado ---
     document.getElementById('btn-finish-care').addEventListener('click', handleFinishCare);
+    
+    // Ajuste no input do Cuidar 
+    const carePhotoInput = document.getElementById('care-photo-input');
+    if(carePhotoInput) {
+        carePhotoInput.addEventListener('change', (e) => {
+            if(e.target.files[0]) {
+                document.getElementById('care-media-label').innerText = "Foto anexada ✔";
+            }
+        });
+    }
+
     document.querySelectorAll('.care-action-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             if (e.currentTarget.id === 'action-prune') return; 
@@ -1341,7 +1389,6 @@ const setupEventListeners = () => {
         });
     });
 
-    // --- Perfil da Árvore ---
     document.getElementById('btn-care-from-profile').addEventListener('click', () => {
         if (appState.currentTree) {
             showPage('care');
@@ -1349,27 +1396,35 @@ const setupEventListeners = () => {
             document.getElementById('care-subtitle').textContent = "O que esta belezura precisa hoje?";
             document.getElementById('care-actions-container').classList.remove('hidden');
             document.getElementById('add-tree-button-container').classList.add('hidden');
-            document.getElementById('action-water').disabled = false;
-            document.getElementById('action-clean').disabled = false;
-            document.getElementById('action-water').classList.remove('opacity-50', 'cursor-not-allowed');
-            document.getElementById('action-clean').classList.remove('opacity-50', 'cursor-not-allowed');
+            document.getElementById('care-media-label').innerText = "Anexar Foto do Cuidado";
+            document.getElementById('care-photo-input').value = null;
         }
     });
+    
     document.getElementById('btn-adopt-tree').addEventListener('click', handleAdoptTree);
     
+    // GATILHO DOS COMENTÁRIOS COM FOTO 
     document.getElementById('btn-post-comment').addEventListener('click', handlePostComment);
+    document.getElementById('btn-comment-media').addEventListener('click', () => document.getElementById('tree-comment-photo-input').click());
+    
     document.getElementById('tree-comment-photo-input').addEventListener('change', (e) => {
-        const preview = document.getElementById('tree-comment-photo-preview');
+        const previewContainer = document.getElementById('tree-comment-photo-preview-container');
+        const previewImg = document.getElementById('tree-comment-photo-preview');
+        const label = document.getElementById('comment-media-label');
+        
         if (e.target.files && e.target.files[0]) {
-            preview.src = URL.createObjectURL(e.target.files[0]);
-            preview.classList.remove('hidden');
+            previewImg.src = URL.createObjectURL(e.target.files[0]);
+            previewContainer.classList.remove('hidden');
+            label.innerText = "Foto Anexada ✔";
+            label.classList.add('text-verde-principal', 'font-bold');
         } else {
-            preview.classList.add('hidden');
+            previewContainer.classList.add('hidden');
+            label.innerText = "Adicionar Foto";
+            label.classList.remove('text-verde-principal', 'font-bold');
         }
     });
 
 
-    // --- Saber Mais ---
     document.querySelectorAll('.suggested-question-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const query = btn.textContent;
@@ -1382,7 +1437,6 @@ const setupEventListeners = () => {
         handleLearnSearch(query);
     });
 
-    // --- Modais ---
     document.getElementById('btn-show-help').addEventListener('click', () => document.getElementById('help-modal').classList.remove('hidden'));
     document.getElementById('btn-close-help-modal').addEventListener('click', () => document.getElementById('help-modal').classList.add('hidden'));
 };
