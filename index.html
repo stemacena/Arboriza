@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <meta name="referrer" content="unsafe-url">
     <meta name="theme-color" content="#1282D8">
-    <title>Arboriza — Ciência Cidadã e Cuidado Urbano</title>
+    <title>Arboriza - Ciência Cidadã e Cuidado Urbano</title>
 
     <!-- NOVA LOGO AQUI (Favicon) -->
     <link rel="icon" href="assets/logo-arboriza.png" type="image/png">
@@ -24,66 +24,48 @@
     <div id="app-container" class="aero-shell max-w-md mx-auto shadow-2xl">
 
         <!-- ==================== TELA: ONBOARDING (INICIAL) ==================== -->
-        <div id="screen-onboarding" class="aero-sky-panel p-6 flex flex-col h-full text-center items-center justify-between fade-in relative overflow-y-auto">
-            <!-- Bolhas decorativas Frutiger Aero -->
-            <span class="aero-bubble bubble-1" aria-hidden="true"></span>
-            <span class="aero-bubble bubble-2" aria-hidden="true"></span>
-            <span class="aero-bubble bubble-3" aria-hidden="true"></span>
+        
+        <div id="screen-onboarding" class="onboarding-hero p-6 flex flex-col h-full justify-between fade-in relative overflow-x-hidden overflow-y-auto">
+            <!-- Elementos visuais oficiais da identidade (decorativos, não bloqueiam cliques) -->
+            <img src="assets/folha-direita.png" alt="" aria-hidden="true" class="onboarding-leaf-right" onerror="this.style.display='none'">
+            <img src="assets/folha-esquerda.png" alt="" aria-hidden="true" class="onboarding-leaf-left" onerror="this.style.display='none'">
+            <img src="assets/bolha-aero.png" alt="" aria-hidden="true" class="onboarding-bubble-accent" onerror="this.style.display='none'">
 
-            <!-- Barra superior nostálgica estilo janela Windows/Linux 2000s -->
-            <div class="aero-window w-full mb-3 z-10">
-                <div class="aero-titlebar">
-                    <span class="text-xs font-extrabold tracking-wide">🖥️ Arboriza 2.0 — Bem-vindo.exe</span>
-                    <div class="aero-win-controls" aria-hidden="true">
-                        <span>_</span><span>□</span><span>×</span>
-                    </div>
+            <!-- Slogan no topo esquerdo (imagem da identidade com fallback fiel em texto) -->
+            <header class="w-full text-left pt-2 z-10">
+                <img src="assets/slogan-arboriza.png"
+                     alt="Tá perdido? Abraça uma árvore e..."
+                     class="onboarding-slogan-img"
+                     onerror="this.style.display='none'; document.getElementById('onboarding-slogan-fallback').classList.remove('hidden');">
+                <div id="onboarding-slogan-fallback" class="hidden onboarding-slogan-text">
+                    <span class="block text-sm tracking-widest uppercase">TÁ PERDIDO?</span>
+                    <span class="block text-2xl tracking-wide uppercase mt-0.5 leading-tight">ABRAÇA UMA ÁRVORE E...</span>
                 </div>
-                <div class="px-3 py-1.5 bg-white/90 text-[11px] font-bold text-slate-700 flex items-center justify-center gap-2">
-                    <span>🫧 Ciência Cidadã</span>
-                    <span>•</span>
-                    <span>🍃 Flora Urbana</span>
-                    <span>•</span>
-                    <span>🌍 Rio de Janeiro</span>
-                </div>
+            </header>
+
+            <!-- Centro: Logo livre (sem bolha em volta) + Wordmark ARBORIZA direto sobre o fundo -->
+            <div class="flex flex-col items-center justify-center my-auto py-3 z-10 w-full">
+                <img src="assets/logo-arboriza.png"
+                     onerror="this.onerror=null;this.src='https://cdn.prod.website-files.com/68c9b59ad35a897b62c3262c/68c9baa2c06920a9e64b5588_logoarborizacolor.png';"
+                     alt="Logo Arboriza"
+                     class="onboarding-logo-free">
+
+                <img src="assets/nome-arboriza.png"
+                     alt="ARBORIZA"
+                     class="onboarding-wordmark-free"
+                     onerror="this.style.display='none'; document.getElementById('onboarding-wordmark-fallback').classList.remove('hidden');">
+                <h1 id="onboarding-wordmark-fallback" class="hidden text-5xl font-extrabold text-verde-principal font-logo tracking-wider mt-3 aero-text-glow">ARBORIZA</h1>
             </div>
 
-            <!-- Centro: Nova Logo + Wordmark Verde -->
-            <div class="flex flex-col items-center my-auto py-2 z-10 w-full">
-                <div class="aero-logo-orb mb-3">
-                    <!-- NOVA LOGO AQUI -->
-                    <img src="assets/logo-arboriza.png"
-                         onerror="this.onerror=null;this.src='https://cdn.prod.website-files.com/68c9b59ad35a897b62c3262c/68c9baa2c06920a9e64b5588_logoarborizacolor.png';"
-                         alt="Logo Arboriza"
-                         class="w-36 h-36 mx-auto object-contain rounded-full">
-                </div>
-
-                <p class="text-aero-deep font-extrabold text-lg aero-text-glow mt-1">
-                    Tá perdido? Abraça uma árvore e...
-                </p>
-
-                <!-- NOVO NOME VERDE AQUI -->
-                <div class="mt-2 bg-white/90 px-5 py-2.5 rounded-2xl border-2 border-white shadow-lg">
-                    <img src="assets/nome-arboriza.png"
-                         alt="ARBORIZA"
-                         class="h-10 mx-auto object-contain"
-                         onerror="this.style.display='none'; document.getElementById('onboarding-wordmark-fallback').classList.remove('hidden');">
-                    <h1 id="onboarding-wordmark-fallback" class="hidden text-4xl font-extrabold text-verde-principal font-logo tracking-wider">ARBORIZA</h1>
-                </div>
-
-                <p class="text-xs font-bold text-aero-deep bg-white/80 px-3.5 py-1.5 rounded-full mt-3 border border-white shadow-sm">
-                    🫧 Mapeie árvores, eternize memórias e ganhe recompensas locais! 🍀
-                </p>
-            </div>
-
-            <!-- Botões de Ação: Guardião, Parceiro e Login -->
-            <div class="w-full space-y-2.5 pt-3 z-10">
+            <!-- Painel translúcido inferior com os 3 botões de ação -->
+            <div class="onboarding-actions-dock w-full space-y-2.5 z-10">
                 <button data-page="signup" class="nav-to-btn frutiger-aero-button aero-green medium w-full">
                     🌱 COMEÇAR COMO GUARDIÃO
                 </button>
                 <button data-page="partner-signup" class="nav-to-btn frutiger-aero-button aero-blue medium w-full">
                     🏪 CADASTRAR MEU COMÉRCIO (PARCEIRO)
                 </button>
-                <button data-page="login" class="nav-to-btn w-full bg-white/95 hover:bg-white text-aero-deep font-extrabold py-3 px-4 rounded-full border-2 border-white shadow-md transition-all">
+                <button data-page="login" class="nav-to-btn onboarding-login-btn w-full">
                     🔑 Já tem conta? Entrar
                 </button>
             </div>
