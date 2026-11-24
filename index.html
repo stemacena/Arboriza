@@ -2,408 +2,1087 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <meta name="referrer" content="unsafe-url">
-    <title>Arboriza</title>
-    
-    <link rel="icon" href="https://cdn.prod.website-files.com/68c9b59ad35a897b62c3262c/68c9baa2c06920a9e64b5588_logoarborizacolor.png" type="image/png">
+    <meta name="theme-color" content="#1282D8">
+    <title>Arboriza - Ciência Cidadã e Cuidado Urbano</title>
+
+    <!-- NOVA LOGO AQUI (Favicon) -->
+    <link rel="icon" href="assets/logo-arboriza.png" type="image/png">
+    <link rel="shortcut icon" href="https://cdn.prod.website-files.com/68c9b59ad35a897b62c3262c/68c9baa2c06920a9e64b5588_logoarborizacolor.png" type="image/png">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merienda:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@0.378.0/dist/umd/lucide.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <link rel="stylesheet" href="style.css"> 
+    <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-cinza">
-    <div id="app-container" class="max-w-md mx-auto bg-branco shadow-lg">
+<body class="aero-desktop-bg">
+    <div id="app-container" class="aero-shell max-w-md mx-auto shadow-2xl">
+
+        <!-- ==================== TELA: ONBOARDING (INICIAL) ==================== -->
         
-        <div id="screen-onboarding" class="p-8 flex flex-col h-full text-center items-center justify-center fade-in">
-            <img src="https://cdn.prod.website-files.com/68c9b59ad35a897b62c3262c/68c9baa2c06920a9e64b5588_logoarborizacolor.png" alt="Logo Arboriza" class="w-64 h-64 mx-auto object-contain"> 
-            <p class="text-gray-600 mt-8 text-xl">Tá perdido? abraça uma árvore e</p>
-            <h2 class="text-6xl font-bold text-verde-principal font-logo mt-2">Arboriza</h2>
-            <div class="mt-auto w-full">
-                <button data-page="signup" class="nav-to-btn w-full bg-verde-principal text-white font-bold py-4 px-4 rounded-xl shadow-lg hover:bg-opacity-90 transition-all">COMEÇAR</button>
-                <button data-page="login" class="nav-to-btn w-full text-gray-600 font-semibold py-4 px-4 mt-2">Já tem conta? Entrar</button>
+        <!-- ==================== TELA: ONBOARDING (INICIAL) ==================== -->
+        <div id="screen-onboarding" class="onboarding-hero p-5 flex flex-col h-full justify-between fade-in relative overflow-x-hidden overflow-y-auto">
+            <!-- Folha direita (folha esquerda removida por enquanto) -->
+            <img src="assets/folha-direita.png" alt="" aria-hidden="true" class="onboarding-leaf-right" onerror="this.style.display='none'">
+
+            <!-- Conjunto de bolhas Frutiger Aero reutilizando assets/bolha-aero.png -->
+            <img src="assets/bolha-aero.png" alt="" aria-hidden="true" class="onboarding-bubble ob-1" onerror="this.style.display='none'">
+            <img src="assets/bolha-aero.png" alt="" aria-hidden="true" class="onboarding-bubble ob-2" onerror="this.style.display='none'">
+            <img src="assets/bolha-aero.png" alt="" aria-hidden="true" class="onboarding-bubble ob-3" onerror="this.style.display='none'">
+            <img src="assets/bolha-aero.png" alt="" aria-hidden="true" class="onboarding-bubble ob-4" onerror="this.style.display='none'">
+            <img src="assets/bolha-aero.png" alt="" aria-hidden="true" class="onboarding-bubble ob-5" onerror="this.style.display='none'">
+            <img src="assets/bolha-aero.png" alt="" aria-hidden="true" class="onboarding-bubble ob-6" onerror="this.style.display='none'">
+            <img src="assets/bolha-aero.png" alt="" aria-hidden="true" class="onboarding-bubble ob-7" onerror="this.style.display='none'">
+
+            <!-- Bloco unificado: Slogan + Logo + ARBORIZA próximos entre si -->
+            <div class="onboarding-brand-group flex flex-col items-center justify-center my-auto w-full z-10">
+                <header class="w-full text-left mb-3 px-1">
+                    <img src="assets/slogan-arboriza.png"
+                         alt="Tá perdido? Abraça uma árvore e..."
+                         class="onboarding-slogan-img"
+                         onerror="this.style.display='none'; document.getElementById('onboarding-slogan-fallback').classList.remove('hidden');">
+                    <div id="onboarding-slogan-fallback" class="hidden onboarding-slogan-text">
+                        <span class="block text-sm tracking-widest uppercase">TÁ PERDIDO?</span>
+                        <span class="block text-2xl tracking-wide uppercase mt-0.5 leading-tight">ABRAÇA UMA ÁRVORE E...</span>
+                    </div>
+                </header>
+
+                <img src="assets/logo-arboriza.png"
+                     onerror="this.onerror=null;this.src='https://cdn.prod.website-files.com/68c9b59ad35a897b62c3262c/68c9baa2c06920a9e64b5588_logoarborizacolor.png';"
+                     alt="Logo Arboriza"
+                     class="onboarding-logo-free">
+
+                <img src="assets/nome-arboriza.png"
+                     alt="ARBORIZA"
+                     class="onboarding-wordmark-free"
+                     onerror="this.style.display='none'; document.getElementById('onboarding-wordmark-fallback').classList.remove('hidden');">
+                <h1 id="onboarding-wordmark-fallback" class="hidden text-5xl font-extrabold text-verde-principal font-logo tracking-wider mt-2 aero-text-glow">ARBORIZA</h1>
+            </div>
+
+            <!-- Painel translúcido inferior com os 3 botões de ação -->
+            <div class="onboarding-actions-dock w-full space-y-2.5 mt-4 z-10">
+                <button data-page="signup" class="nav-to-btn frutiger-aero-button aero-green medium w-full">
+                    🌱 COMEÇAR COMO GUARDIÃO
+                </button>
+                <button data-page="partner-signup" class="nav-to-btn frutiger-aero-button aero-blue medium w-full">
+                    🏪 CADASTRAR MEU COMÉRCIO (PARCEIRO)
+                </button>
+                <button data-page="login" class="nav-to-btn onboarding-login-btn w-full">
+                    🔑 Já tem conta? Entrar
+                </button>
             </div>
         </div>
 
-        <div id="screen-login" class="p-8 flex flex-col h-full hidden fade-in">
-            <h3 class="text-3xl font-bold text-verde-principal text-center mb-8">Bem-vindo de volta!</h3>
-            
-            <button id="btn-google-login-main" class="w-full bg-white border border-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-xl shadow-sm flex items-center justify-center gap-3 hover:bg-gray-50">
-                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.19 4.118-4.102 5.424l6.19 5.238C42.418 34.569 44 29.625 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>
-                Continuar com Google
-            </button>
-            <div class="my-4 flex items-center"><span class="flex-grow bg-gray-200 h-px"></span><span class="mx-4 text-gray-500 text-sm">ou</span><span class="flex-grow bg-gray-200 h-px"></span></div>
+        <!-- ==================== TELA: LOGIN ==================== -->
+        <div id="screen-login" class="aero-soft-bg p-6 flex flex-col h-full hidden fade-in overflow-y-auto">
+            <div class="aero-window my-auto">
+                <div class="aero-titlebar aero-titlebar-blue">
+                    <span class="text-xs font-extrabold">🔐 Entrar — Arboriza 2.0</span>
+                    <button data-page="onboarding" class="nav-to-btn text-white text-xs font-bold hover:underline">← Início</button>
+                </div>
+                <div class="p-5 bg-white/95">
+                    <h2 class="text-2xl font-extrabold text-verde-principal text-center mb-1">Bem-vindo de volta! 🌍</h2>
+                    <p class="text-xs text-slate-600 text-center mb-5">Acesse como Guardião, Comércio Parceiro ou Administrador.</p>
 
-            <form id="login-form" class="space-y-4">
-                <div>
-                    <label for="login-email" class="block text-sm font-medium text-gray-700">Email</label>
-                    <input type="email" id="login-email" required class="w-full p-3 mt-1 border rounded-lg bg-cinza focus:border-verde-principal focus:ring-verde-principal" placeholder="seu@email.com">
+                    <button id="btn-google-login-main" type="button" class="w-full bg-white border-2 border-sky-200 text-slate-800 font-bold py-3 px-4 rounded-full shadow-sm flex items-center justify-center gap-3 hover:bg-sky-50 transition-all">
+                        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.19 4.118-4.102 5.424l6.19 5.238C42.418 34.569 44 29.625 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>
+                        Continuar com Google
+                    </button>
+
+                    <div class="my-4 flex items-center">
+                        <span class="flex-grow bg-sky-200 h-px"></span>
+                        <span class="mx-3 text-slate-500 text-xs font-bold uppercase">ou</span>
+                        <span class="flex-grow bg-sky-200 h-px"></span>
+                    </div>
+
+                    <form id="login-form" class="space-y-3.5">
+                        <div>
+                            <label for="login-email" class="block text-xs font-extrabold text-slate-800 mb-1">Email</label>
+                            <input type="email" id="login-email" required class="aero-input w-full" placeholder="seu@email.com">
+                        </div>
+                        <div>
+                            <label for="login-password" class="block text-xs font-extrabold text-slate-800 mb-1">Senha</label>
+                            <input type="password" id="login-password" required class="aero-input w-full" placeholder="••••••••">
+                        </div>
+                        <button type="submit" class="frutiger-aero-button aero-green medium w-full mt-2">Entrar</button>
+                    </form>
+                    <p id="login-error-message" class="text-erro font-bold text-center text-xs mt-3 hidden" role="alert"></p>
+
+                    <button id="btn-show-forgot-password" type="button" class="w-full text-center text-xs text-sky-800 font-bold py-2 mt-2 hover:underline">
+                        Esqueci minha senha
+                    </button>
                 </div>
-                <div>
-                    <label for="login-password" class="block text-sm font-medium text-gray-700">Senha</label>
-                    <input type="password" id="login-password" required class="w-full p-3 mt-1 border rounded-lg bg-cinza focus:border-verde-principal focus:ring-verde-principal" placeholder="••••••••">
-                </div>
-                <button type="submit" class="w-full bg-verde-principal text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:bg-opacity-90">Entrar</button>
-            </form>
-            <p id="login-error-message" class="text-erro text-center text-sm mt-4 hidden"></p>
-            
-            <button id="btn-show-forgot-password" class="w-full text-center text-sm text-gray-600 font-semibold py-2 mt-2">Esqueci minha senha</button>
-            
-            <button data-page="signup" class="nav-to-btn w-full text-center text-gray-600 font-semibold py-4 mt-auto">Não tem conta? Criar agora</button>
+            </div>
+
+            <div class="mt-4 space-y-1.5 text-center">
+                <button data-page="signup" class="nav-to-btn w-full text-sm text-aero-deep font-bold py-1.5 hover:text-verde-principal">
+                    Não tem conta? Criar agora 🌱
+                </button>
+                <button data-page="partner-signup" class="nav-to-btn w-full text-xs text-sky-800 font-bold py-1 hover:underline">
+                    Tem um comércio? Cadastre-se como Parceiro 🏪
+                </button>
+            </div>
         </div>
 
-        <div id="screen-signup" class="p-8 flex flex-col h-full hidden fade-in">
-            <h3 class="text-3xl font-bold text-verde-principal text-center mb-8">Crie sua conta</h3>
-            
-            <button id="btn-google-login-signup" class="w-full bg-white border border-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-xl shadow-sm flex items-center justify-center gap-3 hover:bg-gray-50">
-                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.19 4.118-4.102 5.424l6.19 5.238C42.418 34.569 44 29.625 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>
-                Continuar com Google
+        <!-- ==================== TELA: CADASTRO GUARDIÃO ==================== -->
+        <div id="screen-signup" class="aero-soft-bg p-6 flex flex-col h-full hidden fade-in overflow-y-auto">
+            <div class="aero-window my-auto">
+                <div class="aero-titlebar">
+                    <span class="text-xs font-extrabold">🌱 Criar Conta de Guardião</span>
+                    <button data-page="onboarding" class="nav-to-btn text-white text-xs font-bold hover:underline">← Início</button>
+                </div>
+                <div class="p-5 bg-white/95">
+                    <h2 class="text-2xl font-extrabold text-verde-principal text-center mb-1">Crie sua conta</h2>
+                    <p class="text-xs text-slate-600 text-center mb-4">Entre para a rede de cuidado das árvores urbanas 🍃</p>
+
+                    <button id="btn-google-login-signup" type="button" class="w-full bg-white border-2 border-sky-200 text-slate-800 font-bold py-3 px-4 rounded-full shadow-sm flex items-center justify-center gap-3 hover:bg-sky-50 transition-all">
+                        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.19 4.118-4.102 5.424l6.19 5.238C42.418 34.569 44 29.625 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>
+                        Continuar com Google
+                    </button>
+
+                    <div class="my-4 flex items-center">
+                        <span class="flex-grow bg-sky-200 h-px"></span>
+                        <span class="mx-3 text-slate-500 text-xs font-bold uppercase">ou</span>
+                        <span class="flex-grow bg-sky-200 h-px"></span>
+                    </div>
+
+                    <form id="signup-form" class="space-y-3.5">
+                        <div>
+                            <label for="signup-name" class="block text-xs font-extrabold text-slate-800 mb-1">Seu nome (de guardião)</label>
+                            <input type="text" id="signup-name" required class="aero-input w-full" placeholder="Ex: Arvoreco da Silva">
+                        </div>
+                        <div>
+                            <label for="signup-email" class="block text-xs font-extrabold text-slate-800 mb-1">Email</label>
+                            <input type="email" id="signup-email" required class="aero-input w-full" placeholder="seu@email.com">
+                        </div>
+                        <div>
+                            <label for="signup-password" class="block text-xs font-extrabold text-slate-800 mb-1">Crie uma senha</label>
+                            <input type="password" id="signup-password" required minlength="6" class="aero-input w-full" placeholder="Mínimo 6 caracteres">
+                        </div>
+                            <label class="flex items-start gap-2.5 p-3 rounded-xl bg-sky-50/90 border border-sky-200 cursor-pointer text-left">
+                                <input type="checkbox" id="signup-privacy-consent" required class="mt-0.5 w-4 h-4 accent-emerald-600 flex-shrink-0">
+                                    <span class="text-[11px] text-slate-700 leading-snug">
+                                            Concordo que meu <strong>nome de guardião, foto, nível e ações nas árvores</strong> fiquem visíveis para a comunidade Arboriza. Meu e-mail permanece privado e posso ocultar meu perfil da busca a qualquer momento no meu Perfil.
+                                                </span>
+                                                    </label>
+                        <button type="submit" class="frutiger-aero-button aero-green medium w-full mt-2">Criar conta e Arborizar 🍀</button>
+                    </form>
+                    <p id="signup-error-message" class="text-erro font-bold text-center text-xs mt-3 hidden" role="alert"></p>
+                </div>
+            </div>
+            <button data-page="login" class="nav-to-btn w-full text-center text-sm text-aero-deep font-bold py-3 mt-2">
+                Já tem conta? Entrar
             </button>
-            <div class="my-4 flex items-center"><span class="flex-grow bg-gray-200 h-px"></span><span class="mx-4 text-gray-500 text-sm">ou</span><span class="flex-grow bg-gray-200 h-px"></span></div>
-            
-            <form id="signup-form" class="space-y-4">
-                <div>
-                    <label for="signup-name" class="block text-sm font-medium text-gray-700">Seu nome (de guardião)</label>
-                    <input type="text" id="signup-name" required class="w-full p-3 mt-1 border rounded-lg bg-cinza focus:border-verde-principal focus:ring-verde-principal" placeholder="Ex: Arvoreco da Silva">
-                </div>
-                <div>
-                    <label for="signup-email" class="block text-sm font-medium text-gray-700">Email</label>
-                    <input type="email" id="signup-email" required class="w-full p-3 mt-1 border rounded-lg bg-cinza focus:border-verde-principal focus:ring-verde-principal" placeholder="seu@email.com">
-                </div>
-                <div>
-                    <label for="signup-password" class="block text-sm font-medium text-gray-700">Crie uma senha</label>
-                    <input type="password" id="signup-password" required minlength="6" class="w-full p-3 mt-1 border rounded-lg bg-cinza focus:border-verde-principal focus:ring-verde-principal" placeholder="Mínimo 6 caracteres">
-                </div>
-                <button type="submit" class="w-full bg-verde-principal text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:bg-opacity-90">Criar conta e Arborizar</button>
-            </form>
-            <p id="signup-error-message" class="text-erro text-center text-sm mt-4 hidden"></p>
-            <button data-page="login" class="nav-to-btn w-full text-center text-gray-600 font-semibold py-4 mt-auto">Já tem conta? Entrar</button>
         </div>
 
+        <!-- ==================== TELA: CADASTRO DE PARCEIRO (COMÉRCIO) ==================== -->
+        <div id="screen-partner-signup" class="aero-soft-bg p-5 flex flex-col h-full hidden fade-in overflow-y-auto">
+            <div class="aero-window mb-4">
+                <div class="aero-titlebar aero-titlebar-blue">
+                    <span class="text-xs font-extrabold">🏪 Cadastro de Parceiro Arboriza</span>
+                    <button data-page="onboarding" class="nav-to-btn text-white text-xs font-bold hover:underline">← Início</button>
+                </div>
+                <div class="p-4 bg-white/95 space-y-4">
+                    <div class="text-center">
+                        <h2 class="text-xl font-extrabold text-sky-900">Cadastre seu Comércio! 🏙️💚</h2>
+                        <p class="text-xs text-slate-600 mt-1">
+                            Ofereça brindes ou descontos para guardiões das árvores e apareça no Mapa Oficial de Parceiros.
+                        </p>
+                    </div>
+
+                    <div class="bg-amber-50 border border-amber-300 rounded-xl p-3 text-xs text-amber-950 font-semibold">
+                        🛡️ <strong>Segurança:</strong> Sua conta e cada nova recompensa cadastrada passam pela aprovação do administrador antes de ficarem visíveis no mapa e no jogo.
+                    </div>
+
+                    <form id="partner-signup-form" class="space-y-3">
+                        <div>
+                            <label for="partner-signup-name" class="block text-xs font-extrabold text-slate-800 mb-1">Nome do Comércio *</label>
+                            <input type="text" id="partner-signup-name" required class="aero-input w-full" placeholder="Ex: Sucos do Marcão">
+                        </div>
+
+                        <div>
+                            <label for="partner-signup-category" class="block text-xs font-extrabold text-slate-800 mb-1">Categoria *</label>
+                            <select id="partner-signup-category" class="aero-input w-full bg-white">
+                                <option value="Alimentação & Sucos">🍹 Alimentação, Sucos & Padaria</option>
+                                <option value="Floricultura & Jardinagem">🌺 Floricultura & Jardinagem</option>
+                                <option value="Mercado & Hortifruti">🍏 Mercado & Hortifruti</option>
+                                <option value="Cultura & Livraria">📚 Cultura, Papelaria & Livraria</option>
+                                <option value="Saúde & Bem-estar">💚 Saúde, Academia & Serviços</option>
+                                <option value="Comércio Local">🏪 Outro Comércio Local</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="partner-signup-address" class="block text-xs font-extrabold text-slate-800 mb-1">Endereço Completo *</label>
+                            <input type="text" id="partner-signup-address" required class="aero-input w-full" placeholder="Ex: Rua Fonseca, 240 - Bangu">
+                        </div>
+
+                        <!-- Mapa para marcar localização do comércio -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="block text-xs font-extrabold text-slate-800">Localização no Mapa *</label>
+                                <button type="button" id="btn-partner-use-my-location" class="text-xs font-extrabold text-sky-700 hover:underline">📍 Usar meu GPS</button>
+                            </div>
+                            <div id="partner-signup-map" class="w-full h-40 rounded-xl border-2 border-sky-200 overflow-hidden z-0"></div>
+                            <div class="grid grid-cols-2 gap-2 mt-1.5">
+                                <input type="text" id="partner-signup-lat" readonly class="aero-input text-[11px] py-1.5 bg-sky-50" placeholder="Latitude">
+                                <input type="text" id="partner-signup-lng" readonly class="aero-input text-[11px] py-1.5 bg-sky-50" placeholder="Longitude">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="partner-signup-description" class="block text-xs font-extrabold text-slate-800 mb-1">Descrição do Comércio *</label>
+                            <textarea id="partner-signup-description" required rows="2" class="aero-input w-full" placeholder="Fale sobre seu comércio e como vocês apoiam o verde do bairro..."></textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-extrabold text-slate-800 mb-1">Foto da Fachada ou Logo</label>
+                            <label for="partner-signup-photo" class="w-full bg-sky-50 border-2 border-dashed border-sky-300 rounded-xl p-3 flex items-center justify-center gap-2 cursor-pointer hover:bg-sky-100 transition text-xs font-bold text-sky-900">
+                                <i data-lucide="image" class="w-4 h-4"></i>
+                                <span>Selecionar Foto do Comércio</span>
+                            </label>
+                            <input type="file" id="partner-signup-photo" accept="image/*">
+                            <img id="partner-signup-photo-preview" src="" alt="Preview do comércio" class="hidden w-full h-32 object-cover rounded-xl mt-2 border border-sky-200">
+                        </div>
+
+                        <hr class="border-sky-100 my-2">
+
+                        <!-- Opção Google para Parceiro (usa os dados preenchidos acima) -->
+                        <button id="btn-google-login-partner" type="button" class="w-full bg-white border-2 border-sky-200 text-slate-800 font-bold py-2.5 px-4 rounded-full shadow-sm flex items-center justify-center gap-2 hover:bg-sky-50 transition-all text-sm">
+                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.19 4.118-4.102 5.424l6.19 5.238C42.418 34.569 44 29.625 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>
+                            Cadastrar Parceiro com Google
+                        </button>
+
+                        <div class="my-2 flex items-center">
+                            <span class="flex-grow bg-sky-200 h-px"></span>
+                            <span class="mx-3 text-slate-500 text-xs font-bold">ou com email e senha</span>
+                            <span class="flex-grow bg-sky-200 h-px"></span>
+                        </div>
+
+                        <div>
+                            <label for="partner-signup-email" class="block text-xs font-extrabold text-slate-800 mb-1">Email de acesso *</label>
+                            <input type="email" id="partner-signup-email" required class="aero-input w-full" placeholder="contato@comercio.com">
+                        </div>
+                        <div>
+                            <label for="partner-signup-password" class="block text-xs font-extrabold text-slate-800 mb-1">Senha (mín. 6 caracteres) *</label>
+                            <input type="password" id="partner-signup-password" required minlength="6" class="aero-input w-full" placeholder="••••••••">
+                        </div>
+
+                        <button type="submit" class="frutiger-aero-button aero-green medium w-full mt-2">
+                            Enviar Cadastro para Aprovação 🏪
+                        </button>
+                    </form>
+
+                    <p id="partner-signup-error-message" class="text-erro font-bold text-center text-xs hidden" role="alert"></p>
+                    <p class="text-[11px] text-center text-slate-500">
+                        Depois de criar a conta, você poderá cadastrar e gerenciar suas recompensas no Painel do Parceiro.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== CONTEÚDO PRINCIPAL (USUÁRIO LOGADO) ==================== -->
         <main class="hidden">
-            <div id="screen-camera" class="p-6 flex flex-col h-full hidden fade-in relative">
+
+            <!-- TELA: CÂMERA -->
+            <div id="screen-camera" class="aero-soft-bg p-5 flex flex-col h-full hidden fade-in relative">
                 <div class="arvoreco-avatar" id="arvoreco-camera">
                     <img src="https://firebasestorage.googleapis.com/v0/b/arboriza-bd.firebasestorage.app/o/%C3%81rvore%20Tropical%20Amiga%20do%20Brasil.png?alt=media&token=1bf9e356-e2a7-4571-aa4c-3b7af0ba7c2b" alt="Arvoreco" class="avatar-img">
                     <div class="speech-bubble speech-bubble-left">
-                        Tire a foto bem de perto da folha ou flor! Se não der certo, tente outro ângulo.
+                        Tire a foto bem de perto da folha 🍃 ou flor! Se não der certo, tente outro ângulo.
                     </div>
                 </div>
 
-                <h3 class="text-2xl font-bold text-center mb-4">Identificar Planta</h3>
+                <h3 class="text-xl font-extrabold text-center text-aero-deep mb-3">📲 Identificar Planta</h3>
                 <div class="camera-viewfinder relative">
                     <video id="camera-feed" class="absolute top-0 left-0 w-full h-full object-cover rounded-[20px] hidden" autoplay playsinline></video>
-                    <div id="camera-placeholder" class="camera-viewfinder-content"><i data-lucide="camera" class="w-24 h-24 text-gray-500"></i><p class="mt-4 text-gray-400">Aguardando permissão da câmera...</p></div>
+                    <div id="camera-placeholder" class="camera-viewfinder-content">
+                        <i data-lucide="camera" class="w-20 h-20 text-sky-200"></i>
+                        <p class="mt-3 text-sky-100 text-sm px-4 text-center">Aguardando permissão da câmera...</p>
+                    </div>
                 </div>
-                <p class="text-center text-gray-500 mt-4">Aponte para uma folha ou flor para identificar</p>
-                
-                <div class="flex items-center justify-center gap-8 mt-auto">
-                    <label for="plant-photo-input"><i data-lucide="image" class="w-10 h-10 text-gray-600 cursor-pointer hover:text-verde-principal transition"></i></label>
-                    <input type="file" id="plant-photo-input" accept="image/*" class="hidden">
-                    <button id="btn-capture" class="w-20 h-20 bg-verde-principal rounded-full border-4 border-white shadow-lg focus:outline-none focus:ring-4 focus:ring-green-300"></button>
-                    <button id="btn-show-help"><i data-lucide="help-circle" class="w-10 h-10 text-gray-600 hover:text-verde-principal transition"></i></button>
+                <p class="text-center text-slate-700 font-semibold text-sm mt-3">Aponte para uma folha ou flor para identificar</p>
+
+                <div class="flex items-center justify-center gap-8 mt-auto pb-2">
+                    <label for="plant-photo-input" class="aero-icon-btn" title="Escolher foto da galeria" aria-label="Escolher foto da galeria">
+                        <i data-lucide="image" class="w-5 h-5 text-sky-800"></i>
+                    </label>
+                    <input type="file" id="plant-photo-input" accept="image/*">
+
+                    <button id="btn-capture" aria-label="Capturar foto" class="w-20 h-20 frutiger-aero-button aero-green rounded-full border-4 border-white shadow-xl flex items-center justify-center p-0">
+                        <i data-lucide="camera" class="w-8 h-8 text-white"></i>
+                    </button>
+
+                    <button id="btn-show-help" class="aero-icon-btn" title="Dicas do Arvoreco" aria-label="Abrir dicas do Arvoreco">
+                        <i data-lucide="help-circle" class="w-5 h-5 text-sky-800"></i>
+                    </button>
                 </div>
             </div>
 
-            <div id="screen-result" class="p-6 hidden fade-in">
-                <img id="result-plant-image" src="https://placehold.co/400x300/81C784/FFFFFF?text=Planta" alt="Planta Identificada" class="w-full h-64 object-cover rounded-2xl shadow-lg">
-                <div class="text-center mt-6">
-                    <h3 id="result-common-name" class="text-3xl font-bold text-verde-principal"></h3>
-                    <p id="result-scientific-name" class="text-lg text-gray-600 italic mt-1"></p>
-                </div>
-                <div class="bg-white border p-3 rounded-lg mt-4 text-center">
-                    <img src="https://my.plantnet.org/images/powered-by-plantnet-light.png" alt="Powered by PlantNet" class="h-8 mx-auto"> 
-                    <p class="font-semibold mt-2">Confiança: <span id="result-confidence">0%</span></p>
-                    <div class="w-full bg-gray-300 rounded-full h-2.5 mt-2"><div id="result-confidence-bar" class="bg-progress-gradient h-2.5 rounded-full" style="width: 0%"></div></div>
-                </div>
-                <div class="mt-8 text-center">
-                    <p class="text-lg font-semibold">Esta é a planta que você identificou?</p>
-                    <div class="flex gap-4 mt-4">
-                        <button id="btn-confirm-no" class="w-full bg-erro text-white font-bold py-3 rounded-xl shadow-lg">Não, tentar de novo</button>
-                        <button id="btn-initiate-care" class="w-full bg-sucesso text-white font-bold py-3 rounded-xl shadow-lg">Sim, cuidar dela!</button>
+            <!-- TELA: RESULTADO DA IDENTIFICAÇÃO (PL@NTNET + ÁRVORE vs PLANTA) -->
+            <div id="screen-result" class="aero-soft-bg p-5 hidden fade-in pb-10">
+                <div class="aero-card overflow-hidden">
+                    <img id="result-plant-image" src="https://placehold.co/400x300/81C784/FFFFFF?text=Planta" alt="Planta Identificada" class="w-full h-60 object-cover">
+                    <div class="p-4 text-center">
+                        <span id="result-plant-type-badge" class="inline-block text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 mt-1">
+                            🌳 Árvore Identificada
+                        </span>
+                        <h3 id="result-common-name" class="text-2xl font-extrabold text-verde-principal mt-2"></h3>
+                        <p id="result-scientific-name" class="text-md text-slate-600 italic mt-0.5"></p>
+
+                        <div class="bg-sky-50/90 border border-sky-200 p-3 rounded-xl mt-4 text-center">
+                            <img src="https://my.plantnet.org/images/powered-by-plantnet-light.png" alt="Powered by PlantNet" class="h-7 mx-auto">
+                            <p class="font-bold text-sm text-slate-800 mt-2">Confiança: <span id="result-confidence">0%</span></p>
+                            <div class="aero-progress-track mt-2">
+                                <div id="result-confidence-bar" class="aero-progress-fill" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Diferenciação Árvore vs Planta -->
+                        <div class="mt-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-left text-xs text-slate-800">
+                            <p id="result-plant-type-note" class="font-semibold leading-relaxed">
+                                Confirme se o exemplar fotografado é uma árvore urbana.
+                            </p>
+                            <label class="flex items-center gap-2 mt-2.5 cursor-pointer font-extrabold text-aero-deep">
+                                <input type="checkbox" id="result-is-tree-checkbox" checked class="w-4 h-4 accent-emerald-600">
+                                <span>Sim, este exemplar é uma árvore (conta para missões arbóreas) 🌳</span>
+                            </label>
+                        </div>
+
+                        <div class="mt-6 text-center">
+                            <p class="text-base font-extrabold text-aero-deep">Esta é a planta que você identificou?</p>
+                            <div class="flex gap-3 mt-3">
+                                <button id="btn-confirm-no" class="frutiger-aero-button aero-red small w-full">Não, tentar de novo</button>
+                                <button id="btn-initiate-care" class="frutiger-aero-button aero-green small w-full">Sim, cuidar dela! 🍃</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            
-            <div id="screen-care" class="p-6 hidden fade-in">
-                <h3 id="care-title" class="text-2xl font-bold text-center"></h3>
-                <p id="care-subtitle" class="text-center text-gray-500"></p>
-                <div id="care-actions-container" class="space-y-4 mt-6">
-                    <button id="action-water" class="care-action-btn w-full text-left p-4 bg-cinza rounded-lg flex items-center gap-4 hover:bg-gray-200 transition-all"><span class="text-3xl">💧</span><div><p class="font-bold">Regar a planta</p><p class="text-sm text-gray-600">Um pouco de água para refrescar!</p></div></button>
-                    <button id="action-clean" class="care-action-btn w-full text-left p-4 bg-cinza rounded-lg flex items-center gap-4 hover:bg-gray-200 transition-all"><span class="text-3xl">🧹</span><div><p class="font-bold">Limpar o canteiro</p><p class="text-sm text-gray-600">Deixar o espaço dela mais bonito.</p></div></button>
-                    <a id="action-prune" href="tel:1746" class="w-full text-left p-4 bg-cinza rounded-lg flex items-center gap-4 hover:bg-gray-200 transition-all"><span class="text-3xl">✂️</span><div><p class="font-bold">Solicitar Poda (Prefeitura)</p><p class="text-sm text-gray-600">Ligar para a central 1746.</p></div></a>
-                </div>
-                <div id="add-tree-button-container" class="mt-6 hidden">
-                    <button data-page="add-tree" class="nav-to-btn w-full bg-verde-principal text-white font-bold py-3 px-4 rounded-xl shadow-lg">Cadastrar Nova Árvore</button>
-                </div>
-                <div id="care-confirmation-section" class="mt-8 p-4 bg-verde-claro bg-opacity-30 rounded-lg hidden">
-                    <h4 class="font-bold text-center text-verde-principal">Missão quase completa!</h4>
-                    <p class="text-center text-gray-700 mt-2">Tire uma foto para registrar o seu cuidado e deixe uma mensagem para a comunidade ver.</p>
-                    
-                    <label for="care-photo-input" class="mt-4 w-full bg-white text-verde-principal font-semibold py-3 px-4 rounded-xl shadow-sm flex items-center justify-center gap-2 cursor-pointer border hover:bg-gray-50 transition">
-                        <i data-lucide="camera"></i><span id="care-media-label">Anexar Foto do Cuidado</span>
-                    </label>
-                    <input type="file" id="care-photo-input" accept="image/*" class="hidden">
-                    <textarea id="care-message" class="w-full p-2 border rounded-lg mt-3" rows="3" placeholder="Tá sem inspiração? Fala de como se sentiu durante essa missão..."></textarea>
-                    <button id="btn-finish-care" class="w-full mt-3 bg-verde-principal text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:bg-opacity-90 transition">Finalizar Missão</button>
+
+            <!-- TELA: CUIDAR -->
+            <div id="screen-care" class="aero-soft-bg p-5 hidden fade-in pb-10">
+                <div class="aero-card p-5">
+                    <h3 id="care-title" class="text-2xl font-extrabold text-center text-verde-principal"></h3>
+                    <p id="care-subtitle" class="text-center text-slate-600 text-sm mt-1"></p>
+
+                    <div id="care-actions-container" class="space-y-3 mt-5">
+                        <button id="action-water" class="care-action-btn aero-card w-full text-left p-4 flex items-center gap-4 hover:scale-[1.01] transition-all">
+                            <span class="text-3xl">💧</span>
+                            <div>
+                                <p class="font-extrabold text-aero-deep">Regar a planta</p>
+                                <p class="text-xs text-slate-600">Um pouco de água para refrescar!</p>
+                            </div>
+                        </button>
+                        <button id="action-clean" class="care-action-btn aero-card w-full text-left p-4 flex items-center gap-4 hover:scale-[1.01] transition-all">
+                            <span class="text-3xl">🧹</span>
+                            <div>
+                                <p class="font-extrabold text-aero-deep">Limpar o canteiro</p>
+                                <p class="text-xs text-slate-600">Deixar o espaço dela mais bonito.</p>
+                            </div>
+                        </button>
+                        <a id="action-prune" href="tel:1746" class="aero-card w-full text-left p-4 flex items-center gap-4 hover:scale-[1.01] transition-all">
+                            <span class="text-3xl">✂️</span>
+                            <div>
+                                <p class="font-extrabold text-aero-deep">Solicitar Poda (Prefeitura)</p>
+                                <p class="text-xs text-slate-600">Ligar para a central 1746.</p>
+                            </div>
+                        </a>
+                    </div>
+
+                    <div id="add-tree-button-container" class="mt-6 hidden">
+                        <button data-page="add-tree" class="nav-to-btn frutiger-aero-button aero-green medium w-full">
+                            📍 Cadastrar Nova Árvore
+                        </button>
+                    </div>
+
+                    <div id="care-confirmation-section" class="mt-6 p-4 bg-emerald-50/90 border border-emerald-200 rounded-2xl hidden">
+                        <h4 class="font-extrabold text-center text-verde-principal">Missão quase completa! 🫧</h4>
+                        <p class="text-center text-slate-700 text-xs mt-1.5">Tire uma foto para registrar o seu cuidado e deixe uma mensagem para a comunidade ver.</p>
+
+                        <label for="care-photo-input" class="mt-3 w-full bg-white text-verde-principal font-bold py-3 px-4 rounded-xl shadow-sm flex items-center justify-center gap-2 cursor-pointer border-2 border-emerald-200 hover:bg-emerald-50 transition text-sm">
+                            <i data-lucide="camera" class="w-4 h-4"></i>
+                            <span id="care-media-label">Anexar Foto do Cuidado</span>
+                        </label>
+                        <input type="file" id="care-photo-input" accept="image/*">
+
+                        <textarea id="care-message" class="aero-input w-full mt-3 bg-white" rows="3" placeholder="Tá sem inspiração? Fala de como se sentiu durante essa missão..."></textarea>
+                        <button id="btn-finish-care" class="frutiger-aero-button aero-green medium w-full mt-3">Finalizar Missão 🍀</button>
+                    </div>
                 </div>
             </div>
 
+            <!-- TELA: MAPA -->
             <div id="screen-map" class="flex flex-col h-full hidden fade-in">
-                <div id="map-container" class="flex-grow bg-gray-300 relative">
-                    <div id="map-bottom-bar" class="absolute bottom-4 left-4 right-4 flex justify-between items-end z-[1000] gap-2">
+                <div id="map-container" class="flex-grow bg-sky-100 relative">
+                    <div id="map-bottom-bar" class="absolute bottom-4 left-3 right-3 flex justify-between items-end z-[1000] gap-2">
                         <div class="flex items-end gap-2 flex-grow min-w-0">
-                            <button id="btn-locate-me" class="w-12 h-12 bg-white text-verde-principal rounded-full shadow-lg flex items-center justify-center flex-shrink-0">
+                            <button id="btn-locate-me" aria-label="Centralizar na minha localização" class="w-12 h-12 aero-fab-light text-verde-principal rounded-full flex items-center justify-center flex-shrink-0">
                                 <i data-lucide="compass" class="w-6 h-6"></i>
                             </button>
-                            
+
                             <div class="arvoreco-avatar" id="arvoreco-mapa">
                                 <img src="https://firebasestorage.googleapis.com/v0/b/arboriza-bd.firebasestorage.app/o/%C3%81rvore%20Tropical%20Amiga%20do%20Brasil.png?alt=media&token=1bf9e356-e2a7-4571-aa4c-3b7af0ba7c2b" alt="Arvoreco" class="avatar-img">
                                 <div class="speech-bubble speech-bubble-left">
-                                    Arvoreco na área! Aqui você pode ver se a árvore que encontrou está perdida ou já foi abraçada! <i data-lucide="arrow-right" class="inline-block w-4 h-4 ml-1"></i>
+                                    Arvoreco na área! Aqui você pode ver se a árvore que encontrou está perdida ou já foi abraçada! <i data-lucide="arrow-right" class="inline-block w-3.5 h-3.5 ml-0.5"></i>
                                 </div>
                             </div>
                         </div>
-                        
-                        <button data-page="camera" class="nav-to-btn w-16 h-16 bg-verde-principal text-white rounded-full shadow-lg flex items-center justify-center flex-shrink-0">
-                            <i data-lucide="scan-search" class="w-8 h-8"></i>
+
+                        <button data-page="camera" aria-label="Identificar árvore com a câmera" class="nav-to-btn w-16 h-16 frutiger-aero-button aero-green rounded-full shadow-xl flex items-center justify-center flex-shrink-0 p-0">
+                            <i data-lucide="scan-search" class="w-8 h-8 text-white"></i>
                         </button>
                     </div>
                 </div>
             </div>
-            
-            <div id="screen-profile" class="p-6 hidden fade-in">
-                <div class="text-center relative">
-                    <button id="btn-logout" class="absolute top-0 right-0 text-gray-500 hover:text-erro"><i data-lucide="log-out" class="w-6 h-6"></i></button>
-                    
-                    <label for="profile-avatar-input" class="cursor-pointer relative inline-block">
-                        <img id="profile-avatar" src="https://placehold.co/128x128/cccccc/FFFFFF?text=U" alt="Foto do usuário" class="w-32 h-32 rounded-full mx-auto border-4 border-white shadow-lg object-cover">
-                        <div class="absolute bottom-1 right-1 bg-white p-1 rounded-full shadow-md border border-gray-200">
-                            <i data-lucide="camera" class="w-5 h-5 text-verde-principal"></i>
-                        </div>
-                    </label>
-                    <input type="file" id="profile-avatar-input" accept="image/*" class="hidden"> 
-                    
-                    <h3 id="profile-name" class="text-2xl font-bold mt-4">Usuário</h3>
-                    <p id="profile-level" class="text-md text-gray-500">Nível 1: Semente</p>
-                </div>
-                <div class="mt-6">
-                    <p class="text-sm text-gray-600 text-center mb-1">
-                        <span id="profile-points-text">0</span> Pontos | <span id="profile-progress-text">0%</span> para o próximo nível
-                    </p>
-                    <div class="w-full bg-gray-200 rounded-full h-4">
-                        <div id="profile-progress-bar" class="bg-progress-gradient h-4 rounded-full" style="width: 0%;"></div>
-                    </div>
-                </div>
-                <div class="grid grid-cols-3 gap-4 text-center mt-6">
-                    <div class="bg-cinza p-4 rounded-xl"><p id="profile-stat-cared" class="text-2xl font-bold">🌳 0</p><p class="text-sm text-gray-600">Cuidadas</p></div>
-                    <div class="bg-cinza p-4 rounded-xl"><p id="profile-stat-identified" class="text-2xl font-bold">🌿 0</p><p class="text-sm text-gray-600">Identificadas</p></div>
-                    <div class="bg-cinza p-4 rounded-xl"><p id="profile-stat-added" class="text-2xl font-bold">📍 0</p><p class="text-sm text-gray-600">Adicionadas</p></div>
-                </div>
-                 <div class="mt-8">
-                    <h4 class="font-bold text-lg mb-2">Árvores Adotadas</h4>
-                    <div id="adopted-trees-list" class="space-y-3">
-                         <p class="text-gray-500 text-center italic">Nenhuma árvore adotada ainda.</p>
-                    </div>
-                </div>
-                <p class="text-center text-xs text-gray-400 mt-8">Dúvidas, parcerias ou sugestões? <br> <a href="mailto:arborizarj@gmail.com" class="font-semibold text-verde-principal">arborizarj@gmail.com</a></p>
-            </div>
 
-            <div id="screen-achievements" class="p-6 hidden fade-in">
-                <h3 class="text-2xl font-bold text-center mb-6">Sua Jornada</h3>
-                <div class="mb-6">
-                    <h4 class="font-bold text-lg mb-2">Emblemas</h4>
-                    <div id="achievements-list" class="space-y-4">
-                         <div data-achievement="Guardiã Iniciante" class="bg-cinza p-4 rounded-lg">
-                            <div class="flex justify-between items-center"><p class="font-bold">Guardiã Iniciante</p><span class="counter text-sm font-semibold text-gray-600">0/5</span></div>
-                            <p class="text-sm text-gray-600 mt-1">Cuide de 5 árvores.</p><div class="w-full bg-gray-300 rounded-full h-2.5 mt-3"><div class="progress-bar bg-sucesso h-2.5 rounded-full" style="width: 0%"></div></div></div>
-                         <div data-achievement="Botânica de Primeira" class="bg-cinza p-4 rounded-lg">
-                            <div class="flex justify-between items-center"><p class="font-bold">Botânica de Primeira</p><span class="counter text-sm font-semibold text-gray-600">0/10</span></div>
-                            <p class="text-sm text-gray-600 mt-1">Identifique 10 espécies diferentes.</p><div class="w-full bg-gray-300 rounded-full h-2.5 mt-3"><div class="progress-bar bg-sucesso h-2.5 rounded-full" style="width: 0%"></div></div></div>
-                         <div data-achievement="Desbravador(a)" class="bg-cinza p-4 rounded-lg">
-                            <div class="flex justify-between items-center"><p class="font-bold">Desbravador(a)</p><span class="counter text-sm font-semibold text-gray-600">0/3</span></div>
-                            <p class="text-sm text-gray-600 mt-1">Adicione 3 novas árvores ao mapa.</p><div class="w-full bg-gray-300 rounded-full h-2.5 mt-3"><div class="progress-bar bg-sucesso h-2.5 rounded-full" style="width: 0%"></div></div></div>
-                    </div>
-                </div>
-                <div class="mt-8">
-                    <h4 class="font-bold text-lg mb-2">Exemplos de Futuros Parceiros</h4>
-                    <p class="text-gray-600 mb-4">Complete emblemas para desbloquear descontos em lojas parceiras!</p>
-                    <div class="space-y-3">
-                        <div class="bg-white p-4 rounded-lg border flex items-center"><div><p class="font-semibold">Sucos do Marcão</p><p class="text-sm text-gray-500">Rua Fonseca, 240 - Bangu</p></div><a href="#" class="ml-auto text-sm text-blue-600 font-semibold">Ver no mapa</a></div>
-                        <div class="bg-white p-4 rounded-lg border flex items-center"><div><p class="font-semibold">Floricultura Pense Verde</p><p class="text-sm text-gray-500">Estrada da Posse, 123 - Campo Grande</p></div><a href="#" class="ml-auto text-sm text-blue-600 font-semibold">Ver no mapa</a></div>
-                    </div>
-                </div>
-            </div>
+            <!-- TELA: PERFIL -->
+            <div id="screen-profile" class="aero-soft-bg p-5 hidden fade-in pb-10">
+                <div class="aero-card p-5 relative">
+                    <button id="btn-logout" title="Sair da conta" aria-label="Sair da conta" class="absolute top-4 right-4 aero-icon-btn text-slate-600 hover:text-erro">
+                        <i data-lucide="log-out" class="w-5 h-5"></i>
+                    </button>
 
-            <div id="screen-feed" class="p-4 hidden fade-in space-y-4">
-                 <h3 class="text-2xl font-bold text-center mb-2">Feed da Galera</h3>
-                 <div id="feed-posts-container" class="space-y-4"></div>
-            </div>
-
-            <div id="screen-tree-profile" class="hidden fade-in pb-10">
-                 <div class="relative">
-                    <img id="tree-profile-image" src="https://placehold.co/600x300/81C784/FFFFFF?text=Árvore" class="w-full h-56 object-cover">
-                    <div class="absolute bottom-4 right-4 flex gap-2">
-                        <button id="btn-adopt-tree" class="bg-white text-verde-principal font-bold py-3 px-5 rounded-xl shadow-lg flex items-center gap-2"><i data-lucide="heart" class="w-5 h-5"></i><span>Adotar</span></button>
-                        <button id="btn-care-from-profile" class="bg-verde-principal text-white font-bold py-3 px-5 rounded-xl shadow-lg">Cuidar</button>
-                    </div>
-                    <button data-page="map" class="nav-to-btn absolute top-4 left-4 bg-white rounded-full p-2 shadow-lg"><i data-lucide="arrow-left"></i></button>
-                 </div>
-                 <div class="p-4">
-                    <h3 id="tree-profile-name" class="text-2xl font-bold"></h3>
-                    <p id="tree-profile-scientific-name" class="text-md text-gray-500 italic"></p>
-                    <p id="tree-profile-address" class="text-sm text-gray-600 mt-2 flex items-center gap-1"><i data-lucide="map-pin" class="w-4 h-4"></i><span></span></p>
-                    <div id="tree-profile-status-badge" class="text-white text-center font-bold p-2 rounded-lg my-4"></div>
-                     
-                    <h4 class="font-bold text-lg mb-2 mt-6">Histórico de Ações</h4>
-                    <div id="tree-profile-history" class="space-y-2 text-sm text-gray-700 max-h-32 overflow-y-auto border p-2 rounded-lg bg-gray-50"></div>
-
-                    <h4 class="font-bold text-lg mb-2 mt-6">Comentários e Evolução</h4>
-                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mb-4">
-                        <textarea id="tree-comment-input" rows="2" class="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-verde-principal focus:border-verde-principal" placeholder="Escreva uma observação ou atualização sobre a planta..."></textarea>
-                        
-                        <div class="flex items-center justify-between mt-2">
-                            <div class="flex items-center gap-2">
-                                <button type="button" id="btn-comment-media" class="text-gray-600 hover:text-verde-principal text-sm flex items-center gap-1 bg-white border border-gray-300 py-1.5 px-3 rounded shadow-sm cursor-pointer transition">
-                                    <i data-lucide="camera" class="w-4 h-4"></i> <span id="comment-media-label" class="text-xs font-semibold">Adicionar Foto</span>
-                                </button>
-                                <input type="file" id="tree-comment-photo-input" accept="image/*" class="hidden">
+                    <div class="text-center">
+                        <label for="profile-avatar-input" class="cursor-pointer relative inline-block">
+                            <img id="profile-avatar" src="https://placehold.co/128x128/00a86b/FFFFFF?text=U" alt="Foto do usuário" class="w-28 h-28 rounded-full mx-auto border-4 border-white shadow-lg object-cover ring-2 ring-sky-300">
+                            <div class="absolute bottom-1 right-1 bg-white p-1.5 rounded-full shadow-md border border-sky-200">
+                                <i data-lucide="camera" class="w-4 h-4 text-verde-principal"></i>
                             </div>
-                            <button type="button" id="btn-post-comment" class="bg-verde-principal text-white px-4 py-1.5 rounded text-sm font-medium shadow hover:bg-opacity-90 transition flex items-center gap-1">
-                                <i data-lucide="send" class="w-4 h-4"></i> Enviar
+                        </label>
+                        <input type="file" id="profile-avatar-input" accept="image/*">
+
+                        <h3 id="profile-name" class="text-2xl font-extrabold text-aero-deep mt-3">Usuário</h3>
+                        <p id="profile-level" class="text-sm font-bold text-verde-principal mt-0.5">🌱 Nível 1: Semente</p>
+                        <span id="profile-role-badge" class="hidden inline-block mt-1.5 aero-badge-pill text-xs font-bold px-3 py-1"></span>
+
+                        <!-- Seguidores / Seguindo -->
+                        <div class="flex justify-center gap-6 mt-3 text-xs font-bold text-slate-700">
+                            <span><strong id="profile-stat-followers" class="text-sky-900 text-sm">0</strong> Seguidores</span>
+                            <span><strong id="profile-stat-following" class="text-sky-900 text-sm">0</strong> Seguindo</span>
+                        </div>
+                    </div>
+
+                    <!-- Atalhos de Painel (exibidos automaticamente para Parceiro ou Admin) -->
+                    <div class="mt-4 space-y-2">
+                        <button id="btn-open-partner-dashboard" type="button" class="hidden frutiger-aero-button aero-blue small w-full">
+                            🏪 Abrir Painel do Meu Comércio
+                        </button>
+                        <button id="btn-open-admin-panel" type="button" class="hidden frutiger-aero-button aero-amber small w-full">
+                            🛡️ Abrir Painel de Administrador
+                        </button>
+                    </div>
+
+                    <!-- Progresso de Nível -->
+                    <div class="mt-5 p-3.5 rounded-2xl bg-sky-50/90 border border-sky-200">
+                        <p class="text-xs font-bold text-slate-700 text-center">
+                            <span id="profile-points-text" class="text-verde-principal text-sm font-extrabold">0</span> Pontos |
+                            <span id="profile-progress-text">0%</span> concluído
+                        </p>
+                        <p id="profile-next-level-text" class="text-[11px] font-semibold text-sky-800 text-center mt-0.5 mb-2"></p>
+                        <div class="aero-progress-track">
+                            <div id="profile-progress-bar" class="aero-progress-fill" style="width: 0%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Contadores -->
+                    <div class="grid grid-cols-3 gap-2.5 text-center mt-4">
+                        <div class="aero-mini-stat">
+                            <strong id="profile-stat-cared">🌳 0</strong>
+                            <span>Cuidadas</span>
+                        </div>
+                        <div class="aero-mini-stat">
+                            <strong id="profile-stat-identified">🍃 0</strong>
+                            <span>Identificadas</span>
+                        </div>
+                        <div class="aero-mini-stat">
+                            <strong id="profile-stat-added">📍 0</strong>
+                            <span>Adicionadas</span>
+                        </div>
+                    </div>
+                    <!-- Controle de Privacidade (LGPD) -->
+                <div class="mt-5 p-3.5 rounded-2xl bg-sky-50/85 border border-sky-200 flex items-center justify-between gap-3">
+                    <div class="text-left">
+                        <p class="text-xs font-extrabold text-aero-deep">🔒 Aparecer na busca da Rede</p>
+                        <p id="privacy-status-desc" class="text-[11px] text-slate-600 mt-0.5">
+                             Outros guardiões podem encontrar e seguir seu perfil (seu e-mail continua privado).
+                        </p>
+                </div>
+                <label class="aero-switch flex-shrink-0" aria-label="Aparecer na busca da Rede">
+                    <input type="checkbox" id="toggle-public-profile" checked>
+                    <span class="aero-slider"></span>
+                </label>
+                </div>
+                    <!-- Emblemas Conquistados -->
+                    <div class="mt-6">
+                        <h4 class="font-extrabold text-base text-aero-deep mb-2">🏅 Meus Emblemas</h4>
+                        <div id="profile-emblems-showcase" class="flex flex-wrap gap-2"></div>
+                    </div>
+
+                    <!-- Meus Vouchers de Parceiros -->
+                    <div class="mt-6">
+                        <h4 class="font-extrabold text-base text-aero-deep mb-2">🎟️ Meus Vouchers de Parceiros</h4>
+                        <div id="profile-vouchers-list" class="space-y-2.5">
+                            <p class="text-slate-500 text-center italic text-sm">Nenhum voucher resgatado ainda.</p>
+                        </div>
+                    </div>
+
+                    <!-- Árvores Adotadas -->
+                    <div class="mt-6">
+                        <h4 class="font-extrabold text-base text-aero-deep mb-2">💚 Árvores Adotadas</h4>
+                        <div id="adopted-trees-list" class="space-y-2.5">
+                            <p class="text-slate-500 text-center italic text-sm">Nenhuma árvore adotada ainda.</p>
+                        </div>
+                    </div>
+
+                    <p class="text-center text-xs text-slate-500 mt-7">
+                        Dúvidas, parcerias ou sugestões? <br>
+                        <a href="mailto:arborizarj@gmail.com" class="font-bold text-verde-principal hover:underline">arborizarj@gmail.com</a>
+                    </p>
+                </div>
+            </div>
+
+            <!-- TELA: CONQUISTAS, MISSÕES, EMBLEMAS E MAPA DE PARCEIROS -->
+            <div id="screen-achievements" class="aero-soft-bg p-5 hidden fade-in pb-10 space-y-6">
+                <h3 class="text-2xl font-extrabold text-center text-aero-deep">🏆 Sua Jornada & Parceiros</h3>
+
+                <!-- Missões de Médio/Longo Prazo -->
+                <section>
+                    <h4 class="font-extrabold text-lg text-aero-deep mb-2 flex items-center gap-1.5">🎯 Missões Ativas</h4>
+                    <div id="missions-list" class="space-y-3"></div>
+                </section>
+
+                <!-- Emblemas -->
+                <section>
+                    <h4 class="font-extrabold text-lg text-aero-deep mb-2 flex items-center gap-1.5">🏅 Emblemas</h4>
+                    <p class="text-xs text-slate-600 mb-2.5">Conclua os conjuntos de missões acima para conquistar cada emblema!</p>
+                    <div id="achievements-list" class="space-y-3"></div>
+                </section>
+
+                <!-- Mapa Real de Parceiros Oficiais -->
+                <section>
+                    <div class="aero-window">
+                        <div class="aero-titlebar aero-titlebar-blue">
+                            <span class="text-xs font-extrabold">🗺️ Mapa Oficial de Parceiros Arboriza</span>
+                            <span class="text-[11px] font-bold">🏪 Recompensas Reais</span>
+                        </div>
+                        <div id="partners-map-container" class="w-full h-56 bg-sky-100 z-0"></div>
+                    </div>
+                    <p class="text-xs text-slate-600 font-semibold mt-2.5 mb-3">
+                        Complete missões para resgatar brindes nos comércios parceiros — cada recompensa resgatada soma árvores cuidadas no placar de impacto do parceiro! 🌳
+                    </p>
+                    <div id="partners-directory-list" class="space-y-3">
+                        <p class="text-slate-500 text-center text-sm italic">Carregando parceiros...</p>
+                    </div>
+                </section>
+            </div>
+
+            <!-- TELA: FEED INTERATIVO -->
+            <div id="screen-feed" class="aero-soft-bg p-4 hidden fade-in pb-10 space-y-4">
+                <div class="flex items-center justify-between gap-2">
+                    <h3 class="text-xl font-extrabold text-aero-deep">📰 Feed da Galera</h3>
+                    <button data-page="community" class="nav-to-btn frutiger-aero-button aero-blue small text-xs">
+                        🔎 Buscar Perfis
+                    </button>
+                </div>
+
+                <!-- Filtro: Todos vs Seguindo -->
+                <div class="grid grid-cols-2 gap-2 bg-white/80 p-1.5 rounded-full border border-sky-200 shadow-sm">
+                    <button id="feed-tab-all" type="button" class="aero-tab-btn aero-tab-active">🌍 Todos</button>
+                    <button id="feed-tab-following" type="button" class="aero-tab-btn">💙 Seguindo</button>
+                </div>
+
+                <div id="feed-posts-container" class="space-y-4"></div>
+            </div>
+
+            <!-- TELA: REDE / COMUNIDADE (BUSCAR PERFIS E CONECTAR) -->
+            <div id="screen-community" class="aero-soft-bg p-4 hidden fade-in pb-10 space-y-4">
+                <div class="aero-window">
+                    <div class="aero-titlebar aero-titlebar-blue">
+                        <span class="text-xs font-extrabold">🌐 Rede de Guardiões — Conectar</span>
+                        <span class="text-[11px] font-bold">🫧 Comunidade</span>
+                    </div>
+                    <div class="p-4 bg-white/95 space-y-3">
+                        <div class="grid grid-cols-2 gap-2.5 text-center">
+                            <div class="aero-mini-stat">
+                                <strong id="community-following-count">0</strong>
+                                <span>Seguindo</span>
+                            </div>
+                            <div class="aero-mini-stat">
+                                <strong id="community-followers-count">0</strong>
+                                <span>Seguidores</span>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <input type="text" id="community-search-input" class="aero-input flex-grow text-sm" placeholder="Pesquisar guardiões por nome ou nível...">
+                            <button id="btn-community-search" type="button" aria-label="Pesquisar" class="frutiger-aero-button aero-blue small px-4">
+                                <i data-lucide="search" class="w-4 h-4 text-white"></i>
                             </button>
                         </div>
-                        <div class="mt-2 relative hidden" id="tree-comment-photo-preview-container">
-                            <img id="tree-comment-photo-preview" class="rounded-lg max-h-32 w-full object-cover border border-gray-200">
-                        </div>
                     </div>
-                    
-                    <div id="tree-profile-timeline" class="space-y-4"></div>
+                </div>
 
-                    <h4 class="font-bold text-lg mb-2 mt-6">Guardiões desta árvore:</h4>
-                    <div id="tree-profile-adopters" class="flex flex-wrap gap-2"></div>
-                 </div>
+                <div id="community-users-list" class="space-y-3"></div>
             </div>
-            
-             <div id="screen-add-tree" class="p-6 hidden fade-in">
-                <h3 class="text-2xl font-bold text-center">Cadastrar Nova Árvore</h3>
-                <p class="text-center text-gray-500 mt-1">Que legal! Vamos dar uma identidade para esta nova amiga.</p>
-                
-                <div class="mt-6 space-y-3">
-                    <label class="block text-sm font-medium text-gray-700">Foto da Árvore *</label>
-                    
-                    <div id="tree-photo-preview-container" class="relative w-full h-48 bg-gray-100 rounded-lg overflow-hidden border-2 border-dashed border-gray-300 flex items-center justify-center">
-                        <img id="tree-registration-preview" src="" class="w-full h-full object-cover hidden">
-                        <div id="preview-placeholder" class="text-center p-4">
-                            <i data-lucide="camera" class="w-10 h-10 text-gray-400 mx-auto"></i>
-                            <span class="text-xs text-gray-500 block mt-2">Nenhuma foto selecionada</span>
-                        </div>
+
+            <!-- TELA: PERFIL DA ÁRVORE -->
+            <div id="screen-tree-profile" class="aero-soft-bg hidden fade-in pb-10">
+                <div class="relative">
+                    <img id="tree-profile-image" src="https://placehold.co/600x300/81C784/FFFFFF?text=Árvore" class="w-full h-56 object-cover">
+                    <div class="absolute bottom-3 right-3 flex gap-2">
+                        <button id="btn-adopt-tree" class="bg-white/95 text-emerald-800 font-extrabold py-2.5 px-4 rounded-full shadow-lg border border-white flex items-center gap-1.5 text-sm">
+                            <i data-lucide="heart" class="w-4 h-4"></i><span>Adotar</span>
+                        </button>
+                        <button id="btn-care-from-profile" class="frutiger-aero-button aero-green small">Cuidar 💧</button>
                     </div>
-                
-                    <div class="flex gap-2">
-                        <button type="button" id="btn-trigger-media" class="w-full bg-white border border-gray-300 text-gray-700 py-3 px-4 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-gray-50 transition shadow-sm">
-                            <i data-lucide="image"></i> Trocar ou Tirar Nova Foto
+                    <button data-page="map" aria-label="Voltar para o mapa" class="nav-to-btn absolute top-3 left-3 aero-icon-btn">
+                        <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <div class="p-4 space-y-4">
+                    <div class="aero-card p-4">
+                        <span id="tree-profile-type-badge" class="aero-badge-pill text-[11px] font-bold px-2.5 py-0.5 inline-block mb-1.5">🌳 Árvore Urbana</span>
+                        <h3 id="tree-profile-name" class="text-2xl font-extrabold text-verde-principal"></h3>
+                        <p id="tree-profile-scientific-name" class="text-sm text-slate-600 italic"></p>
+                        <p id="tree-profile-address" class="text-xs text-slate-700 mt-2 flex items-center gap-1 font-semibold">
+                            <i data-lucide="map-pin" class="w-4 h-4 text-sky-700"></i><span></span>
+                        </p>
+                        <div id="tree-profile-status-badge" class="text-center font-bold p-2.5 rounded-xl my-4"></div>
+                    </div>
+
+                    <div class="aero-card p-4">
+                        <h4 class="font-extrabold text-base text-aero-deep mb-2">🕓 Histórico de Ações</h4>
+                        <div id="tree-profile-history" class="space-y-1.5 text-xs text-slate-700 max-h-36 overflow-y-auto border border-sky-100 p-2.5 rounded-xl bg-white/80"></div>
+                    </div>
+
+                    <div class="aero-card p-4">
+                        <h4 class="font-extrabold text-base text-aero-deep mb-2">💬 Comentários e Evolução</h4>
+                        <div class="bg-sky-50/80 p-3 rounded-xl border border-sky-200 mb-4">
+                            <textarea id="tree-comment-input" rows="2" class="aero-input w-full bg-white text-sm" placeholder="Escreva uma observação ou atualização sobre a planta..."></textarea>
+
+                            <div class="flex items-center justify-between mt-2.5 gap-2">
+                                <button type="button" id="btn-comment-media" class="text-slate-700 hover:text-verde-principal text-xs flex items-center gap-1.5 bg-white border border-sky-200 py-2 px-3 rounded-full shadow-sm cursor-pointer transition font-bold">
+                                    <i data-lucide="camera" class="w-4 h-4"></i>
+                                    <span id="comment-media-label">Adicionar Foto</span>
+                                </button>
+                                <input type="file" id="tree-comment-photo-input" accept="image/*">
+
+                                <button type="button" id="btn-post-comment" class="frutiger-aero-button aero-green small flex items-center gap-1">
+                                    <i data-lucide="send" class="w-4 h-4"></i> Enviar
+                                </button>
+                            </div>
+                            <div class="mt-2 relative hidden" id="tree-comment-photo-preview-container">
+                                <img id="tree-comment-photo-preview" class="rounded-xl max-h-32 w-full object-cover border border-sky-200">
+                            </div>
+                        </div>
+
+                        <div id="tree-profile-timeline" class="space-y-3"></div>
+                    </div>
+
+                    <div class="aero-card p-4">
+                        <h4 class="font-extrabold text-base text-aero-deep mb-2">💚 Guardiões desta árvore:</h4>
+                        <div id="tree-profile-adopters" class="flex flex-wrap gap-2"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TELA: CADASTRAR NOVA ÁRVORE -->
+            <div id="screen-add-tree" class="aero-soft-bg p-5 hidden fade-in pb-10">
+                <div class="aero-card p-5">
+                    <h3 class="text-2xl font-extrabold text-center text-verde-principal">📍 Cadastrar Nova Árvore</h3>
+                    <p class="text-center text-slate-600 text-sm mt-1">Que legal! Vamos dar uma identidade para esta nova amiga.</p>
+
+                    <div class="mt-5 space-y-3">
+                        <label class="block text-xs font-extrabold text-slate-800">Foto da Árvore *</label>
+
+                        <div id="tree-photo-preview-container" class="relative w-full h-48 bg-sky-50 rounded-2xl overflow-hidden border-2 border-dashed border-sky-300 flex items-center justify-center">
+                            <img id="tree-registration-preview" src="" class="w-full h-full object-cover hidden">
+                            <div id="preview-placeholder" class="text-center p-4">
+                                <i data-lucide="camera" class="w-10 h-10 text-sky-400 mx-auto"></i>
+                                <span class="text-xs text-slate-500 block mt-2">Nenhuma foto selecionada</span>
+                            </div>
+                        </div>
+
+                        <button type="button" id="btn-trigger-media" class="w-full bg-white border-2 border-sky-200 text-sky-900 py-2.5 px-4 rounded-full text-sm font-bold flex items-center justify-center gap-2 hover:bg-sky-50 transition shadow-sm">
+                            <i data-lucide="image" class="w-4 h-4"></i> Trocar ou Tirar Nova Foto
+                        </button>
+                        <input type="file" id="add-tree-photo-input" accept="image/*">
+                    </div>
+
+                    <div class="mt-4">
+                        <label for="add-tree-health" class="block font-extrabold text-xs text-slate-800 mb-1.5">Qual o estado de saúde dela?</label>
+                        <select id="add-tree-health" class="aero-input w-full bg-white">
+                            <option value="healthy">Parece saudável e feliz</option>
+                            <option value="needs-care">Parece um pouco triste (folhas secas, lixo)</option>
+                            <option value="critical">Parece muito doente ou danificada</option>
+                        </select>
+                    </div>
+
+                    <div class="mt-4">
+                        <label for="add-tree-message" class="block font-extrabold text-xs text-slate-800 mb-1.5">Deixe a primeira mensagem no mural!</label>
+                        <textarea id="add-tree-message" class="aero-input w-full bg-white" rows="3" placeholder="Ex: Que bom te encontrar! Espero que cresça forte."></textarea>
+                    </div>
+
+                    <button id="btn-finish-add-tree" class="frutiger-aero-button aero-green medium w-full mt-5">
+                        Finalizar Cadastro 🌳
+                    </button>
+                </div>
+            </div>
+
+            <!-- TELA: SABER MAIS -->
+            <div id="screen-learn" class="aero-soft-bg p-5 hidden fade-in pb-10">
+                <div class="aero-card p-5">
+                    <div class="text-center">
+                        <img src="https://firebasestorage.googleapis.com/v0/b/arboriza-bd.firebasestorage.app/o/%C3%81rvore%20Tropical%20Amiga%20do%20Brasil.png?alt=media&token=1bf9e356-e2a7-4571-aa4c-3b7af0ba7c2b" alt="Arvoreco" class="w-28 h-28 object-contain mx-auto arvoreco-bounce">
+                        <h3 class="text-2xl font-extrabold text-verde-principal mt-2">Pergunta pro Arvoreco! 🫧</h3>
+                        <p class="text-slate-600 text-sm mt-1">O que você quer saber sobre o universo das plantas?</p>
+                    </div>
+
+                    <div class="mt-5 relative">
+                        <input type="text" id="learn-search-input" placeholder="Ex: Como adubar uma planta?" class="aero-input w-full pr-14 bg-white">
+                        <button id="learn-search-btn" aria-label="Buscar" class="absolute right-1.5 top-1/2 -translate-y-1/2 frutiger-aero-button aero-green small px-3 py-2">
+                            <i data-lucide="search" class="w-4 h-4 text-white"></i>
                         </button>
                     </div>
-                    <input type="file" id="add-tree-photo-input" accept="image/*" class="hidden">
+
+                    <div class="mt-4">
+                        <p class="text-xs font-extrabold text-slate-600 mb-2">Sugestões:</p>
+                        <div class="flex flex-wrap gap-2">
+                            <button class="suggested-question-btn aero-badge-pill text-xs font-bold py-1.5 px-3 cursor-pointer hover:brightness-95">Como melhorar a terra do canteiro?</button>
+                            <button class="suggested-question-btn aero-badge-pill text-xs font-bold py-1.5 px-3 cursor-pointer hover:brightness-95">Por que não pode pintar os troncos das árvores?</button>
+                            <button class="suggested-question-btn aero-badge-pill text-xs font-bold py-1.5 px-3 cursor-pointer hover:brightness-95">Como proteger uma árvore jovem?</button>
+                        </div>
+                    </div>
+
+                    <div id="learn-results-container" class="mt-5 hidden"></div>
+
+                    <p class="text-center text-xs text-slate-500 mt-7">
+                        Dúvidas, parcerias ou sugestões? <br>
+                        <a href="mailto:arborizarj@gmail.com" class="font-bold text-verde-principal hover:underline">arborizarj@gmail.com</a>
+                    </p>
+                </div>
+            </div>
+
+            <!-- TELA: PAINEL DO PARCEIRO -->
+            <div id="screen-partner-dashboard" class="aero-soft-bg p-4 hidden fade-in pb-10 space-y-4">
+                <div class="flex items-center justify-between">
+                    <button data-page="profile" class="nav-to-btn aero-badge-pill text-xs font-bold px-3 py-1.5">← Perfil</button>
+                    <h3 class="text-lg font-extrabold text-sky-900">🏪 Painel do Parceiro</h3>
+                    <button id="btn-partner-logout" title="Sair" aria-label="Sair" class="aero-icon-btn w-9 h-9 text-slate-600 hover:text-erro">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                    </button>
                 </div>
 
-                <div class="mt-4">
-                    <h4 class="font-semibold mb-2">Qual o estado de saúde dela?</h4>
-                    <select id="add-tree-health" class="w-full p-3 border rounded-lg bg-white">
-                        <option value="healthy">Parece saudável e feliz</option>
-                        <option value="needs-care">Parece um pouco triste (folhas secas, lixo)</option>
-                        <option value="critical">Parece muito doente ou danificada</option>
-                    </select>
+                <!-- Banner de Status (Conta Ativa / Aguardando Aprovação) -->
+                <div id="partner-dash-status-banner" class="aero-status-warning p-3.5 rounded-xl text-center font-bold text-sm">
+                    Carregando status...
                 </div>
-                <div class="mt-4">
-                     <h4 class="font-semibold mb-2">Deixe a primeira mensagem no mural!</h4>
-                     <textarea id="add-tree-message" class="w-full p-2 border rounded-lg" rows="4" placeholder="Ex: Que bom te encontrar! Espero que cresça forte."></textarea>
-                </div>
-                <button id="btn-finish-add-tree" class="w-full mt-6 bg-verde-principal text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:bg-opacity-90 transition">Finalizar Cadastro</button>
-            </div>
-            
-            <div id="screen-learn" class="p-6 hidden fade-in">
-                <div class="text-center">
-                    <img src="https://firebasestorage.googleapis.com/v0/b/arboriza-bd.firebasestorage.app/o/%C3%81rvore%20Tropical%20Amiga%20do%20Brasil.png?alt=media&token=1bf9e356-e2a7-4571-aa4c-3b7af0ba7c2b" alt="Arvoreco" class="w-32 h-32 object-contain mx-auto arvoreco-bounce">
-                    <h3 class="text-2xl font-bold mt-2">Pergunta pro Arvoreco!</h3>
-                    <p class="text-gray-600 mt-1">O que você quer saber sobre o universo das plantas?</p>
-                </div>
-                <div class="mt-6 relative">
-                    <input type="text" id="learn-search-input" placeholder="Ex: Como adubar uma planta?" class="w-full p-4 pr-12 bg-cinza rounded-lg">
-                    <button id="learn-search-btn" class="absolute right-2 top-1/2 -translate-y-1/2 bg-verde-principal text-white rounded-lg p-2"><i data-lucide="search"></i></button>
-                </div>
-                <div class="mt-4">
-                    <p class="text-sm font-semibold text-gray-500 mb-2">Sugestões:</p>
-                    <div class="flex flex-wrap gap-2">
-                        <button class="suggested-question-btn text-sm bg-gray-200 text-gray-700 py-1 px-3 rounded-full hover:bg-gray-300">Como melhorar a terra do canteiro?</button>
-                        <button class="suggested-question-btn text-sm bg-gray-200 text-gray-700 py-1 px-3 rounded-full hover:bg-gray-300">Por que não pode pintar os troncos das árvores?</button>
-                        <button class="suggested-question-btn text-sm bg-gray-200 text-gray-700 py-1 px-3 rounded-full hover:bg-gray-300">Como proteger uma árvore jovem?</button>
+
+                <!-- Resumo do Comércio + Placar de Árvores Impactadas -->
+                <div class="aero-card p-4 space-y-3">
+                    <div class="flex items-center gap-3">
+                        <img id="partner-dash-photo" src="https://placehold.co/120x120/0ea5e9/FFFFFF?text=🏪" alt="Foto do comércio" class="w-16 h-16 rounded-2xl object-cover border-2 border-white shadow">
+                        <div class="min-w-0">
+                            <h4 id="partner-dash-name" class="font-extrabold text-aero-deep truncate">Meu Comércio</h4>
+                            <p id="partner-dash-category" class="text-xs font-bold text-sky-800"></p>
+                            <p id="partner-dash-address" class="text-xs text-slate-600 truncate"></p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2.5 text-center pt-1">
+                        <div class="aero-mini-stat">
+                            <strong id="partner-dash-trees-impacted" class="text-2xl text-verde-principal">0</strong>
+                            <span>🌳 Árvores apoiadas</span>
+                        </div>
+                        <div class="aero-mini-stat">
+                            <strong id="partner-dash-vouchers-count" class="text-2xl text-sky-800">0</strong>
+                            <span>🎟️ Vouchers gerados</span>
+                        </div>
                     </div>
                 </div>
-                <div id="learn-results-container" class="mt-6 hidden"></div>
-                <p class="text-center text-xs text-gray-400 mt-8">Dúvidas, parcerias ou sugestões? <br> <a href="mailto:arborizarj@gmail.com" class="font-semibold text-verde-principal">arborizarj@gmail.com</a></p>
+
+                <!-- Gerenciar Recompensas -->
+                <div class="aero-card p-4 space-y-3">
+                    <h4 class="font-extrabold text-base text-aero-deep">🎁 Minhas Recompensas</h4>
+                    <div id="partner-rewards-manage-list" class="space-y-2.5"></div>
+
+                    <hr class="border-sky-100">
+
+                    <form id="partner-add-reward-form" class="space-y-2.5">
+                        <p class="text-xs font-extrabold text-verde-principal">+ Nova Recompensa (passa por aprovação do admin)</p>
+                        <input type="text" id="reward-title-input" required class="aero-input w-full bg-white text-sm" placeholder="Título (ex: 10% OFF no suco natural)">
+                        <textarea id="reward-desc-input" required rows="2" class="aero-input w-full bg-white text-sm" placeholder="Descrição e regras de retirada..."></textarea>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label for="reward-mission-type" class="block text-[11px] font-bold text-slate-700 mb-0.5">Missão exigida</label>
+                                <select id="reward-mission-type" class="aero-input w-full bg-white text-xs">
+                                    <option value="treesCared">Cuidar de árvores</option>
+                                    <option value="treesIdentified">Identificar árvores</option>
+                                    <option value="treesAdded">Cadastrar árvores</option>
+                                    <option value="treesAdoptedCount">Adotar árvores</option>
+                                    <option value="points">Alcançar pontos</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="reward-required-count" class="block text-[11px] font-bold text-slate-700 mb-0.5">Quantidade</label>
+                                <input type="number" id="reward-required-count" min="1" max="5000" value="10" required class="aero-input w-full bg-white text-xs">
+                            </div>
+                        </div>
+                        <button type="submit" class="frutiger-aero-button aero-green small w-full">Enviar para Aprovação 📤</button>
+                    </form>
+                </div>
+
+                <!-- Vouchers Resgatados (Validação no Balcão) -->
+                <div class="aero-card p-4 space-y-2.5">
+                    <h4 class="font-extrabold text-base text-aero-deep">🎟️ Vouchers dos Guardiões</h4>
+                    <div id="partner-vouchers-manage-list" class="space-y-2"></div>
+                </div>
+
+                <!-- Editar Perfil do Comércio -->
+                <div class="aero-card p-4 space-y-2.5">
+                    <h4 class="font-extrabold text-base text-aero-deep">✏️ Editar Dados do Comércio</h4>
+                    <form id="partner-edit-form" class="space-y-2.5">
+                        <input type="text" id="partner-edit-name" required class="aero-input w-full bg-white text-sm" placeholder="Nome do comércio">
+                        <select id="partner-edit-category" class="aero-input w-full bg-white text-sm">
+                            <option value="Alimentação & Sucos">🍹 Alimentação, Sucos & Padaria</option>
+                            <option value="Floricultura & Jardinagem">🌺 Floricultura & Jardinagem</option>
+                            <option value="Mercado & Hortifruti">🍏 Mercado & Hortifruti</option>
+                            <option value="Cultura & Livraria">📚 Cultura, Papelaria & Livraria</option>
+                            <option value="Saúde & Bem-estar">💚 Saúde, Academia & Serviços</option>
+                            <option value="Comércio Local">🏪 Outro Comércio Local</option>
+                        </select>
+                        <input type="text" id="partner-edit-address" required class="aero-input w-full bg-white text-sm" placeholder="Endereço completo">
+                        <textarea id="partner-edit-description" required rows="2" class="aero-input w-full bg-white text-sm" placeholder="Descrição"></textarea>
+                        <label for="partner-edit-photo-input" class="block text-center bg-sky-50 border border-sky-200 rounded-xl py-2 px-3 text-xs font-bold text-sky-900 cursor-pointer hover:bg-sky-100">
+                            📷 Alterar Foto do Comércio
+                        </label>
+                        <input type="file" id="partner-edit-photo-input" accept="image/*">
+                        <button type="submit" class="frutiger-aero-button aero-blue small w-full">Salvar Alterações</button>
+                    </form>
+                </div>
             </div>
 
+            <!-- TELA: PAINEL DE ADMINISTRADOR -->
+            <div id="screen-admin" class="aero-soft-bg p-4 hidden fade-in pb-10 space-y-4">
+                <div class="flex items-center justify-between">
+                    <button data-page="profile" class="nav-to-btn aero-badge-pill text-xs font-bold px-3 py-1.5">← Perfil</button>
+                    <h3 class="text-lg font-extrabold text-aero-deep">🛡️ Painel Admin Arboriza</h3>
+                    <span class="w-12"></span>
+                </div>
+
+                <!-- Métricas Gerais -->
+                <div class="grid grid-cols-4 gap-2 text-center">
+                    <div class="aero-mini-stat">
+                        <strong id="admin-stat-users">0</strong>
+                        <span>Usuários</span>
+                    </div>
+                    <div class="aero-mini-stat">
+                        <strong id="admin-stat-trees" class="text-verde-principal">0</strong>
+                        <span>Árvores</span>
+                    </div>
+                    <div class="aero-mini-stat">
+                        <strong id="admin-stat-partners" class="text-sky-800">0</strong>
+                        <span>Ativos</span>
+                    </div>
+                    <div class="aero-mini-stat">
+                        <strong id="admin-stat-pending" class="text-amber-700">0</strong>
+                        <span>Pendentes</span>
+                    </div>
+                </div>
+                <button id="btn-admin-sync-profiles" type="button" class="frutiger-aero-button aero-blue small w-full">
+                    🔄 Sincronizar Perfis Antigos na Rede (LGPD)
+                </button>
+                <!-- Abas do Admin -->
+                <div class="grid grid-cols-3 gap-1.5 bg-white/85 p-1.5 rounded-full border border-sky-200 shadow-sm">
+                    <button id="admin-tab-partners" type="button" class="aero-tab-btn aero-tab-active text-xs">🏪 Parceiros</button>
+                    <button id="admin-tab-rewards" type="button" class="aero-tab-btn text-xs">🎁 Recompensas</button>
+                    <button id="admin-tab-active-partners" type="button" class="aero-tab-btn text-xs">✅ Ativos</button>
+                </div>
+
+                <div id="admin-pending-partners-list" class="space-y-3"></div>
+                <div id="admin-pending-rewards-list" class="hidden space-y-3"></div>
+                <div id="admin-active-partners-list" class="hidden space-y-3"></div>
+            </div>
         </main>
 
-        <nav class="bg-white shadow-t-lg border-t border-gray-200 justify-around hidden">
-            <button data-page="map" class="nav-btn flex-1 flex flex-col items-center justify-center p-2 text-gray-400"><i data-lucide="map" class="w-6 h-6"></i><span class="text-xs font-semibold mt-1">Mapa</span></button>
-            <button data-page="learn" class="nav-btn flex-1 flex flex-col items-center justify-center p-2 text-gray-400"><i data-lucide="graduation-cap" class="w-6 h-6"></i><span class="text-xs font-semibold mt-1">Saber Mais</span></button>
-            <button data-page="feed" class="nav-btn flex-1 flex flex-col items-center justify-center p-2 text-gray-400"><i data-lucide="newspaper" class="w-6 h-6"></i><span class="text-xs font-semibold mt-1">Feed</span></button>
-            <button data-page="achievements" class="nav-btn flex-1 flex flex-col items-center justify-center p-2 text-gray-400"><i data-lucide="award" class="w-6 h-6"></i><span class="text-xs font-semibold mt-1">Conquistas</span></button>
-            <button data-page="profile" class="nav-btn flex-1 flex flex-col items-center justify-center p-2 text-gray-400"><i data-lucide="user" class="w-6 h-6"></i><span class="text-xs font-semibold mt-1">Perfil</span></button>
+        <!-- ==================== TASKBAR INFERIOR FRUTIGER AERO ==================== -->
+        <nav class="aero-taskbar justify-around hidden" aria-label="Navegação principal">
+            <button data-page="map" class="nav-btn flex-1 flex flex-col items-center justify-center py-2 px-1 text-gray-500">
+                <i data-lucide="map" class="w-5 h-5"></i>
+                <span class="text-[10px] font-extrabold mt-0.5">Mapa</span>
+            </button>
+            <button data-page="learn" class="nav-btn flex-1 flex flex-col items-center justify-center py-2 px-1 text-gray-500">
+                <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+                <span class="text-[10px] font-extrabold mt-0.5">Saber</span>
+            </button>
+            <button data-page="feed" class="nav-btn flex-1 flex flex-col items-center justify-center py-2 px-1 text-gray-500">
+                <i data-lucide="newspaper" class="w-5 h-5"></i>
+                <span class="text-[10px] font-extrabold mt-0.5">Feed</span>
+            </button>
+            <button data-page="community" class="nav-btn flex-1 flex flex-col items-center justify-center py-2 px-1 text-gray-500">
+                <i data-lucide="users" class="w-5 h-5"></i>
+                <span class="text-[10px] font-extrabold mt-0.5">Rede</span>
+            </button>
+            <button data-page="achievements" class="nav-btn flex-1 flex flex-col items-center justify-center py-2 px-1 text-gray-500">
+                <i data-lucide="award" class="w-5 h-5"></i>
+                <span class="text-[10px] font-extrabold mt-0.5">Conquistas</span>
+            </button>
+            <button data-page="profile" class="nav-btn flex-1 flex flex-col items-center justify-center py-2 px-1 text-gray-500">
+                <i data-lucide="user" class="w-5 h-5"></i>
+                <span class="text-[10px] font-extrabold mt-0.5">Perfil</span>
+            </button>
         </nav>
-        
-        <div id="toast-notification" class="hidden fixed bottom-24 left-1/2 -translate-x-1/2 bg-gray-800 text-white py-2 px-5 rounded-full shadow-lg z-[2000] text-center w-[90%]"><p></p></div>
 
-        <div id="loading-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[3000]">
-            <div class="bg-white p-6 rounded-lg flex items-center gap-4 shadow-xl">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-verde-principal"></div>
-                <p id="loading-message" class="font-semibold text-gray-700"></p>
+        <!-- ==================== TOAST & MODAIS ==================== -->
+        <div id="toast-notification" role="status" aria-live="polite" class="hidden fixed bottom-24 left-1/2 -translate-x-1/2 aero-toast py-2.5 px-5 rounded-full shadow-xl z-[3500] text-center w-[90%] max-w-sm">
+            <p class="text-xs font-bold"></p>
+        </div>
+
+        <div id="loading-modal" class="hidden fixed inset-0 bg-slate-900/55 backdrop-blur-sm flex items-center justify-center z-[4000] p-4">
+            <div class="aero-card p-5 flex items-center gap-4 shadow-2xl">
+                <div class="animate-spin rounded-full h-8 w-8 border-4 border-sky-200 border-t-emerald-600"></div>
+                <p id="loading-message" class="font-extrabold text-aero-deep text-sm"></p>
             </div>
         </div>
 
-        <div id="location-permission-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[2000] p-4">
-            <div class="bg-white p-6 rounded-lg shadow-xl text-center">
-                <i data-lucide="compass" class="w-16 h-16 mx-auto text-verde-principal"></i>
-                <h3 class="text-2xl font-bold mt-4">Olá, Guardião!</h3>
-                <p class="text-gray-600 mt-2">Para te mostrar as árvores pertinho de você, o Arboriza precisa da sua localização.</p>
-                <p class="text-sm text-gray-500 mt-4">Nós só usamos isso para centralizar o mapa onde você está.</p>
-                <button id="btn-grant-location" class="w-full mt-6 bg-verde-principal text-white font-bold py-3 px-4 rounded-xl shadow-lg">Entendido, permitir localização</button>
-            </div>
-        </div>
-        
-        <div id="forgot-password-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[2000] p-4">
-            <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-2xl font-bold text-verde-principal">Redefinir Senha</h3>
-                    <button id="btn-close-forgot-modal"><i data-lucide="x"></i></button>
+        <!-- Modal: Permissão de Localização -->
+        <div id="location-permission-modal" class="hidden fixed inset-0 bg-slate-900/55 backdrop-blur-sm flex items-center justify-center z-[2500] p-4">
+            <div class="aero-window max-w-sm w-full">
+                <div class="aero-titlebar">
+                    <span class="text-xs font-extrabold">🧭 Localização — Arboriza</span>
                 </div>
-                <p class="text-gray-600 mb-4">Digite seu email e enviaremos um link para você criar uma nova senha.</p>
-                <form id="forgot-password-form">
-                    <label for="forgot-email" class="block text-sm font-medium text-gray-700">Email</label>
-                    <input type="email" id="forgot-email" required class="w-full p-3 mt-1 border rounded-lg bg-cinza" placeholder="seu@email.com">
-                    <button type="submit" class="w-full mt-4 bg-verde-principal text-white font-bold py-3 px-4 rounded-xl shadow-lg">Enviar link</button>
-                </form>
+                <div class="p-6 bg-white text-center">
+                    <i data-lucide="compass" class="w-14 h-14 mx-auto text-verde-principal"></i>
+                    <h3 class="text-2xl font-extrabold text-aero-deep mt-3">Olá, Guardião! 🌍</h3>
+                    <p class="text-slate-700 text-sm mt-2">Para te mostrar as árvores pertinho de você, o Arboriza precisa da sua localização.</p>
+                    <p class="text-xs text-slate-500 mt-3">Nós só usamos isso para centralizar o mapa onde você está.</p>
+                    <button id="btn-grant-location" class="frutiger-aero-button aero-green medium w-full mt-5">
+                        Entendido, permitir localização
+                    </button>
+                </div>
             </div>
         </div>
 
-        <div id="help-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[2000] p-4">
-            <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
-                <div class="flex justify-between items-center mb-4">
-                    <img src="https://firebasestorage.googleapis.com/v0/b/arboriza-bd.firebasestorage.app/o/%C3%81rvore%20Tropical%20Amiga%20do%20Brasil.png?alt=media&token=1bf9e356-e2a7-4571-aa4c-3b7af0ba7c2b" alt="Arvoreco" class="w-20 h-20 object-contain arvoreco-bounce">
-                    <h3 class="text-2xl font-bold text-verde-principal">Dicas do Arvoreco</h3>
-                    <button id="btn-close-help-modal"><i data-lucide="x"></i></button>
+        <!-- Modal: Esqueci minha senha -->
+        <div id="forgot-password-modal" class="hidden fixed inset-0 bg-slate-900/55 backdrop-blur-sm flex items-center justify-center z-[2500] p-4">
+            <div class="aero-window max-w-sm w-full">
+                <div class="aero-titlebar aero-titlebar-blue">
+                    <span class="text-xs font-extrabold">🔑 Redefinir Senha</span>
+                    <button id="btn-close-forgot-modal" class="text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
                 </div>
-                <div class="space-y-4 text-gray-700">
+                <div class="p-5 bg-white">
+                    <p class="text-slate-700 text-sm mb-4">Digite seu email e enviaremos um link para você criar uma nova senha.</p>
+                    <form id="forgot-password-form">
+                        <label for="forgot-email" class="block text-xs font-extrabold text-slate-800 mb-1">Email</label>
+                        <input type="email" id="forgot-email" required class="aero-input w-full" placeholder="seu@email.com">
+                        <button type="submit" class="frutiger-aero-button aero-green medium w-full mt-4">Enviar link</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal: Dicas do Arvoreco -->
+        <div id="help-modal" class="hidden fixed inset-0 bg-slate-900/55 backdrop-blur-sm flex items-center justify-center z-[2500] p-4">
+            <div class="aero-window max-w-sm w-full">
+                <div class="aero-titlebar">
+                    <span class="text-xs font-extrabold">💡 Dicas do Arvoreco</span>
+                    <button id="btn-close-help-modal" class="text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+                </div>
+                <div class="p-5 bg-white space-y-3 text-slate-700 text-sm">
+                    <div class="flex items-center gap-3">
+                        <img src="https://firebasestorage.googleapis.com/v0/b/arboriza-bd.firebasestorage.app/o/%C3%81rvore%20Tropical%20Amiga%20do%20Brasil.png?alt=media&token=1bf9e356-e2a7-4571-aa4c-3b7af0ba7c2b" alt="Arvoreco" class="w-16 h-16 object-contain arvoreco-bounce">
+                        <h3 class="text-lg font-extrabold text-verde-principal">Dicas do Arvoreco</h3>
+                    </div>
                     <p><strong>1. Identificando:</strong> Para ter uma boa identificação, chegue bem perto da folha 🍃 ou flor 🌸. Evite fotos da árvore inteira de longe!</p>
                     <p><strong>2. Cadastrando:</strong> Se a árvore não está no mapa, você pode cadastrá-la! Vá para a tela de "Cuidar" após a identificação e escolha "Cadastrar Nova Árvore".</p>
-                    <p><strong>3. Cuidando:</strong> Você pode "Cuidar" 💧 de qualquer árvore já cadastrada, registrando suas ações e deixando mensagens para a comunidade.</p>
+                    <p><strong>3. Cuidando:</strong> Você pode "Cuidar" 💧 de qualquer árvore já cadastrada, registrando suas ações e escolhendo se deseja publicar no Feed da Galera.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal: Confirmação antes de publicar no Feed -->
+        <div id="feed-publish-confirm-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[3000] p-4">
+            <div class="aero-window max-w-sm w-full">
+                <div class="aero-titlebar">
+                    <span class="text-xs font-extrabold">💬 Publicar no Feed da Galera?</span>
+                </div>
+                <div class="p-5 bg-white space-y-3">
+                    <p id="feed-confirm-preview-text" class="text-sm font-semibold text-slate-800 whitespace-pre-line"></p>
+                    <img id="feed-confirm-preview-img" src="" alt="Prévia da publicação" class="hidden w-full max-h-44 object-cover rounded-xl border border-sky-200">
+                    <div class="flex flex-col gap-2 pt-2">
+                        <button id="btn-feed-confirm-yes" type="button" class="frutiger-aero-button aero-green small w-full">
+                            🌐 Sim, publicar no Feed da Galera
+                        </button>
+                        <button id="btn-feed-confirm-no" type="button" class="w-full py-2.5 px-4 rounded-full border-2 border-slate-300 bg-slate-50 text-slate-800 font-bold text-xs hover:bg-slate-100 transition">
+                            🔒 Não, salvar apenas no perfil da árvore
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal: Perfil Público de Outro Guardião -->
+        <div id="public-profile-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[2800] p-4">
+            <div class="aero-window max-w-sm w-full max-h-[85vh] flex flex-col">
+                <div class="aero-titlebar aero-titlebar-blue">
+                    <span class="text-xs font-extrabold">👤 Perfil de Guardião</span>
+                    <button id="btn-close-public-profile" class="text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+                </div>
+                <div class="p-5 bg-white overflow-y-auto space-y-4 text-center">
+                    <img id="public-profile-avatar" src="" alt="Avatar do guardião" class="w-24 h-24 rounded-full mx-auto object-cover border-4 border-sky-100 shadow">
+                    <div>
+                        <h4 id="public-profile-name" class="text-xl font-extrabold text-aero-deep"></h4>
+                        <p id="public-profile-level" class="text-xs font-bold text-verde-principal mt-0.5"></p>
+                        <div class="flex justify-center gap-4 text-xs font-bold text-slate-600 mt-2">
+                            <span id="public-profile-followers"></span>
+                            <span>•</span>
+                            <span id="public-profile-following"></span>
+                        </div>
+                    </div>
+                    <button id="btn-toggle-follow-modal" type="button" class="frutiger-aero-button aero-blue small w-full"></button>
+                    <div id="public-profile-stats" class="grid grid-cols-3 gap-2"></div>
+                    <div class="text-left">
+                        <p class="text-xs font-extrabold text-aero-deep mb-2">🏅 Emblemas</p>
+                        <div id="public-profile-emblems" class="flex flex-wrap gap-1.5"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal: Detalhes do Parceiro + Recompensas -->
+        <div id="partner-detail-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[2800] p-4">
+            <div class="aero-window max-w-sm w-full max-h-[88vh] flex flex-col">
+                <div class="aero-titlebar">
+                    <span class="text-xs font-extrabold">🏪 Perfil do Parceiro Arboriza</span>
+                    <button id="btn-close-partner-detail" class="text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+                </div>
+                <div class="bg-white overflow-y-auto">
+                    <img id="partner-detail-photo" src="" alt="Foto do parceiro" class="w-full h-40 object-cover">
+                    <div class="p-4 space-y-3">
+                        <div>
+                            <span id="partner-detail-category" class="aero-badge-pill text-[11px] font-bold px-2.5 py-0.5 inline-block"></span>
+                            <h4 id="partner-detail-name" class="text-xl font-extrabold text-aero-deep mt-1"></h4>
+                            <p id="partner-detail-address" class="text-xs text-slate-600 font-semibold mt-0.5"></p>
+                            <p id="partner-detail-description" class="text-xs text-slate-700 mt-2 leading-relaxed"></p>
+                        </div>
+
+                        <div class="aero-status-healthy p-3 rounded-xl text-center">
+                            <p class="text-xs font-bold">🌳 Impacto Verde deste Parceiro</p>
+                            <p class="text-2xl font-extrabold mt-0.5"><span id="partner-detail-trees-impacted">0</span> árvores cuidadas</p>
+                        </div>
+
+                        <div>
+                            <h5 class="font-extrabold text-sm text-aero-deep mb-2">🎁 Recompensas Disponíveis</h5>
+                            <div id="partner-detail-rewards-list" class="space-y-2.5"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -413,7 +1092,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js" type="module"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js" type="module"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js" type="module"></script>
-    
+
     <script src="script.js" type="module"></script>
 </body>
 </html>

@@ -1,21 +1,26 @@
-/* Este é o style.css completo. */
-/* MUDANÇAS v1.0.9: 
-    1. Aumenta o tamanho do avatar para 72px.
-    2. Reposiciona o Arvoreco do Mapa (Avatar à esquerda, Balão à direita).
-    3. Posição do Arvoreco na Câmera "mais para dentro" (left: 32px).
-    4. Adiciona max-width ao balão do mapa para não encostar no botão.
-    5. Garante que o Arvoreco do mapa não seja "espremido" (flex-shrink: 0).
-*/
+/* ==========================================================================
+   ARBORIZA v2.0 — IDENTIDADE FRUTIGER AERO (Windows/Linux 2000s + Acessibilidade)
+   100% sincronizado com index.html e script.js
+   ========================================================================== */
+
 :root {
-    --verde-principal: #2E7D32;
-    --verde-claro: #81C784;
+    /* Paleta Frutiger Aero extraída da nova logo e wordmark verde */
+    --verde-principal: #18981D;
+    --verde-escuro: #0F6315;
+    --verde-claro: #6CE53A;
+    --azul-ceu: #1C96E8;
+    --azul-aero: #0078D7;
+    --azul-profundo: #0B4F8A;
+    --aqua-brilho: #24D2D6;
+    --aero-deep: #0E2F23; /* Alto contraste WCAG AA+ sobre superfícies claras */
     --branco: #FFFFFF;
-    --cinza: #F5F5F5;
-    --sucesso: #4CAF50;
-    --alerta: #FFD700;
-    --erro: #F44336;
-    font-family: 'Inter', sans-serif;
+    --cinza: #EEF6FA;
+    --sucesso: #1E9E34;
+    --alerta: #E6A100;
+    --erro: #D62828;
+
     --app-height: 100vh;
+    font-family: "Segoe UI", "Lucida Grande", "Tahoma", "Nunito", system-ui, -apple-system, sans-serif;
 }
 
 html, body {
@@ -24,8 +29,23 @@ html, body {
     overflow: hidden;
     margin: 0;
     padding: 0;
+    color: var(--aero-deep);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+}
+
+/* Fundo Desktop Frutiger Aero (Céu azul -> Horizonte claro -> Relva verde) */
+.aero-desktop-bg {
+    background:
+        radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.72) 0%, transparent 32%),
+        radial-gradient(circle at 82% 20%, rgba(108, 229, 232, 0.45) 0%, transparent 38%),
+        linear-gradient(180deg, #1685DB 0%, #58B8F4 42%, #D7F2FD 68%, #9BE347 88%, #41A81C 100%);
+}
+
+.aero-shell {
+    background: linear-gradient(180deg, #EAF7FF 0%, #F4FBF6 100%);
+    border-left: 1px solid rgba(255, 255, 255, 0.9);
+    border-right: 1px solid rgba(255, 255, 255, 0.9);
 }
 
 #app-container {
@@ -46,106 +66,541 @@ nav {
     flex-shrink: 0;
 }
 
-.font-logo { font-family: 'Merienda', cursive; }
+/* Tipografia & Utilitários */
+.font-logo {
+    font-family: "Fredoka", "Segoe UI", "Nunito", sans-serif;
+    letter-spacing: 0.02em;
+}
+.text-aero-deep { color: var(--aero-deep); }
 .bg-verde-principal { background-color: var(--verde-principal); }
 .text-verde-principal { color: var(--verde-principal); }
 .border-verde-principal { border-color: var(--verde-principal); }
 .bg-verde-claro { background-color: var(--verde-claro); }
 .bg-sucesso { background-color: var(--sucesso); }
 .bg-alerta { background-color: var(--alerta); }
-.text-alerta { color: #c8a900; }
+.text-alerta { color: #9A6B00; }
 .bg-erro { background-color: var(--erro); }
 .text-erro { color: var(--erro); }
-.transition-all { transition: all 0.3s ease-in-out; }
+.bg-cinza { background-color: var(--cinza); }
+.bg-branco { background-color: var(--branco); }
+.transition-all { transition: all 0.25s ease-in-out; }
 
-.fade-in { animation: fadeIn 0.5s ease-in-out; }
+/* Acessibilidade: foco visível para navegação por teclado */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 3px solid #0078D7;
+    outline-offset: 2px;
+}
+
+/* Painéis de Fundo */
+.aero-sky-panel {
+    background:
+        radial-gradient(ellipse at 50% 8%, rgba(255, 255, 255, 0.8) 0%, transparent 48%),
+        radial-gradient(circle at 90% 30%, rgba(255, 255, 255, 0.45) 0%, transparent 30%),
+        linear-gradient(180deg, #1E90E6 0%, #5EC0F7 36%, #CBEFFD 66%, #B4EE6B 88%, #58BD22 100%);
+}
+
+.aero-soft-bg {
+    background:
+        radial-gradient(circle at 92% 6%, rgba(94, 192, 247, 0.22) 0%, transparent 40%),
+        radial-gradient(circle at 8% 92%, rgba(108, 229, 58, 0.2) 0%, transparent 45%),
+        linear-gradient(180deg, #EBF7FE 0%, #F5FBF6 60%, #E7F7E5 100%);
+    min-height: 100%;
+}
+
+/* Bolhas Translúcidas Frutiger Aero */
+.aero-bubble {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.92), rgba(173, 235, 255, 0.35) 55%, rgba(24, 152, 29, 0.12) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.88);
+    box-shadow: inset -4px -6px 12px rgba(28, 150, 232, 0.25), 0 6px 14px rgba(0, 80, 140, 0.15);
+    animation: floatBubble 7s ease-in-out infinite;
+}
+.bubble-1 { width: 52px; height: 52px; top: 14%; left: 5%; animation-delay: 0s; }
+.bubble-2 { width: 34px; height: 34px; top: 24%; right: 6%; animation-delay: 1.8s; }
+.bubble-3 { width: 42px; height: 42px; bottom: 26%; left: 8%; animation-delay: 3.2s; }
+
+@keyframes floatBubble {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-10px) scale(1.04); }
+}
+
+.aero-logo-orb {
+    padding: 12px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.38) 60%, rgba(36, 210, 214, 0.25) 100%);
+    border: 2px solid rgba(255, 255, 255, 0.95);
+    box-shadow: 0 10px 26px rgba(11, 79, 138, 0.24), inset 0 2px 6px rgba(255, 255, 255, 0.95);
+}
+
+.aero-text-glow {
+    text-shadow: 0 2px 10px rgba(255, 255, 255, 0.95), 0 1px 2px rgba(0, 50, 20, 0.3);
+}
+
+/* Janelas Clássicas Windows/Linux 2000s (Vista / Aero Glass) */
+.aero-window {
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1.5px solid rgba(255, 255, 255, 0.95);
+    box-shadow:
+        0 8px 24px rgba(11, 79, 138, 0.16),
+        0 0 0 1px rgba(24, 152, 29, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+}
+
+.aero-titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    color: #FFFFFF;
+    text-shadow: 0 1px 2px rgba(0, 45, 10, 0.7);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.12) 48%, rgba(0, 0, 0, 0.06) 52%, rgba(255, 255, 255, 0.08) 100%),
+        linear-gradient(90deg, #168A1C 0%, #32B82A 65%, #168E68 100%);
+    border-bottom: 1px solid rgba(15, 99, 21, 0.4);
+}
+
+.aero-titlebar-blue {
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.48) 0%, rgba(255, 255, 255, 0.12) 48%, rgba(0, 0, 0, 0.06) 52%, rgba(255, 255, 255, 0.08) 100%),
+        linear-gradient(90deg, #0B69C2 0%, #1C96E8 65%, #18B4C7 100%);
+    border-bottom: 1px solid rgba(11, 79, 138, 0.45);
+}
+
+.aero-win-controls {
+    display: flex;
+    gap: 4px;
+}
+.aero-win-controls span {
+    width: 17px;
+    height: 17px;
+    border-radius: 4px;
+    background: linear-gradient(180deg, #F6FAFD 0%, #D2E4F0 100%);
+    color: #1A3A2E;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 15px;
+    text-align: center;
+    border: 1px solid rgba(11, 79, 138, 0.35);
+    text-shadow: none;
+    box-shadow: inset 0 1px 0 #FFFFFF;
+}
+
+/* Cards, Badges, Chips e Status */
+.aero-card {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.97) 0%, rgba(242, 250, 255, 0.94) 100%);
+    border: 1px solid rgba(135, 200, 235, 0.6);
+    border-radius: 16px;
+    box-shadow:
+        0 4px 14px rgba(11, 79, 138, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.aero-badge-pill {
+    background: linear-gradient(180deg, #FFFFFF 0%, #E0F6EA 100%);
+    color: #0F5C17;
+    border: 1px solid #8ADCA0;
+    border-radius: 9999px;
+    box-shadow: 0 2px 6px rgba(15, 92, 23, 0.1), inset 0 1px 0 #FFFFFF;
+}
+
+.aero-points-chip {
+    background: linear-gradient(180deg, #E3F7FF 0%, #BAE6FD 100%);
+    color: #0B4F8A;
+    border: 1px solid #7DD3FC;
+    border-radius: 9999px;
+    padding: 3px 10px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.aero-mini-stat {
+    background: linear-gradient(180deg, #FFFFFF 0%, #EAF7FF 100%);
+    border: 1px solid #B7DDF2;
+    border-radius: 14px;
+    padding: 10px 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 1px 0 #FFFFFF, 0 2px 6px rgba(11, 79, 138, 0.06);
+}
+.aero-mini-stat strong {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--aero-deep);
+    line-height: 1.2;
+}
+.aero-mini-stat span {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #475569;
+    margin-top: 2px;
+}
+
+.aero-status-healthy {
+    background: linear-gradient(180deg, #DCFCE7 0%, #BBF7D0 100%);
+    color: #14532D;
+    border: 1.5px solid #4ADE80;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.aero-status-warning {
+    background: linear-gradient(180deg, #FEF9C3 0%, #FDE68A 100%);
+    color: #78350F;
+    border: 1.5px solid #F59E0B;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.aero-status-critical {
+    background: linear-gradient(180deg, #FEE2E2 0%, #FECACA 100%);
+    color: #7F1D1D;
+    border: 1.5px solid #F87171;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* Botões de Ícone e FAB */
+.aero-icon-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #FFFFFF 0%, #DFF2FC 100%);
+    border: 1.5px solid rgba(255, 255, 255, 0.95);
+    box-shadow: 0 3px 10px rgba(11, 79, 138, 0.18), inset 0 1px 0 #FFFFFF;
+    color: var(--aero-deep);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.aero-icon-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 14px rgba(11, 79, 138, 0.25);
+}
+
+.aero-fab-light {
+    background: linear-gradient(180deg, #FFFFFF 0%, #E1F5FE 100%);
+    border: 2px solid #FFFFFF;
+    box-shadow: 0 4px 14px rgba(0, 60, 110, 0.25), inset 0 2px 3px #FFFFFF;
+    cursor: pointer;
+}
+
+/* Inputs Limpos com Contraste Acessível */
+.aero-input {
+    background: linear-gradient(180deg, #F4FAFE 0%, #FFFFFF 100%);
+    border: 1.5px solid #9CCBE8;
+    border-radius: 10px;
+    padding: 10px 12px;
+    color: var(--aero-deep);
+    font-weight: 600;
+    box-shadow: inset 0 2px 4px rgba(11, 79, 138, 0.08);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.aero-input:focus {
+    border-color: var(--verde-principal);
+    box-shadow: 0 0 0 3px rgba(24, 152, 29, 0.18), inset 0 1px 2px rgba(0, 0, 0, 0.04);
+    outline: none;
+}
+
+/* ==========================================================================
+   AUTHENTIC FRUTIGER AERO BUTTON (Base makeaero.com + Contraste Acessível)
+   ========================================================================== */
+.frutiger-aero-button {
+    --hue: 140;
+    --sat: 0.28;
+    --glow-intensity: 0.65;
+
+    --fg: #FFFFFF;
+    --bg: oklch(64% var(--sat) var(--hue) / 0.92);
+    --bg-dark: oklch(44% var(--sat) var(--hue) / 0.96);
+    --bottom-glow: radial-gradient(
+        farthest-corner at bottom center,
+        rgba(255, 255, 255, var(--glow-intensity)),
+        transparent
+    );
+
+    background-color: var(--verde-principal);
+    background:
+        var(--bottom-glow),
+        linear-gradient(to bottom, var(--bg-dark), var(--bg));
+
+    border: 1.5px solid rgba(255, 255, 255, 0.88);
+    border-radius: 9999px;
+    box-shadow:
+        0 4px 10px rgba(0, 45, 20, 0.30),
+        inset 0 1px 1px rgba(255, 255, 255, 0.85);
+
+    color: var(--fg);
+    font-family: "Segoe UI", "Lucida Grande", "Lucida Sans Unicode", system-ui, sans-serif;
+    font-weight: 800;
+    text-shadow: 0 1px 3px rgba(0, 35, 10, 0.72);
+
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all 240ms ease;
+    user-select: none;
+    -webkit-user-select: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+/* Diagonal Glass Shine Sweep — clássico Web 2.0 */
+.frutiger-aero-button::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        120deg,
+        transparent 30%,
+        rgba(255, 255, 255, 0.35) 45%,
+        rgba(255, 255, 255, 0.05) 55%,
+        transparent 70%
+    );
+    border-radius: inherit;
+    pointer-events: none;
+}
+
+/* Top Highlight Effect (Brilho vítreo superior) */
+.frutiger-aero-button::after {
+    content: "";
+    position: absolute;
+    top: 4%;
+    left: 0.75em;
+    width: calc(100% - 1.5em);
+    height: 40%;
+    background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.78),
+        rgba(255, 255, 255, 0.08)
+    );
+    border-radius: inherit;
+    transition: background 350ms ease;
+    pointer-events: none;
+}
+
+.frutiger-aero-button:hover,
+.frutiger-aero-button:focus {
+    box-shadow: 0 6px 14px rgba(0, 50, 25, 0.38);
+    transform: translateY(-1px);
+    filter: brightness(1.04);
+}
+
+.frutiger-aero-button:active {
+    box-shadow: 0 2px 5px rgba(0, 40, 20, 0.35);
+    transform: translateY(1px);
+}
+
+.frutiger-aero-button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Variantes Cromáticas */
+.frutiger-aero-button.aero-green {
+    --hue: 142;
+    --sat: 0.26;
+    background-color: #18981D;
+}
+.frutiger-aero-button.aero-blue {
+    --hue: 238;
+    --sat: 0.21;
+    background-color: #0078D7;
+    text-shadow: 0 1px 3px rgba(0, 25, 65, 0.75);
+}
+.frutiger-aero-button.aero-amber {
+    --hue: 68;
+    --sat: 0.20;
+    background-color: #D97706;
+    text-shadow: 0 1px 3px rgba(70, 30, 0, 0.78);
+}
+.frutiger-aero-button.aero-red {
+    --hue: 25;
+    --sat: 0.22;
+    background-color: #D62828;
+    text-shadow: 0 1px 3px rgba(75, 0, 0, 0.75);
+}
+
+/* Tamanhos */
+.frutiger-aero-button.small {
+    padding: 0.52em 1.25em;
+    font-size: 0.85rem;
+}
+.frutiger-aero-button.medium {
+    padding: 0.75em 1.75em;
+    font-size: 0.96rem;
+}
+.frutiger-aero-button.large {
+    padding: 1em 2.5em;
+    font-size: 1.08rem;
+}
+
+/* Abas Internas (Feed & Admin) */
+.aero-tab-btn {
+    padding: 8px 10px;
+    border-radius: 9999px;
+    font-weight: 800;
+    font-size: 0.8rem;
+    color: var(--aero-deep);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.aero-tab-btn.aero-tab-active {
+    background: linear-gradient(180deg, #32B82E 0%, #168A1B 100%);
+    color: #FFFFFF;
+    box-shadow: 0 3px 8px rgba(24, 152, 29, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.65);
+    text-shadow: 0 1px 2px rgba(0, 45, 10, 0.6);
+}
+
+/* Barra de Progresso Glossy (Windows Vista/7) */
+.aero-progress-track {
+    width: 100%;
+    height: 13px;
+    background: linear-gradient(180deg, #D2E6F2 0%, #EAF5FB 100%);
+    border-radius: 9999px;
+    border: 1px solid #9EC5DE;
+    overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0, 40, 70, 0.14);
+}
+.aero-progress-fill,
+.bg-progress-gradient {
+    height: 100%;
+    border-radius: 9999px;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0.12) 48%, rgba(0, 0, 0, 0.06) 52%, rgba(255, 255, 255, 0.18) 100%),
+        linear-gradient(90deg, #27C42C 0%, #6CE53A 55%, #18B4C7 100%);
+    transition: width 0.45s ease-out;
+}
+
+/* Taskbar Inferior Estilo Windows/Linux Glass */
+.aero-taskbar {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.97) 0%, rgba(224, 244, 255, 0.97) 52%, rgba(203, 234, 250, 0.99) 100%);
+    border-top: 1.5px solid #FFFFFF;
+    box-shadow: 0 -4px 16px rgba(11, 79, 138, 0.14);
+}
+.aero-taskbar .nav-btn {
+    transition: all 0.2s ease;
+    position: relative;
+}
+.aero-taskbar .nav-btn.active-nav {
+    color: var(--verde-escuro);
+    background: radial-gradient(circle at 50% 45%, rgba(108, 229, 58, 0.28), transparent 72%);
+}
+.aero-taskbar .nav-btn.active-nav::after {
+    content: "";
+    position: absolute;
+    bottom: 2px;
+    left: 20%;
+    right: 20%;
+    height: 3px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #18981D, #24D2D6);
+}
+
+/* Toast Aero */
+.aero-toast {
+    background: linear-gradient(180deg, rgba(14, 54, 42, 0.97), rgba(9, 38, 52, 0.97));
+    color: #FFFFFF;
+    border: 1.5px solid rgba(108, 229, 232, 0.75);
+}
+
+/* Animações */
+.fade-in { animation: fadeIn 0.35s ease-out; }
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
+    from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
-.bg-progress-gradient {
-    background-image: linear-gradient(to right, var(--verde-claro), var(--verde-principal));
-}
-
+/* Câmera */
 .camera-viewfinder {
-    width: 100%; padding-top: 100%; position: relative; background: #000;
-    border-radius: 24px; overflow: hidden; border: 4px solid var(--cinza);
+    width: 100%;
+    padding-top: 96%;
+    position: relative;
+    background: #061A26;
+    border-radius: 24px;
+    overflow: hidden;
+    border: 3px solid #FFFFFF;
+    box-shadow: 0 8px 20px rgba(11, 79, 138, 0.22);
 }
 .camera-viewfinder-content {
-    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-    display: flex; align-items: center; justify-content: center; flex-direction: column; color: white;
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    color: white;
 }
 input[type="file"] { display: none; }
 
-
+/* Arvoreco (preservado e harmonizado com Frutiger Aero) */
 .arvoreco-avatar {
-    position: relative; /* Posição relativa para o Arvoreco do Mapa */
+    position: relative;
     z-index: 1001;
     display: flex;
     align-items: flex-end;
 }
-
-/* Container do Arvoreco do Mapa (dentro da barra inferior) */
 #arvoreco-mapa {
-    flex-direction: row; /* Avatar à esquerda, Balão à direita */
-    flex-shrink: 0; /* NÃO deixa o Arvoreco ser espremido */
+    flex-direction: row;
+    flex-shrink: 0;
 }
-#arvoreco-mapa .avatar-img {
-    animation: bounceAvatar 2s ease-in-out infinite;
-}
-
-/* Container do Arvoreco da Câmera (continua absolute) */
 #arvoreco-camera {
     position: absolute;
-    top: 70px;
-    left: 32px; /* ATUALIZAÇÃO: Movido "para dentro" */
-    flex-direction: row; /* Avatar à esquerda, Balão à direita */
+    top: 66px;
+    left: 28px;
+    flex-direction: row;
 }
-
-/* ATUALIZAÇÃO: Avatar aumentado para 72px */
 .arvoreco-avatar .avatar-img {
     width: 72px;
     height: 72px;
     border-radius: 50%;
     object-fit: contain;
-    animation: bounceAvatar 2s ease-in-out infinite;
-    flex-shrink: 0; /* Impede que o avatar encolha */
+    animation: bounceAvatar 2.2s ease-in-out infinite;
+    flex-shrink: 0;
+    filter: drop-shadow(0 4px 6px rgba(0, 45, 20, 0.3));
 }
-
 .arvoreco-bounce {
-    animation: bounceAvatar 2s ease-in-out infinite;
+    animation: bounceAvatar 2.2s ease-in-out infinite;
 }
 
 @keyframes bounceAvatar {
     0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-8px); }
+    50% { transform: translateY(-7px); }
     55% { transform: translateY(0); }
 }
 
 .speech-bubble {
     position: relative;
-    background: var(--branco);
-    border-radius: 12px;
-    padding: 10px 14px;
-    font-size: 13px;
-    font-weight: 500;
-    color: #333;
-    max-width: 200px; /* Define um máximo padrão */
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    animation: fadeInBubble 0.5s ease-out 0.2s forwards;
+    background: linear-gradient(180deg, #FFFFFF 0%, #EFF9FF 100%);
+    border: 1.5px solid #9CD3EE;
+    border-radius: 14px;
+    padding: 9px 12px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--aero-deep);
+    max-width: 205px;
+    box-shadow: 0 5px 14px rgba(11, 79, 138, 0.2);
+    animation: fadeInBubble 0.45s ease-out 0.15s forwards;
     opacity: 0;
 }
-
-/* ATUALIZAÇÃO v1.0.9: Garante que o balão do mapa não estique demais */
 #arvoreco-mapa .speech-bubble {
-    max-width: 170px; /* Reduz de 200px para 170px para não encostar no botão */
-    flex-shrink: 1; /* Permite que o balão encolha se necessário */
+    max-width: 170px;
+    flex-shrink: 1;
 }
 
-
 @keyframes fadeInBubble {
-    from { opacity: 0; transform: scale(0.8); }
+    from { opacity: 0; transform: scale(0.85); }
     to { opacity: 1; transform: scale(1); }
 }
 
@@ -156,30 +611,225 @@ input[type="file"] { display: none; }
     height: 0;
     border: 8px solid transparent;
 }
-
-/* Seta para o balão da CÂMERA e MAPA (Avatar à esquerda, Seta aponta p/ esquerda) */
 .speech-bubble-left {
     margin-left: 10px;
     margin-bottom: 8px;
 }
 .speech-bubble-left::after {
-    border-right-color: var(--branco); /* Seta na direita do balão */
-    border-top-color: var(--branco);
+    border-right-color: #FFFFFF;
+    border-top-color: #FFFFFF;
     top: 50%;
-    left: -8px; /* Posição da seta (para fora, à esquerda) */
+    left: -8px;
     margin-top: -8px;
-    transform: rotate(225deg); /* Aponta para a esquerda */
+    transform: rotate(225deg);
 }
 
-/* Seta para o balão do MODAL (Avatar à esquerda, Seta aponta p/ baixo) */
-.speech-bubble-bottom-left {
-    margin-left: 10px;
-    margin-bottom: 8px;
+/* Acessibilidade: respeita preferência de redução de movimento do sistema */
+@media (prefers-reduced-motion: reduce) {
+    .aero-bubble,
+    .arvoreco-avatar .avatar-img,
+    .arvoreco-bounce,
+    .fade-in,
+    .speech-bubble {
+        animation: none !important;
+        opacity: 1 !important;
+    }
 }
-.speech-bubble-bottom-left::after {
-    border-top-color: var(--branco);
-    border-left-color: var(--branco);
-    bottom: -8px;
-    left: 10px;
-    transform: rotate(-45deg);
+
+/* Checklist de Missões exigidas em cada Emblema */
+.aero-emblem-checklist {
+    list-style: none;
+    padding: 8px 10px;
+    margin: 10px 0 0 0;
+    background: rgba(235, 247, 254, 0.7);
+    border: 1px solid rgba(156, 203, 232, 0.45);
+    border-radius: 10px;
+}
+
+/* Interruptor (Toggle) de Privacidade Frutiger Aero */
+.aero-switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 26px;
+}
+.aero-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.aero-slider {
+    position: absolute;
+    inset: 0;
+    cursor: pointer;
+    border-radius: 9999px;
+    background: linear-gradient(180deg, #CBD5E1 0%, #E2E8F0 100%);
+    border: 1.5px solid #94A3B8;
+    box-shadow: inset 0 2px 4px rgba(15, 23, 42, 0.18);
+    transition: all 0.25s ease;
+}
+.aero-slider::before {
+    content: "";
+    position: absolute;
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 2.5px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #FFFFFF 0%, #E2F4FF 100%);
+    border: 1px solid rgba(11, 79, 138, 0.25);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.28);
+    transition: transform 0.25s ease;
+}
+.aero-switch input:checked + .aero-slider {
+    background: linear-gradient(180deg, #168A1B 0%, #48D138 100%);
+    border-color: #15803D;
+}
+.aero-switch input:checked + .aero-slider::before {
+    transform: translateX(21px);
+}
+.aero-switch input:focus-visible + .aero-slider {
+    outline: 3px solid #0078D7;
+    outline-offset: 2px;
+}
+
+/* ==========================================================================
+   TELA INICIAL (ONBOARDING) — LAYOUT OFICIAL FRUTIGER AERO
+   ========================================================================== */
+.onboarding-hero {
+    background-color: #2185D5;
+    background-image:
+        url("assets/fundo-inicial.jpg"),
+        linear-gradient(180deg, #0D5EBF 0%, #58B8F4 42%, #D7F2FD 62%, #7AD12B 82%, #399E18 100%);
+    background-size: cover;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+}
+
+/* Slogan mais próximo da logo */
+.onboarding-slogan-img {
+    max-width: 88%;
+    max-height: 78px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 6px rgba(0, 35, 90, 0.35));
+}
+
+.onboarding-slogan-text {
+    color: #FFFFFF;
+    font-family: "Segoe UI", "Nunito", system-ui, sans-serif;
+    font-weight: 500;
+    text-shadow: 0 2px 8px rgba(0, 40, 100, 0.45);
+}
+
+/* Logo maior e com destaque central (compensa margem transparente do brilho) */
+.onboarding-logo-free {
+    width: 265px;
+    max-width: 78%;
+    height: auto;
+    max-height: 265px;
+    margin-top: -6px;
+    margin-bottom: -6px;
+    object-fit: contain;
+    filter: drop-shadow(0 10px 18px rgba(0, 55, 95, 0.25));
+    animation: floatLogoGentle 5.5s ease-in-out infinite;
+}
+
+/* Wordmark ARBORIZA maior e bem legível */
+.onboarding-wordmark-free {
+    width: 90%;
+    max-width: 340px;
+    height: auto;
+    margin-top: 8px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 10px rgba(255, 255, 255, 0.92));
+}
+
+@keyframes floatLogoGentle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+/* Folha direita */
+.onboarding-leaf-right {
+    position: absolute;
+    top: 20%;
+    right: -12px;
+    width: 145px;
+    height: auto;
+    pointer-events: none;
+    user-select: none;
+    z-index: 2;
+    filter: drop-shadow(0 6px 12px rgba(0, 50, 20, 0.22));
+}
+
+/* Bolhas espalhadas em tamanhos diferentes (inspirado no banner oficial) */
+.onboarding-bubble {
+    position: absolute;
+    height: auto;
+    pointer-events: none;
+    user-select: none;
+    z-index: 2;
+    animation: floatBubble 7s ease-in-out infinite;
+}
+
+.ob-1 { width: 54px; top: 4%; right: 8%; opacity: 0.92; animation-delay: 0s; }
+.ob-2 { width: 28px; top: 9%; right: 24%; opacity: 0.85; animation-delay: 1.4s; }
+.ob-3 { width: 64px; top: 38%; left: 3%; opacity: 0.92; animation-delay: 0.8s; }
+.ob-4 { width: 32px; top: 31%; left: 16%; opacity: 0.80; animation-delay: 2.3s; }
+.ob-5 { width: 46px; top: 47%; right: 5%; opacity: 0.88; animation-delay: 1.9s; }
+.ob-6 { width: 24px; top: 55%; right: 17%; opacity: 0.78; animation-delay: 3.1s; }
+.ob-7 { width: 42px; bottom: 27%; left: 7%; opacity: 0.85; animation-delay: 2.6s; }
+
+/* Painel translúcido inferior ao redor dos 3 botões */
+.onboarding-actions-dock {
+    background: rgba(255, 255, 255, 0.34);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1.5px solid rgba(255, 255, 255, 0.58);
+    border-radius: 22px;
+    padding: 14px;
+    box-shadow:
+        0 8px 24px rgba(10, 65, 20, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* Botão branco "Já tem conta? Entrar" */
+.onboarding-login-btn {
+    background: linear-gradient(180deg, #FFFFFF 0%, #F2F9F5 100%);
+    color: var(--aero-deep);
+    font-weight: 800;
+    font-size: 0.96rem;
+    padding: 0.78em 1.5em;
+    border-radius: 9999px;
+    border: 1.5px solid #FFFFFF;
+    box-shadow: 0 4px 10px rgba(0, 45, 20, 0.2), inset 0 1px 1px #FFFFFF;
+    cursor: pointer;
+    transition: all 220ms ease;
+}
+.onboarding-login-btn:hover,
+.onboarding-login-btn:focus {
+    background: #FFFFFF;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(0, 45, 20, 0.26);
+}
+.onboarding-login-btn:active {
+    transform: translateY(1px);
+}
+
+/* Ajuste responsivo para celulares com tela menor */
+@media (max-height: 720px) {
+    .onboarding-logo-free { width: 215px; max-height: 215px; }
+    .onboarding-wordmark-free { max-width: 280px; margin-top: 4px; }
+    .onboarding-leaf-right { width: 118px; }
+    .ob-3 { width: 50px; }
+    .ob-7 { bottom: 30%; width: 34px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .onboarding-logo-free,
+    .onboarding-bubble {
+        animation: none !important;
+    }
 }
