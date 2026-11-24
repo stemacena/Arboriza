@@ -754,7 +754,7 @@ input[type="file"] { display: none; }
 /* Folha direita */
 .onboarding-leaf-right {
     position: absolute;
-    top: 13%;
+    top: 20%;
     right: -12px;
     width: 145px;
     height: auto;
