@@ -645,3 +645,50 @@ input[type="file"] { display: none; }
     border: 1px solid rgba(156, 203, 232, 0.45);
     border-radius: 10px;
 }
+
+/* Interruptor (Toggle) de Privacidade Frutiger Aero */
+.aero-switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 26px;
+}
+.aero-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.aero-slider {
+    position: absolute;
+    inset: 0;
+    cursor: pointer;
+    border-radius: 9999px;
+    background: linear-gradient(180deg, #CBD5E1 0%, #E2E8F0 100%);
+    border: 1.5px solid #94A3B8;
+    box-shadow: inset 0 2px 4px rgba(15, 23, 42, 0.18);
+    transition: all 0.25s ease;
+}
+.aero-slider::before {
+    content: "";
+    position: absolute;
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 2.5px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #FFFFFF 0%, #E2F4FF 100%);
+    border: 1px solid rgba(11, 79, 138, 0.25);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.28);
+    transition: transform 0.25s ease;
+}
+.aero-switch input:checked + .aero-slider {
+    background: linear-gradient(180deg, #168A1B 0%, #48D138 100%);
+    border-color: #15803D;
+}
+.aero-switch input:checked + .aero-slider::before {
+    transform: translateX(21px);
+}
+.aero-switch input:focus-visible + .aero-slider {
+    outline: 3px solid #0078D7;
+    outline-offset: 2px;
+}

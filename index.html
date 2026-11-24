@@ -175,6 +175,12 @@
                             <label for="signup-password" class="block text-xs font-extrabold text-slate-800 mb-1">Crie uma senha</label>
                             <input type="password" id="signup-password" required minlength="6" class="aero-input w-full" placeholder="Mínimo 6 caracteres">
                         </div>
+                            <label class="flex items-start gap-2.5 p-3 rounded-xl bg-sky-50/90 border border-sky-200 cursor-pointer text-left">
+                                <input type="checkbox" id="signup-privacy-consent" required class="mt-0.5 w-4 h-4 accent-emerald-600 flex-shrink-0">
+                                    <span class="text-[11px] text-slate-700 leading-snug">
+                                            Concordo que meu <strong>nome de guardião, foto, nível e ações nas árvores</strong> fiquem visíveis para a comunidade Arboriza. Meu e-mail permanece privado e posso ocultar meu perfil da busca a qualquer momento no meu Perfil.
+                                                </span>
+                                                    </label>
                         <button type="submit" class="frutiger-aero-button aero-green medium w-full mt-2">Criar conta e Arborizar 🍀</button>
                     </form>
                     <p id="signup-error-message" class="text-erro font-bold text-center text-xs mt-3 hidden" role="alert"></p>
@@ -510,7 +516,19 @@
                             <span>Adicionadas</span>
                         </div>
                     </div>
-
+                    <!-- Controle de Privacidade (LGPD) -->
+                <div class="mt-5 p-3.5 rounded-2xl bg-sky-50/85 border border-sky-200 flex items-center justify-between gap-3">
+                    <div class="text-left">
+                        <p class="text-xs font-extrabold text-aero-deep">🔒 Aparecer na busca da Rede</p>
+                        <p id="privacy-status-desc" class="text-[11px] text-slate-600 mt-0.5">
+                             Outros guardiões podem encontrar e seguir seu perfil (seu e-mail continua privado).
+                        </p>
+                </div>
+                <label class="aero-switch flex-shrink-0" aria-label="Aparecer na busca da Rede">
+                    <input type="checkbox" id="toggle-public-profile" checked>
+                    <span class="aero-slider"></span>
+                </label>
+                </div>
                     <!-- Emblemas Conquistados -->
                     <div class="mt-6">
                         <h4 class="font-extrabold text-base text-aero-deep mb-2">🏅 Meus Emblemas</h4>

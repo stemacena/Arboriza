@@ -2,7 +2,8 @@
    ARBORIZA 2.1 — SCRIPT PRINCIPAL (Produção / Segurança / Frutiger Aero)
    - Preserva 100% do banco de dados existente (users, trees, careEvents,
      adopters, adoptedTrees), integração Pl@ntNet e backend Python MapBiomas.
-   - Privacidade LGPD: separa dados privados (/users) de /publicProfiles.
+   - Privacidade LGPD: separa dados privados (/users) de /publicProfiles,
+     com consentimento no cadastro e chave de visibilidade no Perfil.
    - Rede Social, Busca, Perfis Públicos, Vouchers e Parceiros corrigidos.
    - Missões e Emblemas desacoplados (emblemas exigem múltiplas missões).
    ========================================================================== */
@@ -60,7 +61,7 @@ const firebaseConfig = {
 // E-mails autorizados a acessar o Painel de Administrador (espelhados nas Firestore Rules)
 const ADMIN_EMAILS = [
     "arborizarj@gmail.com",
-    "stemacena@gmail.com",
+    "stephannie.macena@edu.unirio.br",
     "tiagomartins.one@gmail.com"
 ];
 
@@ -519,6 +520,7 @@ const buildPublicProfilePayload = (userData) => {
 
 const syncPublicProfile = async (uid, userData) => {
     if (!uid || !userData) return;
+    if (userData.isPublicProfile === false) return; // Respeita opção de privacidade
     try {
         await setDoc(doc(db, "publicProfiles", uid), buildPublicProfilePayload(userData), { merge: true });
     } catch (err) {
@@ -576,6 +578,7 @@ const fetchUserProfile = async (uid, authUser) => {
             const levelInfo = getLevelInfo(data.points || 0);
             appState.currentUser = {
                 uid,
+                isPublicProfile: true,
                 treesCared: 0,
                 treesIdentified: 0,
                 plantsIdentified: 0,
@@ -603,6 +606,9 @@ const fetchUserProfile = async (uid, authUser) => {
                 email: authUser.email,
                 photoURL: authUser.photoURL || `https://placehold.co/128x128/18981d/FFFFFF?text=${encodeURIComponent(displayName.charAt(0).toUpperCase())}`,
                 role: role === "admin" ? "guardian" : role, // role admin sempre verificada via email nas Rules
+                isPublicProfile: true,
+                privacyConsent: true,
+                privacyConsentAt: serverTimestamp(),
                 level: 1,
                 levelName: LEVELS[0].name,
                 points: 0,
@@ -811,6 +817,13 @@ const handleSignup = async (e) => {
         return;
     }
 
+    const consentCheckbox = document.getElementById("signup-privacy-consent");
+    if (consentCheckbox && !consentCheckbox.checked) {
+        errorMessageEl.textContent = "Por favor, confirme o aviso de privacidade para continuar.";
+        errorMessageEl.classList.remove("hidden");
+        return;
+    }
+
     showLoadingModal(true, "Criando sua conta de Guardião...");
     errorMessageEl.classList.add("hidden");
     appState.pendingAuthRole = "guardian";
@@ -823,6 +836,9 @@ const handleSignup = async (e) => {
             email,
             role: "guardian",
             photoURL: `https://placehold.co/128x128/18981d/FFFFFF?text=${encodeURIComponent(name.charAt(0).toUpperCase())}`,
+            isPublicProfile: true,
+            privacyConsent: true,
+            privacyConsentAt: serverTimestamp(),
             level: 1,
             levelName: LEVELS[0].name,
             points: 0,
@@ -896,6 +912,9 @@ const handlePartnerSignup = async (e) => {
             email,
             role: "partner",
             photoURL,
+            isPublicProfile: true,
+            privacyConsent: true,
+            privacyConsentAt: serverTimestamp(),
             level: 1,
             levelName: LEVELS[0].name,
             points: 0,
@@ -1072,7 +1091,7 @@ const getFirebaseErrorMessage = (error) => {
     }
 };
 
-// --- 10. GAMIFICAÇÃO, NÍVEIS, MISSÕES E EMBLEMAS ---
+// --- 10. GAMIFICAÇÃO, PRIVACIDADE, NÍVEIS, MISSÕES E EMBLEMAS ---
 const handleProfilePicUpload = async (e) => {
     const file = e.target.files[0];
     if (!file || !appState.currentUser) return;
@@ -1102,6 +1121,51 @@ const handleProfilePicUpload = async (e) => {
         showToast("Erro ao enviar sua foto. Verifique as regras do Storage.");
     } finally {
         showLoadingModal(false);
+    }
+};
+
+const updatePrivacyToggleUI = () => {
+    const toggle = document.getElementById("toggle-public-profile");
+    const desc = document.getElementById("privacy-status-desc");
+    if (!toggle || !appState.currentUser) return;
+
+    const isPublic = appState.currentUser.isPublicProfile !== false;
+    toggle.checked = isPublic;
+    if (desc) {
+        desc.textContent = isPublic
+            ? "Outros guardiões podem encontrar e seguir seu perfil (seu e-mail continua privado)."
+            : "Seu perfil está oculto da busca da Rede e não pode ser aberto por outros usuários.";
+    }
+};
+
+const handleTogglePublicProfile = async (e) => {
+    const user = appState.currentUser;
+    if (!user) return;
+    const wantPublic = e.target.checked;
+    e.target.disabled = true;
+
+    try {
+        await updateDoc(doc(db, "users", user.uid), {
+            isPublicProfile: wantPublic
+        });
+        user.isPublicProfile = wantPublic;
+
+        if (wantPublic) {
+            await syncPublicProfile(user.uid, user);
+            showToast("Seu perfil agora aparece na busca da Rede! 🌐");
+        } else {
+            await deleteDoc(doc(db, "publicProfiles", user.uid));
+            showToast("Perfil ocultado da Rede! 🔒");
+        }
+
+        appState.profilesLoadedOnce = false;
+        updatePrivacyToggleUI();
+    } catch (err) {
+        console.error("Erro ao alterar privacidade:", err);
+        e.target.checked = !wantPublic;
+        showToast(getFirebaseErrorMessage(err));
+    } finally {
+        e.target.disabled = false;
     }
 };
 
@@ -1273,6 +1337,7 @@ const updateGamificationUI = () => {
     setStat("profile-stat-following", user.followingCount || 0);
 
     updateRoleButtonsVisibility();
+    updatePrivacyToggleUI();
     renderProfileEmblemsShowcase();
     loadAdoptedTreesForProfile();
     renderMissionsList();
@@ -2404,7 +2469,7 @@ const openPublicUserProfile = async (uid) => {
         ]);
 
         if (!profileSnap.exists()) {
-            showToast("Este guardião ainda não ativou o perfil público na versão 2.0.");
+            showToast("Este guardião optou por manter o perfil privado ou ainda não ativou o perfil público.");
             return;
         }
 
@@ -3295,7 +3360,9 @@ const handleAdminSyncPublicProfiles = async () => {
         const usersSnap = await getDocs(collection(db, "users"));
         let count = 0;
         for (const docSnap of usersSnap.docs) {
-            await syncPublicProfile(docSnap.id, docSnap.data());
+            const uData = docSnap.data();
+            if (uData.isPublicProfile === false) continue;
+            await syncPublicProfile(docSnap.id, uData);
             count++;
         }
         appState.profilesLoadedOnce = false;
@@ -3472,7 +3539,15 @@ const setupEventListeners = () => {
     document.getElementById("btn-partner-logout")?.addEventListener("click", handleLogout);
 
     document.getElementById("btn-google-login-main")?.addEventListener("click", handleGoogleLogin);
-    document.getElementById("btn-google-login-signup")?.addEventListener("click", handleGoogleLogin);
+    document.getElementById("btn-google-login-signup")?.addEventListener("click", () => {
+        const consent = document.getElementById("signup-privacy-consent");
+        if (consent && !consent.checked) {
+            showToast("Marque a caixinha de privacidade antes de criar sua conta.");
+            consent.focus();
+            return;
+        }
+        handleGoogleLogin();
+    });
     document.getElementById("btn-google-login-partner")?.addEventListener("click", handlePartnerGoogleSignup);
 
     // Localização no cadastro de parceiro
@@ -3514,8 +3589,9 @@ const setupEventListeners = () => {
     });
     document.getElementById("forgot-password-form")?.addEventListener("submit", handleForgotPassword);
 
-    // Foto de perfil
+    // Foto de perfil e Privacidade
     document.getElementById("profile-avatar-input")?.addEventListener("change", handleProfilePicUpload);
+    document.getElementById("toggle-public-profile")?.addEventListener("change", handleTogglePublicProfile);
 
     // Atalhos de perfil para Parceiro e Admin
     document.getElementById("btn-open-partner-dashboard")?.addEventListener("click", () => showPage("partner-dashboard"));
