@@ -706,10 +706,10 @@ input[type="file"] { display: none; }
     background-repeat: no-repeat;
 }
 
-/* Slogan superior esquerdo */
+/* Slogan mais próximo da logo */
 .onboarding-slogan-img {
-    max-width: 82%;
-    max-height: 76px;
+    max-width: 88%;
+    max-height: 78px;
     width: auto;
     height: auto;
     object-fit: contain;
@@ -723,22 +723,25 @@ input[type="file"] { display: none; }
     text-shadow: 0 2px 8px rgba(0, 40, 100, 0.45);
 }
 
-/* Logo livre (sem bolha/círculo em volta) */
+/* Logo maior e com destaque central (compensa margem transparente do brilho) */
 .onboarding-logo-free {
-    width: 196px;
+    width: 265px;
+    max-width: 78%;
     height: auto;
-    max-height: 196px;
+    max-height: 265px;
+    margin-top: -6px;
+    margin-bottom: -6px;
     object-fit: contain;
     filter: drop-shadow(0 10px 18px rgba(0, 55, 95, 0.25));
     animation: floatLogoGentle 5.5s ease-in-out infinite;
 }
 
-/* Wordmark ARBORIZA direto sobre o horizonte claro */
+/* Wordmark ARBORIZA maior e bem legível */
 .onboarding-wordmark-free {
-    width: 82%;
-    max-width: 295px;
+    width: 90%;
+    max-width: 340px;
     height: auto;
-    margin-top: 14px;
+    margin-top: 8px;
     object-fit: contain;
     filter: drop-shadow(0 2px 10px rgba(255, 255, 255, 0.92));
 }
@@ -748,12 +751,12 @@ input[type="file"] { display: none; }
     50% { transform: translateY(-6px); }
 }
 
-/* Folhas e bolha originais da identidade */
+/* Folha direita */
 .onboarding-leaf-right {
     position: absolute;
-    top: 11%;
-    right: -10px;
-    width: 138px;
+    top: 13%;
+    right: -12px;
+    width: 145px;
     height: auto;
     pointer-events: none;
     user-select: none;
@@ -761,30 +764,23 @@ input[type="file"] { display: none; }
     filter: drop-shadow(0 6px 12px rgba(0, 50, 20, 0.22));
 }
 
-.onboarding-leaf-left {
+/* Bolhas espalhadas em tamanhos diferentes (inspirado no banner oficial) */
+.onboarding-bubble {
     position: absolute;
-    bottom: 92px;
-    left: -14px;
-    width: 162px;
     height: auto;
-    pointer-events: none;
-    user-select: none;
-    z-index: 3;
-    filter: drop-shadow(0 6px 14px rgba(0, 45, 15, 0.24));
-}
-
-.onboarding-bubble-accent {
-    position: absolute;
-    top: 41%;
-    left: 6%;
-    width: 48px;
-    height: auto;
-    opacity: 0.82;
     pointer-events: none;
     user-select: none;
     z-index: 2;
     animation: floatBubble 7s ease-in-out infinite;
 }
+
+.ob-1 { width: 54px; top: 4%; right: 8%; opacity: 0.92; animation-delay: 0s; }
+.ob-2 { width: 28px; top: 9%; right: 24%; opacity: 0.85; animation-delay: 1.4s; }
+.ob-3 { width: 64px; top: 38%; left: 3%; opacity: 0.92; animation-delay: 0.8s; }
+.ob-4 { width: 32px; top: 31%; left: 16%; opacity: 0.80; animation-delay: 2.3s; }
+.ob-5 { width: 46px; top: 47%; right: 5%; opacity: 0.88; animation-delay: 1.9s; }
+.ob-6 { width: 24px; top: 55%; right: 17%; opacity: 0.78; animation-delay: 3.1s; }
+.ob-7 { width: 42px; bottom: 27%; left: 7%; opacity: 0.85; animation-delay: 2.6s; }
 
 /* Painel translúcido inferior ao redor dos 3 botões */
 .onboarding-actions-dock {
@@ -799,7 +795,7 @@ input[type="file"] { display: none; }
         inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
-/* Botão branco "Já tem conta? Entrar" com brilho limpo */
+/* Botão branco "Já tem conta? Entrar" */
 .onboarding-login-btn {
     background: linear-gradient(180deg, #FFFFFF 0%, #F2F9F5 100%);
     color: var(--aero-deep);
@@ -822,17 +818,18 @@ input[type="file"] { display: none; }
     transform: translateY(1px);
 }
 
-/* Ajuste responsivo para celulares mais compactos */
-@media (max-height: 700px) {
-    .onboarding-logo-free { width: 152px; max-height: 152px; }
-    .onboarding-wordmark-free { max-width: 240px; margin-top: 8px; }
-    .onboarding-leaf-right { width: 112px; }
-    .onboarding-leaf-left { width: 132px; bottom: 84px; }
+/* Ajuste responsivo para celulares com tela menor */
+@media (max-height: 720px) {
+    .onboarding-logo-free { width: 215px; max-height: 215px; }
+    .onboarding-wordmark-free { max-width: 280px; margin-top: 4px; }
+    .onboarding-leaf-right { width: 118px; }
+    .ob-3 { width: 50px; }
+    .ob-7 { bottom: 30%; width: 34px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
     .onboarding-logo-free,
-    .onboarding-bubble-accent {
+    .onboarding-bubble {
         animation: none !important;
     }
 }

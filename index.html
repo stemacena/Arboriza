@@ -25,26 +25,33 @@
 
         <!-- ==================== TELA: ONBOARDING (INICIAL) ==================== -->
         
-        <div id="screen-onboarding" class="onboarding-hero p-6 flex flex-col h-full justify-between fade-in relative overflow-x-hidden overflow-y-auto">
-            <!-- Elementos visuais oficiais da identidade (decorativos, não bloqueiam cliques) -->
+        <!-- ==================== TELA: ONBOARDING (INICIAL) ==================== -->
+        <div id="screen-onboarding" class="onboarding-hero p-5 flex flex-col h-full justify-between fade-in relative overflow-x-hidden overflow-y-auto">
+            <!-- Folha direita (folha esquerda removida por enquanto) -->
             <img src="assets/folha-direita.png" alt="" aria-hidden="true" class="onboarding-leaf-right" onerror="this.style.display='none'">
-            <img src="assets/folha-esquerda.png" alt="" aria-hidden="true" class="onboarding-leaf-left" onerror="this.style.display='none'">
-            <img src="assets/bolha-aero.png" alt="" aria-hidden="true" class="onboarding-bubble-accent" onerror="this.style.display='none'">
 
-            <!-- Slogan no topo esquerdo (imagem da identidade com fallback fiel em texto) -->
-            <header class="w-full text-left pt-2 z-10">
-                <img src="assets/slogan-arboriza.png"
-                     alt="Tá perdido? Abraça uma árvore e..."
-                     class="onboarding-slogan-img"
-                     onerror="this.style.display='none'; document.getElementById('onboarding-slogan-fallback').classList.remove('hidden');">
-                <div id="onboarding-slogan-fallback" class="hidden onboarding-slogan-text">
-                    <span class="block text-sm tracking-widest uppercase">TÁ PERDIDO?</span>
-                    <span class="block text-2xl tracking-wide uppercase mt-0.5 leading-tight">ABRAÇA UMA ÁRVORE E...</span>
-                </div>
-            </header>
+            <!-- Conjunto de bolhas Frutiger Aero reutilizando assets/bolha-aero.png -->
+            <img src="assets/bolha-aero.png" alt="" aria-hidden="true" class="onboarding-bubble ob-1" onerror="this.style.display='none'">
+            <img src="assets/bolha-aero.png" alt="" aria-hidden="true" class="onboarding-bubble ob-2" onerror="this.style.display='none'">
+            <img src="assets/bolha-aero.png" alt="" aria-hidden="true" class="onboarding-bubble ob-3" onerror="this.style.display='none'">
+            <img src="assets/bolha-aero.png" alt="" aria-hidden="true" class="onboarding-bubble ob-4" onerror="this.style.display='none'">
+            <img src="assets/bolha-aero.png" alt="" aria-hidden="true" class="onboarding-bubble ob-5" onerror="this.style.display='none'">
+            <img src="assets/bolha-aero.png" alt="" aria-hidden="true" class="onboarding-bubble ob-6" onerror="this.style.display='none'">
+            <img src="assets/bolha-aero.png" alt="" aria-hidden="true" class="onboarding-bubble ob-7" onerror="this.style.display='none'">
 
-            <!-- Centro: Logo livre (sem bolha em volta) + Wordmark ARBORIZA direto sobre o fundo -->
-            <div class="flex flex-col items-center justify-center my-auto py-3 z-10 w-full">
+            <!-- Bloco unificado: Slogan + Logo + ARBORIZA próximos entre si -->
+            <div class="onboarding-brand-group flex flex-col items-center justify-center my-auto w-full z-10">
+                <header class="w-full text-left mb-3 px-1">
+                    <img src="assets/slogan-arboriza.png"
+                         alt="Tá perdido? Abraça uma árvore e..."
+                         class="onboarding-slogan-img"
+                         onerror="this.style.display='none'; document.getElementById('onboarding-slogan-fallback').classList.remove('hidden');">
+                    <div id="onboarding-slogan-fallback" class="hidden onboarding-slogan-text">
+                        <span class="block text-sm tracking-widest uppercase">TÁ PERDIDO?</span>
+                        <span class="block text-2xl tracking-wide uppercase mt-0.5 leading-tight">ABRAÇA UMA ÁRVORE E...</span>
+                    </div>
+                </header>
+
                 <img src="assets/logo-arboriza.png"
                      onerror="this.onerror=null;this.src='https://cdn.prod.website-files.com/68c9b59ad35a897b62c3262c/68c9baa2c06920a9e64b5588_logoarborizacolor.png';"
                      alt="Logo Arboriza"
@@ -54,11 +61,11 @@
                      alt="ARBORIZA"
                      class="onboarding-wordmark-free"
                      onerror="this.style.display='none'; document.getElementById('onboarding-wordmark-fallback').classList.remove('hidden');">
-                <h1 id="onboarding-wordmark-fallback" class="hidden text-5xl font-extrabold text-verde-principal font-logo tracking-wider mt-3 aero-text-glow">ARBORIZA</h1>
+                <h1 id="onboarding-wordmark-fallback" class="hidden text-5xl font-extrabold text-verde-principal font-logo tracking-wider mt-2 aero-text-glow">ARBORIZA</h1>
             </div>
 
             <!-- Painel translúcido inferior com os 3 botões de ação -->
-            <div class="onboarding-actions-dock w-full space-y-2.5 z-10">
+            <div class="onboarding-actions-dock w-full space-y-2.5 mt-4 z-10">
                 <button data-page="signup" class="nav-to-btn frutiger-aero-button aero-green medium w-full">
                     🌱 COMEÇAR COMO GUARDIÃO
                 </button>
