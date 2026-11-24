@@ -692,3 +692,147 @@ input[type="file"] { display: none; }
     outline: 3px solid #0078D7;
     outline-offset: 2px;
 }
+
+/* ==========================================================================
+   TELA INICIAL (ONBOARDING) — LAYOUT OFICIAL FRUTIGER AERO
+   ========================================================================== */
+.onboarding-hero {
+    background-color: #2185D5;
+    background-image:
+        url("assets/fundo-inicial.jpg"),
+        linear-gradient(180deg, #0D5EBF 0%, #58B8F4 42%, #D7F2FD 62%, #7AD12B 82%, #399E18 100%);
+    background-size: cover;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+}
+
+/* Slogan superior esquerdo */
+.onboarding-slogan-img {
+    max-width: 82%;
+    max-height: 76px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 6px rgba(0, 35, 90, 0.35));
+}
+
+.onboarding-slogan-text {
+    color: #FFFFFF;
+    font-family: "Segoe UI", "Nunito", system-ui, sans-serif;
+    font-weight: 500;
+    text-shadow: 0 2px 8px rgba(0, 40, 100, 0.45);
+}
+
+/* Logo livre (sem bolha/círculo em volta) */
+.onboarding-logo-free {
+    width: 196px;
+    height: auto;
+    max-height: 196px;
+    object-fit: contain;
+    filter: drop-shadow(0 10px 18px rgba(0, 55, 95, 0.25));
+    animation: floatLogoGentle 5.5s ease-in-out infinite;
+}
+
+/* Wordmark ARBORIZA direto sobre o horizonte claro */
+.onboarding-wordmark-free {
+    width: 82%;
+    max-width: 295px;
+    height: auto;
+    margin-top: 14px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 10px rgba(255, 255, 255, 0.92));
+}
+
+@keyframes floatLogoGentle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+/* Folhas e bolha originais da identidade */
+.onboarding-leaf-right {
+    position: absolute;
+    top: 11%;
+    right: -10px;
+    width: 138px;
+    height: auto;
+    pointer-events: none;
+    user-select: none;
+    z-index: 2;
+    filter: drop-shadow(0 6px 12px rgba(0, 50, 20, 0.22));
+}
+
+.onboarding-leaf-left {
+    position: absolute;
+    bottom: 92px;
+    left: -14px;
+    width: 162px;
+    height: auto;
+    pointer-events: none;
+    user-select: none;
+    z-index: 3;
+    filter: drop-shadow(0 6px 14px rgba(0, 45, 15, 0.24));
+}
+
+.onboarding-bubble-accent {
+    position: absolute;
+    top: 41%;
+    left: 6%;
+    width: 48px;
+    height: auto;
+    opacity: 0.82;
+    pointer-events: none;
+    user-select: none;
+    z-index: 2;
+    animation: floatBubble 7s ease-in-out infinite;
+}
+
+/* Painel translúcido inferior ao redor dos 3 botões */
+.onboarding-actions-dock {
+    background: rgba(255, 255, 255, 0.34);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1.5px solid rgba(255, 255, 255, 0.58);
+    border-radius: 22px;
+    padding: 14px;
+    box-shadow:
+        0 8px 24px rgba(10, 65, 20, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* Botão branco "Já tem conta? Entrar" com brilho limpo */
+.onboarding-login-btn {
+    background: linear-gradient(180deg, #FFFFFF 0%, #F2F9F5 100%);
+    color: var(--aero-deep);
+    font-weight: 800;
+    font-size: 0.96rem;
+    padding: 0.78em 1.5em;
+    border-radius: 9999px;
+    border: 1.5px solid #FFFFFF;
+    box-shadow: 0 4px 10px rgba(0, 45, 20, 0.2), inset 0 1px 1px #FFFFFF;
+    cursor: pointer;
+    transition: all 220ms ease;
+}
+.onboarding-login-btn:hover,
+.onboarding-login-btn:focus {
+    background: #FFFFFF;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(0, 45, 20, 0.26);
+}
+.onboarding-login-btn:active {
+    transform: translateY(1px);
+}
+
+/* Ajuste responsivo para celulares mais compactos */
+@media (max-height: 700px) {
+    .onboarding-logo-free { width: 152px; max-height: 152px; }
+    .onboarding-wordmark-free { max-width: 240px; margin-top: 8px; }
+    .onboarding-leaf-right { width: 112px; }
+    .onboarding-leaf-left { width: 132px; bottom: 84px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .onboarding-logo-free,
+    .onboarding-bubble-accent {
+        animation: none !important;
+    }
+}
