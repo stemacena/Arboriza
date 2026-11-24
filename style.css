@@ -635,3 +635,13 @@ input[type="file"] { display: none; }
         opacity: 1 !important;
     }
 }
+
+/* Checklist de Missões exigidas em cada Emblema */
+.aero-emblem-checklist {
+    list-style: none;
+    padding: 8px 10px;
+    margin: 10px 0 0 0;
+    background: rgba(235, 247, 254, 0.7);
+    border: 1px solid rgba(156, 203, 232, 0.45);
+    border-radius: 10px;
+}

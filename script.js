@@ -1,7 +1,10 @@
 /* ==========================================================================
-   ARBORIZA 2.0 — SCRIPT PRINCIPAL (Produção / Frutiger Aero)
-   Preserva 100% do banco de dados existente (users, trees, careEvents,
-   adopters, adoptedTrees), integração Pl@ntNet e backend Python MapBiomas.
+   ARBORIZA 2.1 — SCRIPT PRINCIPAL (Produção / Segurança / Frutiger Aero)
+   - Preserva 100% do banco de dados existente (users, trees, careEvents,
+     adopters, adoptedTrees), integração Pl@ntNet e backend Python MapBiomas.
+   - Privacidade LGPD: separa dados privados (/users) de /publicProfiles.
+   - Rede Social, Busca, Perfis Públicos, Vouchers e Parceiros corrigidos.
+   - Missões e Emblemas desacoplados (emblemas exigem múltiplas missões).
    ========================================================================== */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -54,22 +57,22 @@ const firebaseConfig = {
     appId: "1:210425976523:web:2733f5b67fe02aa7d4ad4e"
 };
 
-// E-mails autorizados a acessar o Painel de Administrador
+// E-mails autorizados a acessar o Painel de Administrador (espelhados nas Firestore Rules)
 const ADMIN_EMAILS = [
     "arborizarj@gmail.com",
     "stemacena@gmail.com",
     "tiagomartins.one@gmail.com"
 ];
 
-const ARVORECO_IMG = "https://firebasestorage.googleapis.com/v0/b/arboriza-bd.firebasestorage.app/o/%C3%81rvore%20Tropical%20Amiga%20do%20Brasil.png?alt=media&token=1bf9e356-e2a7-4571-aa4c-3b7af0ba7c2b";
 const PYTHON_BACKEND_URL = "https://arboriza-backend.onrender.com";
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024; // 5 MB
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// --- 2. REGRAS DE GAMIFICAÇÃO (NÍVEIS, MISSÕES E EMBLEMAS) ---
+// --- 2. REGRAS DE GAMIFICAÇÃO (NÍVEIS, MISSÕES E EMBLEMAS MULTI-MISSÃO) ---
 const LEVELS = [
     { level: 1, name: "Nível 1: Semente", minPoints: 0, emoji: "🌱" },
     { level: 2, name: "Nível 2: Broto Urbano", minPoints: 300, emoji: "🌿" },
@@ -77,32 +80,59 @@ const LEVELS = [
     { level: 4, name: "Nível 4: Raiz do Território", minPoints: 1600, emoji: "🌳" },
     { level: 5, name: "Nível 5: Guardião da Copa", minPoints: 3000, emoji: "🦋" },
     { level: 6, name: "Nível 6: Mestre da Mata Atlântica", minPoints: 5000, emoji: "🌍" },
-    { level: 7, name: "Nível 7: Geopoeta Ancestral", minPoints: 8000, emoji: "🫧" }
+    { level: 7, name: "Nível 7: Guardião Ancestral", minPoints: 8000, emoji: "🫧" }
 ];
 
 const MISSIONS = [
     {
+        id: "mission_identify_5",
+        title: "Olhar Atento",
+        description: "Identifique 5 árvores urbanas usando a câmera do Arboriza.",
+        statKey: "treesIdentified",
+        goal: 5,
+        rewardPoints: 100,
+        emoji: "🔎"
+    },
+    {
         id: "mission_identify_15",
         title: "Explorador Botânico",
-        description: "Identifique 15 árvores urbanas usando a câmera do Arboriza.",
+        description: "Identifique 15 árvores urbanas para conhecer a flora do bairro.",
         statKey: "treesIdentified",
         goal: 15,
         rewardPoints: 250,
         emoji: "🍃"
     },
     {
+        id: "mission_care_5",
+        title: "Mão na Terra",
+        description: "Realize 5 ações de cuidado (rega ou limpeza de canteiro).",
+        statKey: "treesCared",
+        goal: 5,
+        rewardPoints: 120,
+        emoji: "🌱"
+    },
+    {
         id: "mission_care_10",
         title: "Cuidador Constante",
-        description: "Realize 10 ações de cuidado (rega ou limpeza de canteiro) em árvores.",
+        description: "Realize 10 ações de cuidado em árvores urbanas.",
         statKey: "treesCared",
         goal: 10,
         rewardPoints: 300,
         emoji: "💧"
     },
     {
+        id: "mission_add_3",
+        title: "Primeiras Raízes",
+        description: "Cadastre 3 novas árvores no mapa colaborativo da cidade.",
+        statKey: "treesAdded",
+        goal: 3,
+        rewardPoints: 150,
+        emoji: "🗺️"
+    },
+    {
         id: "mission_add_8",
         title: "Cartógrafo Verde",
-        description: "Cadastre 8 novas árvores no mapa colaborativo da cidade.",
+        description: "Cadastre 8 novas árvores para expandir o inventário urbano.",
         statKey: "treesAdded",
         goal: 8,
         rewardPoints: 400,
@@ -118,8 +148,8 @@ const MISSIONS = [
         emoji: "💚"
     },
     {
-        id: "mission_comments_10",
-        title: "Escrevivência Geopoética",
+        id: "mission_escrevivencia_10",
+        title: "Escrevivência",
         description: "Registre 10 mensagens em murais de árvores ou comentários no feed.",
         statKey: "commentsCount",
         goal: 10,
@@ -134,62 +164,58 @@ const MISSIONS = [
         goal: 5,
         rewardPoints: 100,
         emoji: "🌐"
+    },
+    {
+        id: "mission_care_25",
+        title: "Protetor do Bairro",
+        description: "Alcance a marca de 25 cuidados registrados em árvores urbanas.",
+        statKey: "treesCared",
+        goal: 25,
+        rewardPoints: 500,
+        emoji: "🛡️"
     }
 ];
 
+// Cada emblema exige concluir múltiplas missões diferentes
 const EMBLEMS = [
     {
-        id: "guardia_iniciante",
-        name: "Guardiã(o) Iniciante",
-        description: "Cuide de 10 árvores urbanas.",
-        statKey: "treesCared",
-        goal: 10,
+        id: "guardiao_territorio",
+        name: "Guardiã(o) do Território",
+        description: "Conclua 3 missões de cuidado e afeto pelas árvores.",
+        requiredMissions: ["mission_care_5", "mission_care_10", "mission_adopt_5"],
         emoji: "💧"
     },
     {
-        id: "botanica_primeira",
-        name: "Botânico(a) de Primeira",
-        description: "Identifique 15 árvores diferentes.",
-        statKey: "treesIdentified",
-        goal: 15,
+        id: "botanico_urbano",
+        name: "Botânico(a) Urbano(a)",
+        description: "Conclua 3 missões de identificação e mapeamento inicial.",
+        requiredMissions: ["mission_identify_5", "mission_identify_15", "mission_add_3"],
         emoji: "🍃"
     },
     {
-        id: "desbravador",
-        name: "Desbravador(a) do Território",
-        description: "Adicione 8 novas árvores ao mapa.",
-        statKey: "treesAdded",
-        goal: 8,
+        id: "desbravador_cidade",
+        name: "Desbravador(a) da Cidade",
+        description: "Conclua as missões de cartografia verde do seu bairro.",
+        requiredMissions: ["mission_add_3", "mission_add_8"],
         emoji: "🧭"
     },
     {
-        id: "coracao_raiz",
-        name: "Coração de Raiz",
-        description: "Adote 5 árvores como guardião.",
-        statKey: "treesAdoptedCount",
-        goal: 5,
-        emoji: "💚"
+        id: "tecelao_memorias",
+        name: "Tecelão(ã) de Memórias",
+        description: "Conclua as missões de Escrevivência e conexão comunitária.",
+        requiredMissions: ["mission_escrevivencia_10", "mission_follow_5"],
+        emoji: "💬"
     },
     {
-        id: "conectado_rede",
-        name: "Conectado na Rede",
-        description: "Siga 5 guardiões e fortaleça a comunidade.",
-        statKey: "followingCount",
-        goal: 5,
-        emoji: "🌐"
-    },
-    {
-        id: "protetor_mata",
-        name: "Protetor da Floresta Carioca",
-        description: "Alcance 1.600 pontos (Nível 4: Raiz do Território).",
-        statKey: "points",
-        goal: 1600,
+        id: "mestre_mata_atlantica",
+        name: "Mestre da Mata Atlântica",
+        description: "Conclua 3 grandes missões avançadas de preservação urbana.",
+        requiredMissions: ["mission_care_25", "mission_identify_15", "mission_add_8"],
         emoji: "🌍"
     }
 ];
 
 // --- 3. CLASSIFICADOR BOTÂNICO (ÁRVORE vs. PLANTA/ARBUSTO) ---
-// Complementa a API do Pl@ntNet usando taxonomia (família/gênero) e nomes comuns brasileiros
 const KNOWN_TREE_GENERA = new Set([
     "handroanthus", "tabebuia", "paubrasilia", "caesalpinia", "cenostigma", "libidibia",
     "inga", "ficus", "mangifera", "psidium", "eugenia", "syzygium", "licania", "moquilea",
@@ -242,7 +268,6 @@ const classifyPlantHabit = (speciesData) => {
         return { isTree: true, category: "uncertain", label: "🌱 Espécie Vegetal", note: "Confirme se este exemplar é uma árvore." };
     }
 
-    // Se a API ou função Netlify retornar explicitamente isTree
     if (typeof speciesData.isTree === "boolean") {
         return speciesData.isTree
             ? { isTree: true, category: "tree", label: "🌳 Árvore Urbana", note: "Identificada como espécie arbórea (conta para missões de árvores)." }
@@ -308,16 +333,19 @@ const appState = {
     partnerSignupMarker: null,
     followingIds: new Set(),
     feedFilter: "all",
-    pendingAuthRole: "guardian", // 'guardian' ou 'partner'
+    pendingAuthRole: "guardian",
     pendingPartnerSignupData: null,
     pendingFeedPublishResolver: null,
     cachedPartners: [],
-    cachedUsers: [],
+    cachedProfiles: [],
+    profilesLoadedOnce: false,
     selectedPartnerDetail: null,
-    selectedPublicProfileUid: null
+    selectedPublicProfileUid: null,
+    activeTreeUnsubscribers: [],
+    treesMapUnsubscriber: null
 };
 
-// --- 5. UTILITÁRIOS GERAIS ---
+// --- 5. SEGURANÇA, SANITIZAÇÃO E UTILITÁRIOS ---
 const escapeHtml = (unsafe = "") => {
     return String(unsafe)
         .replace(/&/g, "&amp;")
@@ -327,9 +355,34 @@ const escapeHtml = (unsafe = "") => {
         .replace(/'/g, "&#039;");
 };
 
+const sanitizeUrl = (url = "", fallback = "") => {
+    if (!url || typeof url !== "string") return fallback;
+    const trimmed = url.trim();
+    if (/^(https?:\/\/|blob:|assets\/)/i.test(trimmed)) return trimmed;
+    return fallback;
+};
+
+const normalizeText = (str = "") => {
+    return String(str)
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim();
+};
+
+const validateImageFile = (file) => {
+    if (!file) return { ok: false, error: "Nenhum arquivo selecionado." };
+    if (!file.type || !file.type.startsWith("image/")) {
+        return { ok: false, error: "Selecione apenas arquivos de imagem (JPG, PNG ou WebP)." };
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+        return { ok: false, error: "A imagem deve ter no máximo 5 MB." };
+    }
+    return { ok: true };
+};
+
 const isAdminUser = (user) => {
     if (!user) return false;
-    if (user.role === "admin") return true;
     return ADMIN_EMAILS.includes((user.email || "").toLowerCase());
 };
 
@@ -355,6 +408,35 @@ const getLevelInfo = (points = 0) => {
     return { current, next, progress };
 };
 
+const isMissionCompleted = (user, mission) => {
+    if (!user || !mission) return false;
+    const claimed = user.claimedMissions || [];
+    if (claimed.includes(mission.id)) return true;
+    return (Number(user[mission.statKey]) || 0) >= mission.goal;
+};
+
+const getEmblemProgress = (user, emblem) => {
+    const reqList = emblem.requiredMissions || [];
+    const details = reqList.map(mId => {
+        const m = MISSIONS.find(item => item.id === mId);
+        return {
+            id: mId,
+            title: m ? m.title : mId,
+            emoji: m ? m.emoji : "🎯",
+            done: m ? isMissionCompleted(user, m) : false
+        };
+    });
+    const completedCount = details.filter(d => d.done).length;
+    const totalCount = details.length || 1;
+    return {
+        details,
+        completedCount,
+        totalCount,
+        pct: Math.min(100, (completedCount / totalCount) * 100),
+        unlocked: completedCount >= totalCount
+    };
+};
+
 const formatDateBR = (timestamp) => {
     if (!timestamp) return "Agora mesmo";
     try {
@@ -367,9 +449,15 @@ const formatDateBR = (timestamp) => {
 
 const generateVoucherCode = () => {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const randomValues = new Uint32Array(6);
+    if (window.crypto?.getRandomValues) {
+        window.crypto.getRandomValues(randomValues);
+    } else {
+        for (let i = 0; i < 6; i++) randomValues[i] = Math.floor(Math.random() * chars.length);
+    }
     let code = "ARB-";
     for (let i = 0; i < 6; i++) {
-        code += chars.charAt(Math.floor(Math.random() * chars.length));
+        code += chars.charAt(randomValues[i] % chars.length);
     }
     return code;
 };
@@ -385,31 +473,89 @@ const getMissionTypeLabel = (type, count) => {
     }
 };
 
-// --- 6. CICLO DE VIDA DA APLICAÇÃO ---
+const stopCameraStream = () => {
+    const videoEl = document.getElementById("camera-feed");
+    if (videoEl && videoEl.srcObject) {
+        const tracks = videoEl.srcObject.getTracks();
+        tracks.forEach(t => t.stop());
+        videoEl.srcObject = null;
+        videoEl.classList.add("hidden");
+        document.getElementById("camera-placeholder")?.classList.remove("hidden");
+    }
+};
+
+const clearTreeSubcollectionListeners = () => {
+    appState.activeTreeUnsubscribers.forEach(unsub => {
+        try { unsub(); } catch {}
+    });
+    appState.activeTreeUnsubscribers = [];
+};
+
+// --- 6. SINCRONIZAÇÃO DE PERFIL PÚBLICO (LGPD — SEM EXPOR EMAIL) ---
+const buildPublicProfilePayload = (userData) => {
+    const levelInfo = getLevelInfo(userData.points || 0);
+    const unlockedIds = EMBLEMS
+        .filter(e => getEmblemProgress(userData, e).unlocked)
+        .map(e => e.id);
+
+    return {
+        name: String(userData.name || "Guardião").slice(0, 80),
+        photoURL: sanitizeUrl(
+            userData.photoURL,
+            `https://placehold.co/128x128/18981d/FFFFFF?text=${encodeURIComponent((userData.name || "G").charAt(0).toUpperCase())}`
+        ),
+        role: userData.role === "partner" ? "partner" : "guardian",
+        level: levelInfo.current.level,
+        levelName: levelInfo.current.name,
+        points: Number(userData.points) || 0,
+        treesCared: Number(userData.treesCared) || 0,
+        treesIdentified: Number(userData.treesIdentified) || 0,
+        treesAdded: Number(userData.treesAdded) || 0,
+        treesAdoptedCount: Number(userData.treesAdoptedCount) || 0,
+        unlockedEmblems: unlockedIds,
+        updatedAt: serverTimestamp()
+    };
+};
+
+const syncPublicProfile = async (uid, userData) => {
+    if (!uid || !userData) return;
+    try {
+        await setDoc(doc(db, "publicProfiles", uid), buildPublicProfilePayload(userData), { merge: true });
+    } catch (err) {
+        console.warn("Aviso ao sincronizar perfil público:", err);
+    }
+};
+
+// --- 7. CICLO DE VIDA DA APLICAÇÃO ---
 const acordarServidorPython = () => {
-    console.log("⏰ Mandando um 'Bom dia' para acordar o servidor Render...");
     fetch(`${PYTHON_BACKEND_URL}/`)
         .then(res => res.json())
-        .then(() => console.log("🚀 Servidor Python está 100% acordado e pronto!"))
-        .catch(() => console.log("Servidor Python ainda acordando..."));
+        .then(() => console.log("🚀 Servidor Python MapBiomas pronto!"))
+        .catch(() => console.log("Servidor Python acordando..."));
 };
 
 const initializeAppCore = () => {
-    console.log("Arboriza 2.0 iniciando... (Frutiger Aero + Rede Social + Parceiros + Admin + MapBiomas)");
+    console.log("Arboriza 2.1 iniciando... (Segurança + LGPD + Frutiger Aero + Parceiros + Admin)");
     setAppHeight();
     window.addEventListener("resize", setAppHeight);
     if (window.lucide) lucide.createIcons();
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
-            console.log("Usuário logado:", user.uid);
             fetchUserProfile(user.uid, user);
             acordarServidorPython();
         } else {
-            console.log("Nenhum usuário logado.");
+            stopCameraStream();
+            clearTreeSubcollectionListeners();
+            if (appState.treesMapUnsubscriber) {
+                appState.treesMapUnsubscriber();
+                appState.treesMapUnsubscriber = null;
+            }
             appState.currentUser = null;
             appState.currentPartnerDoc = null;
             appState.followingIds = new Set();
+            appState.cachedProfiles = [];
+            appState.profilesLoadedOnce = false;
             showPage("onboarding");
             document.querySelector("main")?.classList.add("hidden");
             document.querySelector("nav")?.classList.add("hidden");
@@ -430,7 +576,6 @@ const fetchUserProfile = async (uid, authUser) => {
             const levelInfo = getLevelInfo(data.points || 0);
             appState.currentUser = {
                 uid,
-                role: isAdminUser(data) ? "admin" : (data.role || "guardian"),
                 treesCared: 0,
                 treesIdentified: 0,
                 plantsIdentified: 0,
@@ -442,6 +587,8 @@ const fetchUserProfile = async (uid, authUser) => {
                 claimedMissions: [],
                 unlockedEmblems: [],
                 ...data,
+                email: authUser?.email || data.email || "",
+                role: isAdminUser({ email: authUser?.email || data.email }) ? "admin" : (data.role || "guardian"),
                 level: levelInfo.current.level,
                 levelName: levelInfo.current.name
             };
@@ -454,8 +601,8 @@ const fetchUserProfile = async (uid, authUser) => {
             const newUserProfile = {
                 name: displayName,
                 email: authUser.email,
-                photoURL: authUser.photoURL || `https://placehold.co/128x128/00a86b/FFFFFF?text=${encodeURIComponent(displayName.charAt(0).toUpperCase())}`,
-                role,
+                photoURL: authUser.photoURL || `https://placehold.co/128x128/18981d/FFFFFF?text=${encodeURIComponent(displayName.charAt(0).toUpperCase())}`,
+                role: role === "admin" ? "guardian" : role, // role admin sempre verificada via email nas Rules
                 level: 1,
                 levelName: LEVELS[0].name,
                 points: 0,
@@ -472,9 +619,8 @@ const fetchUserProfile = async (uid, authUser) => {
                 createdAt: serverTimestamp()
             };
             await setDoc(userRef, newUserProfile);
-            appState.currentUser = { uid, ...newUserProfile };
+            appState.currentUser = { uid, ...newUserProfile, role };
 
-            // Se veio do cadastro de parceiro via Google, cria o documento do comércio
             if (role === "partner") {
                 await createInitialPartnerDocument(uid, authUser.email, appState.pendingPartnerSignupData);
             }
@@ -486,10 +632,9 @@ const fetchUserProfile = async (uid, authUser) => {
             return;
         }
 
-        // Sincroniza contagem de árvores adotadas (para contas legadas)
         await syncUserSocialAndAdoptionCounts();
+        await syncPublicProfile(uid, appState.currentUser);
 
-        // Carrega dados de parceiro caso a conta seja parceiro
         if (appState.currentUser.role === "partner") {
             await loadOwnPartnerDocument(uid);
         }
@@ -500,7 +645,6 @@ const fetchUserProfile = async (uid, authUser) => {
         updateRoleButtonsVisibility();
         updateGamificationUI();
 
-        // Redireciona parceiros direto ao painel de parceiro se desejado, ou guardiões ao mapa
         if (appState.currentUser.role === "partner") {
             showPage("partner-dashboard");
         } else {
@@ -508,7 +652,7 @@ const fetchUserProfile = async (uid, authUser) => {
         }
     } catch (error) {
         console.error("Erro crítico ao buscar perfil:", error);
-        showToast("Erro de conexão. Verifique sua internet.");
+        showToast("Erro de conexão ou permissão. Verifique sua internet.");
     } finally {
         showLoadingModal(false);
     }
@@ -516,15 +660,17 @@ const fetchUserProfile = async (uid, authUser) => {
 
 const syncUserSocialAndAdoptionCounts = async () => {
     if (!appState.currentUser) return;
+    const uid = appState.currentUser.uid;
     try {
-        const followingSnap = await getDocs(collection(db, "users", appState.currentUser.uid, "following"));
+        const [followingSnap, followersSnap, adoptedSnap] = await Promise.all([
+            getDocs(collection(db, "publicProfiles", uid, "following")),
+            getDocs(collection(db, "publicProfiles", uid, "followers")),
+            getDocs(collection(db, "users", uid, "adoptedTrees"))
+        ]);
+
         appState.followingIds = new Set(followingSnap.docs.map(d => d.id));
         appState.currentUser.followingCount = appState.followingIds.size;
-
-        const followersSnap = await getDocs(collection(db, "users", appState.currentUser.uid, "followers"));
         appState.currentUser.followersCount = followersSnap.size;
-
-        const adoptedSnap = await getDocs(collection(db, "users", appState.currentUser.uid, "adoptedTrees"));
         appState.currentUser.treesAdoptedCount = adoptedSnap.size;
     } catch (err) {
         console.warn("Aviso ao sincronizar conexões/adoções:", err);
@@ -557,7 +703,7 @@ const updateRoleButtonsVisibility = () => {
     }
 };
 
-// --- 7. NAVEGAÇÃO E UI ---
+// --- 8. NAVEGAÇÃO E UI ---
 const getScreens = () => document.querySelectorAll('#app-container > div[id^="screen-"], main > div[id^="screen-"]');
 const loadingModal = document.getElementById("loading-modal");
 const loadingMessage = document.getElementById("loading-message");
@@ -573,6 +719,10 @@ const showPage = (pageId) => {
         showToast("Acesso restrito a administradores.");
         showPage("map");
         return;
+    }
+
+    if (pageId !== "camera") {
+        stopCameraStream();
     }
 
     getScreens().forEach(screen => screen.classList.add("hidden"));
@@ -603,7 +753,10 @@ const showPage = (pageId) => {
         setTimeout(() => initializePartnerSignupMap(), 80);
     }
     if (pageId === "feed") loadFeedPosts();
-    if (pageId === "community") loadCommunityDirectory();
+    if (pageId === "community") {
+        const currentTerm = document.getElementById("community-search-input")?.value || "";
+        loadCommunityDirectory(currentTerm, true);
+    }
     if (pageId === "profile") {
         updateGamificationUI();
         loadUserVouchers();
@@ -644,7 +797,7 @@ const showToast = (message) => {
     }
 };
 
-// --- 8. AUTENTICAÇÃO (GUARDIÃO E PARCEIRO) ---
+// --- 9. AUTENTICAÇÃO (GUARDIÃO E PARCEIRO) ---
 const handleSignup = async (e) => {
     e.preventDefault();
     const name = document.getElementById("signup-name").value.trim();
@@ -652,8 +805,8 @@ const handleSignup = async (e) => {
     const password = document.getElementById("signup-password").value;
     const errorMessageEl = document.getElementById("signup-error-message");
 
-    if (name.length < 3) {
-        errorMessageEl.textContent = "Por favor, insira um nome válido (mínimo 3 letras).";
+    if (name.length < 3 || name.length > 80) {
+        errorMessageEl.textContent = "Por favor, insira um nome válido (entre 3 e 80 caracteres).";
         errorMessageEl.classList.remove("hidden");
         return;
     }
@@ -665,12 +818,11 @@ const handleSignup = async (e) => {
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-        const userRef = doc(db, "users", user.uid);
         const newUserProfile = {
             name,
             email,
-            role: isAdminUser({ email }) ? "admin" : "guardian",
-            photoURL: `https://placehold.co/128x128/00a86b/FFFFFF?text=${encodeURIComponent(name.charAt(0).toUpperCase())}`,
+            role: "guardian",
+            photoURL: `https://placehold.co/128x128/18981d/FFFFFF?text=${encodeURIComponent(name.charAt(0).toUpperCase())}`,
             level: 1,
             levelName: LEVELS[0].name,
             points: 0,
@@ -686,7 +838,8 @@ const handleSignup = async (e) => {
             unlockedEmblems: [],
             createdAt: serverTimestamp()
         };
-        await setDoc(userRef, newUserProfile);
+        await setDoc(doc(db, "users", user.uid), newUserProfile);
+        await syncPublicProfile(user.uid, newUserProfile);
     } catch (error) {
         console.error("Erro no cadastro:", error);
         errorMessageEl.textContent = getFirebaseErrorMessage(error);
@@ -715,6 +868,15 @@ const handlePartnerSignup = async (e) => {
         return;
     }
 
+    if (photoFile) {
+        const check = validateImageFile(photoFile);
+        if (!check.ok) {
+            errorEl.textContent = check.error;
+            errorEl.classList.remove("hidden");
+            return;
+        }
+    }
+
     showLoadingModal(true, "Enviando solicitação de Parceiro...");
     errorEl.classList.add("hidden");
     appState.pendingAuthRole = "partner";
@@ -729,8 +891,7 @@ const handlePartnerSignup = async (e) => {
             if (uploaded) photoURL = uploaded;
         }
 
-        const userRef = doc(db, "users", user.uid);
-        await setDoc(userRef, {
+        const newProfile = {
             name: businessName,
             email,
             role: "partner",
@@ -749,7 +910,9 @@ const handlePartnerSignup = async (e) => {
             claimedMissions: [],
             unlockedEmblems: [],
             createdAt: serverTimestamp()
-        });
+        };
+        await setDoc(doc(db, "users", user.uid), newProfile);
+        await syncPublicProfile(user.uid, newProfile);
 
         await createInitialPartnerDocument(user.uid, email, {
             businessName,
@@ -773,17 +936,20 @@ const handlePartnerSignup = async (e) => {
 
 const createInitialPartnerDocument = async (uid, email, data) => {
     const partnerRef = doc(db, "partners", uid);
-    const businessName = data?.businessName || "Novo Comércio Parceiro";
+    const businessName = (data?.businessName || "Novo Comércio Parceiro").slice(0, 100);
     const partnerDoc = {
         ownerUid: uid,
         email: email || "",
         businessName,
         category: data?.category || "Comércio Local",
-        address: data?.address || "Endereço a informar",
-        description: data?.description || "Parceiro apoiador da arborização urbana no Rio.",
-        photoURL: data?.photoURL || `https://placehold.co/240x180/0ea5e9/FFFFFF?text=${encodeURIComponent(businessName.substring(0, 12))}`,
+        address: (data?.address || "Endereço a informar").slice(0, 200),
+        description: (data?.description || "Parceiro apoiador da arborização urbana no Rio.").slice(0, 500),
+        photoURL: sanitizeUrl(
+            data?.photoURL,
+            `https://placehold.co/240x180/0ea5e9/FFFFFF?text=${encodeURIComponent(businessName.substring(0, 12))}`
+        ),
         location: new GeoPoint(data?.lat || -22.9068, data?.lng || -43.1729),
-        status: "pending", // 'pending' | 'approved' | 'rejected'
+        status: "pending",
         treesImpacted: 0,
         vouchersRedeemed: 0,
         createdAt: serverTimestamp()
@@ -815,7 +981,6 @@ const handlePartnerGoogleSignup = async () => {
     try {
         const result = await signInWithPopup(auth, provider);
         const uid = result.user.uid;
-        // Se o usuário já existia mas não tinha doc de parceiro, cria agora
         const partnerSnap = await getDoc(doc(db, "partners", uid));
         if (!partnerSnap.exists()) {
             await updateDoc(doc(db, "users", uid), { role: "partner" }).catch(() => {});
@@ -883,6 +1048,7 @@ const handleForgotPassword = async (e) => {
 
 const handleLogout = async () => {
     try {
+        stopCameraStream();
         await signOut(auth);
     } catch (error) {
         console.error("Erro ao sair:", error);
@@ -901,14 +1067,22 @@ const getFirebaseErrorMessage = (error) => {
         case "auth/configuration-not-found": return "Configuração de login não encontrada. (Ative Email/Senha no Firebase).";
         case "auth/popup-closed-by-user": return "Você fechou a janela do Google antes de terminar.";
         case "auth/unauthorized-domain": return "Este domínio não está autorizado para login. (Adicione-o no Firebase).";
+        case "permission-denied": return "Permissão insuficiente no banco de dados. Atualize as Regras do Firebase.";
         default: return "Ocorreu um erro. Tente novamente.";
     }
 };
 
-// --- 9. GAMIFICAÇÃO, NÍVEIS, MISSÕES E EMBLEMAS ---
+// --- 10. GAMIFICAÇÃO, NÍVEIS, MISSÕES E EMBLEMAS ---
 const handleProfilePicUpload = async (e) => {
     const file = e.target.files[0];
     if (!file || !appState.currentUser) return;
+
+    const check = validateImageFile(file);
+    if (!check.ok) {
+        showToast(check.error);
+        e.target.value = null;
+        return;
+    }
 
     showLoadingModal(true, "Atualizando sua foto...");
     try {
@@ -919,11 +1093,13 @@ const handleProfilePicUpload = async (e) => {
 
         await updateDoc(doc(db, "users", appState.currentUser.uid), { photoURL: downloadURL });
         appState.currentUser.photoURL = downloadURL;
+        await syncPublicProfile(appState.currentUser.uid, appState.currentUser);
+
         document.getElementById("profile-avatar").src = downloadURL;
         showToast("Foto de perfil atualizada! ✨");
     } catch (error) {
         console.error("Erro ao atualizar foto de perfil:", error);
-        showToast("Erro ao enviar sua foto.");
+        showToast("Erro ao enviar sua foto. Verifique as regras do Storage.");
     } finally {
         showLoadingModal(false);
     }
@@ -933,6 +1109,7 @@ const awardPoints = async (action, extraPoints = 0) => {
     if (!appState.currentUser) return;
 
     const prevLevel = appState.currentUser.level || 1;
+    const prevUnlocked = new Set(appState.currentUser.unlockedEmblems || []);
     let points = extraPoints;
     const updates = {};
 
@@ -983,23 +1160,25 @@ const awardPoints = async (action, extraPoints = 0) => {
         updates.level = levelInfo.current.level;
         updates.levelName = levelInfo.current.name;
 
-        // Verifica desbloqueio de novos emblemas
-        const unlocked = new Set(appState.currentUser.unlockedEmblems || []);
+        // Verifica emblemas desbloqueados via múltiplas missões
         const newlyUnlocked = [];
+        const allUnlocked = new Set(prevUnlocked);
         EMBLEMS.forEach(emblem => {
-            const val = Number(appState.currentUser[emblem.statKey]) || 0;
-            if (val >= emblem.goal && !unlocked.has(emblem.id)) {
-                unlocked.add(emblem.id);
-                newlyUnlocked.push(emblem.name);
+            if (getEmblemProgress(appState.currentUser, emblem).unlocked) {
+                if (!allUnlocked.has(emblem.id)) {
+                    newlyUnlocked.push(emblem.name);
+                }
+                allUnlocked.add(emblem.id);
             }
         });
         if (newlyUnlocked.length > 0) {
-            appState.currentUser.unlockedEmblems = Array.from(unlocked);
+            appState.currentUser.unlockedEmblems = Array.from(allUnlocked);
             updates.unlockedEmblems = appState.currentUser.unlockedEmblems;
         }
 
         try {
             await updateDoc(doc(db, "users", appState.currentUser.uid), updates);
+            await syncPublicProfile(appState.currentUser.uid, appState.currentUser);
         } catch (error) {
             console.error("Erro ao atualizar pontos no Firestore:", error);
         }
@@ -1036,8 +1215,7 @@ const claimMissionReward = async (missionId) => {
 
     showLoadingModal(true, "Resgatando recompensa da missão...");
     try {
-        const updatedClaimed = [...claimed, missionId];
-        user.claimedMissions = updatedClaimed;
+        user.claimedMissions = [...claimed, missionId];
         await updateDoc(doc(db, "users", user.uid), {
             claimedMissions: arrayUnion(missionId)
         });
@@ -1062,7 +1240,12 @@ const updateGamificationUI = () => {
     const profileAvatarEl = document.getElementById("profile-avatar");
     const profileLevelEl = document.getElementById("profile-level");
     if (profileNameEl) profileNameEl.textContent = user.name || "Guardião";
-    if (profileAvatarEl) profileAvatarEl.src = user.photoURL || `https://placehold.co/128x128/00a86b/FFFFFF?text=${encodeURIComponent((user.name || "G").charAt(0))}`;
+    if (profileAvatarEl) {
+        profileAvatarEl.src = sanitizeUrl(
+            user.photoURL,
+            `https://placehold.co/128x128/18981d/FFFFFF?text=${encodeURIComponent((user.name || "G").charAt(0))}`
+        );
+    }
     if (profileLevelEl) profileLevelEl.textContent = `${levelInfo.current.emoji} ${levelInfo.current.name}`;
 
     const pointsTextEl = document.getElementById("profile-points-text");
@@ -1100,9 +1283,9 @@ const renderProfileEmblemsShowcase = () => {
     const container = document.getElementById("profile-emblems-showcase");
     if (!container || !appState.currentUser) return;
 
-    const unlocked = EMBLEMS.filter(e => (Number(appState.currentUser[e.statKey]) || 0) >= e.goal);
+    const unlocked = EMBLEMS.filter(e => getEmblemProgress(appState.currentUser, e).unlocked);
     if (unlocked.length === 0) {
-        container.innerHTML = `<p class="text-xs text-slate-500 italic text-center w-full">Complete missões na aba Conquistas para exibir seus emblemas aqui! 🫧</p>`;
+        container.innerHTML = `<p class="text-xs text-slate-500 italic text-center w-full">Conclua conjuntos de missões na aba Conquistas para desbloquear emblemas! 🫧</p>`;
         return;
     }
 
@@ -1131,7 +1314,7 @@ const renderMissionsList = () => {
             <div class="aero-card p-4">
                 <div class="flex items-start justify-between gap-2">
                     <div>
-                        <p class="font-bold text-slate-800 flex items-center gap-1.5">
+                        <p class="font-extrabold text-slate-800 flex items-center gap-1.5">
                             <span>${mission.emoji}</span>
                             <span>${escapeHtml(mission.title)}</span>
                         </p>
@@ -1149,7 +1332,7 @@ const renderMissionsList = () => {
                     </div>
                 </div>
                 ${isCompleted && !isClaimed ? `
-                    <button data-claim-mission="${mission.id}" class="btn-claim-mission frutiger-aero-button small w-full mt-3">
+                    <button data-claim-mission="${mission.id}" class="btn-claim-mission frutiger-aero-button aero-green small w-full mt-3">
                         Resgatar +${mission.rewardPoints} Pontos 🫧
                     </button>
                 ` : isClaimed ? `
@@ -1166,25 +1349,31 @@ const renderEmblemsList = () => {
 
     const user = appState.currentUser;
     container.innerHTML = EMBLEMS.map(emblem => {
-        const current = Number(user[emblem.statKey]) || 0;
-        const pct = Math.min((current / emblem.goal) * 100, 100);
-        const unlocked = current >= emblem.goal;
+        const prog = getEmblemProgress(user, emblem);
 
         return `
-            <div data-achievement="${escapeHtml(emblem.name)}" class="aero-card p-4 ${unlocked ? "border-emerald-400" : ""}">
-                <div class="flex justify-between items-center">
-                    <p class="font-bold text-slate-800 flex items-center gap-2">
+            <div data-achievement="${escapeHtml(emblem.name)}" class="aero-card p-4 ${prog.unlocked ? "border-emerald-400" : ""}">
+                <div class="flex justify-between items-center gap-2">
+                    <p class="font-extrabold text-slate-800 flex items-center gap-2">
                         <span class="text-xl">${emblem.emoji}</span>
                         <span>${escapeHtml(emblem.name)}</span>
                     </p>
-                    <span class="counter text-xs font-bold px-2 py-0.5 rounded-full ${unlocked ? "bg-emerald-100 text-emerald-800" : "bg-sky-100 text-sky-800"}">
-                        ${unlocked ? "✅ Desbloqueado" : `${current}/${emblem.goal}`}
+                    <span class="counter text-xs font-bold px-2.5 py-0.5 rounded-full whitespace-nowrap ${prog.unlocked ? "bg-emerald-100 text-emerald-800" : "bg-sky-100 text-sky-800"}">
+                        ${prog.unlocked ? "🏆 Desbloqueado" : `${prog.completedCount}/${prog.totalCount} missões`}
                     </span>
                 </div>
                 <p class="text-xs text-slate-600 mt-1">${escapeHtml(emblem.description)}</p>
                 <div class="aero-progress-track mt-2.5">
-                    <div class="progress-bar aero-progress-fill" style="width: ${pct}%"></div>
+                    <div class="progress-bar aero-progress-fill" style="width: ${prog.pct}%"></div>
                 </div>
+                <ul class="aero-emblem-checklist mt-3 space-y-1">
+                    ${prog.details.map(item => `
+                        <li class="text-xs flex items-center gap-1.5 ${item.done ? "text-emerald-800 font-bold" : "text-slate-600"}">
+                            <span>${item.done ? "✅" : "⏳"}</span>
+                            <span>${item.emoji} ${escapeHtml(item.title)}</span>
+                        </li>
+                    `).join("")}
+                </ul>
             </div>
         `;
     }).join("");
@@ -1211,7 +1400,7 @@ const loadAdoptedTreesForProfile = async () => {
             const el = document.createElement("div");
             el.className = "aero-card p-3 flex items-center gap-3 cursor-pointer hover:scale-[1.01] transition-all";
             el.innerHTML = `
-                <img src="${escapeHtml(tree.coverPhoto || "https://placehold.co/60x60/22c55e/FFFFFF?text=🌳")}" class="w-12 h-12 rounded-xl object-cover border border-white shadow">
+                <img src="${escapeHtml(sanitizeUrl(tree.coverPhoto, "https://placehold.co/60x60/22c55e/FFFFFF?text=🌳"))}" class="w-12 h-12 rounded-xl object-cover border border-white shadow">
                 <div class="min-w-0">
                     <p class="font-bold text-emerald-800 truncate">${escapeHtml(tree.commonName)}</p>
                     <p class="text-xs text-slate-600 italic truncate">${escapeHtml(tree.scientificName)}</p>
@@ -1257,11 +1446,11 @@ const loadUserVouchers = async () => {
         `).join("");
     } catch (err) {
         console.error("Erro ao carregar vouchers:", err);
-        listEl.innerHTML = `<p class="text-xs text-erro text-center">Erro ao carregar vouchers.</p>`;
+        listEl.innerHTML = `<p class="text-xs text-erro text-center">${escapeHtml(getFirebaseErrorMessage(err))}</p>`;
     }
 };
 
-// --- 10. MAPA PRINCIPAL DE ÁRVORES E FIREBASE ---
+// --- 11. MAPA PRINCIPAL DE ÁRVORES E FIREBASE ---
 const promptForLocation = () => {
     if (appState.locationPermissionGranted) {
         showPage("map");
@@ -1327,7 +1516,6 @@ const initializeMap = () => {
 
     L.control.zoom({ position: "topright" }).addTo(appState.map);
 
-    // PINO DO USUÁRIO ("Lei do Pino" preservada)
     appState.userMarker = L.marker([initialLat, initialLng], { draggable: true })
         .addTo(appState.map)
         .bindPopup("Arraste o pino ou clique no mapa! 📍")
@@ -1406,14 +1594,15 @@ const addTreeMarkerToMap = (tree) => {
 };
 
 const loadTreesOnMap = () => {
+    if (appState.treesMapUnsubscriber) appState.treesMapUnsubscriber();
     const q = query(collection(db, "trees"));
-    onSnapshot(q, (querySnapshot) => {
+    appState.treesMapUnsubscriber = onSnapshot(q, (querySnapshot) => {
         querySnapshot.forEach((docSnap) => {
             try {
                 const tree = { id: docSnap.id, ...docSnap.data() };
                 addTreeMarkerToMap(tree);
             } catch (err) {
-                console.error("Erro ao processar árvore específica (Ignorada):", docSnap.id, err);
+                console.error("Erro ao processar árvore:", docSnap.id, err);
             }
         });
     }, (error) => {
@@ -1421,9 +1610,11 @@ const loadTreesOnMap = () => {
     });
 };
 
-// --- 11. PERFIL DA ÁRVORE, ADOÇÃO E MURAL ---
+// --- 12. PERFIL DA ÁRVORE, ADOÇÃO E MURAL ---
 const showTreeProfile = async (treeId) => {
     showLoadingModal(true, "Carregando árvore...");
+    clearTreeSubcollectionListeners();
+
     try {
         const docRef = doc(db, "trees", treeId);
         const docSnap = await getDoc(docRef);
@@ -1447,7 +1638,7 @@ const showTreeProfile = async (treeId) => {
             if (lat && lng) locText = `${Number(lat).toFixed(5)}, ${Number(lng).toFixed(5)}`;
         }
         document.getElementById("tree-profile-address").querySelector("span").textContent = tree.address || locText;
-        document.getElementById("tree-profile-image").src = tree.coverPhoto || "https://placehold.co/600x300/22c55e/FFFFFF?text=Árvore";
+        document.getElementById("tree-profile-image").src = sanitizeUrl(tree.coverPhoto, "https://placehold.co/600x300/22c55e/FFFFFF?text=Árvore");
 
         const statusBadge = document.getElementById("tree-profile-status-badge");
         if (tree.status === "healthy") {
@@ -1461,7 +1652,6 @@ const showTreeProfile = async (treeId) => {
             statusBadge.textContent = "❤️ Em Estado Crítico";
         }
 
-        // Limpa inputs de comentário
         document.getElementById("tree-comment-photo-preview-container").classList.add("hidden");
         document.getElementById("tree-comment-photo-preview").src = "";
         document.getElementById("tree-comment-photo-input").value = null;
@@ -1495,7 +1685,7 @@ const loadTreeSubcollection = (treeId, subcollection, containerId, renderFunctio
         q = query(q, orderBy("timestamp", "desc"));
     }
 
-    onSnapshot(q, (snapshot) => {
+    const unsub = onSnapshot(q, (snapshot) => {
         if (snapshot.empty) {
             container.innerHTML = `<p class="text-slate-500 text-sm text-center italic">Nada por aqui ainda.</p>`;
             return;
@@ -1519,6 +1709,8 @@ const loadTreeSubcollection = (treeId, subcollection, containerId, renderFunctio
         console.error(`Erro ao carregar ${subcollection}:`, error);
         container.innerHTML = `<p class="text-erro text-sm">Erro ao carregar dados.</p>`;
     });
+
+    appState.activeTreeUnsubscribers.push(unsub);
 };
 
 const renderHistoryEvent = (event) => {
@@ -1531,23 +1723,27 @@ const renderTimelineEvent = (event) => {
     if (!event || !event.user) return "";
     const eventDate = formatDateBR(event.timestamp);
     const isFirst = (event.action || "").includes("cadastrou");
+    const avatarUrl = sanitizeUrl(event.user.photoURL, "https://placehold.co/32x32/0ea5e9/FFFFFF?text=?");
+    const photoUrl = sanitizeUrl(event.photoUrl, "");
+
     return `
         <div class="aero-card p-3.5 fade-in relative">
             <div class="flex items-center mb-2">
-                <img src="${escapeHtml(event.user.photoURL || "https://placehold.co/32x32/0ea5e9/FFFFFF?text=?")}" class="w-8 h-8 rounded-full object-cover border border-white shadow-sm cursor-pointer btn-open-user-profile" data-uid="${escapeHtml(event.user.id || "")}">
+                <img src="${escapeHtml(avatarUrl)}" class="w-8 h-8 rounded-full object-cover border border-white shadow-sm cursor-pointer btn-open-user-profile" data-uid="${escapeHtml(event.user.id || "")}">
                 <button type="button" class="ml-2 font-bold text-slate-800 text-xs hover:underline btn-open-user-profile" data-uid="${escapeHtml(event.user.id || "")}">${escapeHtml(event.user.name || "Anônimo")}</button>
                 <p class="ml-auto text-[10px] text-slate-500">${eventDate}</p>
             </div>
             ${event.message ? `<p class="text-sm text-slate-700 leading-relaxed">"${escapeHtml(event.message)}"</p>` : ""}
-            ${event.photoUrl ? `<img src="${escapeHtml(event.photoUrl)}" class="w-full h-auto rounded-xl object-cover mt-2 border border-white shadow">` : ""}
+            ${photoUrl ? `<img src="${escapeHtml(photoUrl)}" class="w-full h-auto rounded-xl object-cover mt-2 border border-white shadow">` : ""}
             ${isFirst ? '<span class="absolute -top-2 -right-2 text-[10px] aero-badge-pill px-2.5 py-0.5 font-bold shadow">✨ Primeira Mensagem</span>' : ""}
         </div>`;
 };
 
 const renderAdopter = (adopter) => {
     if (!adopter) return "";
+    const avatarUrl = sanitizeUrl(adopter.photoURL, "https://placehold.co/16x16/0ea5e9/FFFFFF?text=?");
     return `<span class="aero-badge-pill text-xs font-semibold px-2.5 py-1 flex items-center gap-1.5">
-                <img src="${escapeHtml(adopter.photoURL || "https://placehold.co/16x16/0ea5e9/FFFFFF?text=?")}" class="w-4 h-4 rounded-full object-cover">
+                <img src="${escapeHtml(avatarUrl)}" class="w-4 h-4 rounded-full object-cover">
                 ${escapeHtml(adopter.name || "Alguém")}
             </span>`;
 };
@@ -1590,6 +1786,7 @@ const handleAdoptTree = async () => {
             await deleteDoc(userAdoptRef);
             user.treesAdoptedCount = Math.max(0, (user.treesAdoptedCount || 1) - 1);
             await updateDoc(doc(db, "users", user.uid), { treesAdoptedCount: user.treesAdoptedCount });
+            await syncPublicProfile(user.uid, user);
             showToast(`${tree.commonName} removida das adoções.`);
         } else {
             await setDoc(treeAdoptRef, {
@@ -1615,7 +1812,7 @@ const handleAdoptTree = async () => {
     }
 };
 
-// --- 12. CONFIRMAÇÃO ANTES DE PUBLICAR NO FEED + POSTAGEM ---
+// --- 13. CONFIRMAÇÃO ANTES DE PUBLICAR NO FEED + POSTAGEM ---
 const askFeedPublishConfirmation = (previewText, previewPhotoUrl = null) => {
     return new Promise((resolve) => {
         const modal = document.getElementById("feed-publish-confirm-modal");
@@ -1645,10 +1842,10 @@ const publishPostToCommunityFeed = async ({ treeId, treeName, action, message, p
     if (!appState.currentUser) return;
     await addDoc(collection(db, "feedPosts"), {
         treeId: treeId || null,
-        treeName: treeName || "Árvore Urbana",
+        treeName: String(treeName || "Árvore Urbana").slice(0, 120),
         careEventId,
-        action,
-        message: message || "",
+        action: String(action || "atualizou uma árvore").slice(0, 160),
+        message: String(message || "").slice(0, 1000),
         photoUrl: photoUrl || null,
         user: {
             id: appState.currentUser.uid,
@@ -1669,12 +1866,20 @@ const handlePostComment = async () => {
     const previewContainer = document.getElementById("tree-comment-photo-preview-container");
     const previewImg = document.getElementById("tree-comment-photo-preview");
 
-    const message = input.value.trim();
+    const message = input.value.trim().slice(0, 1000);
     const photoFile = photoInput.files[0];
 
     if (!tree || !user || (!message && !photoFile)) {
         showToast("Escreva uma mensagem ou anexe uma foto!");
         return;
+    }
+
+    if (photoFile) {
+        const check = validateImageFile(photoFile);
+        if (!check.ok) {
+            showToast(check.error);
+            return;
+        }
     }
 
     const previewPhotoLocal = photoFile ? URL.createObjectURL(photoFile) : null;
@@ -1736,24 +1941,31 @@ const handlePostComment = async () => {
         console.error("Erro ao postar comentário:", error);
         showToast("Erro ao enviar sua mensagem.");
     } finally {
+        if (previewPhotoLocal) URL.revokeObjectURL(previewPhotoLocal);
         btn.disabled = false;
         showLoadingModal(false);
     }
 };
 
-// --- 13. FLUXO DE CUIDADO E CADASTRO DE ÁRVORE ---
+// --- 14. FLUXO DE CUIDADO E UPLOAD SEGURO ---
 const uploadImage = async (file, folder = "photos") => {
     if (!file) return null;
-    const safeName = (file.name || "imagem.jpg").replace(/[^a-zA-Z0-9._-]/g, "_");
+    const check = validateImageFile(file);
+    if (!check.ok) {
+        showToast(check.error);
+        return null;
+    }
+
+    const safeName = (file.name || "imagem.jpg").replace(/[^a-zA-Z0-9._-]/g, "_").slice(-60);
     const filePath = `${folder}/${Date.now()}_${safeName}`;
     const fileRef = ref(storage, filePath);
 
     try {
-        const snapshot = await uploadBytes(fileRef, file);
+        const snapshot = await uploadBytes(fileRef, file, { contentType: file.type || "image/jpeg" });
         return await getDownloadURL(snapshot.ref);
     } catch (error) {
         console.error("Erro no upload da imagem:", error);
-        showToast("Erro ao enviar a foto. Tente novamente.");
+        showToast("Erro ao enviar a foto. Verifique as permissões do Storage.");
         return null;
     }
 };
@@ -1763,10 +1975,18 @@ const handleFinishCare = async () => {
     const user = appState.currentUser;
     if (!tree || !user) return;
 
-    const message = document.getElementById("care-message").value.trim();
+    const message = document.getElementById("care-message").value.trim().slice(0, 1000);
     const photoFile = document.getElementById("care-photo-input").files[0];
-    const previewPhotoLocal = photoFile ? URL.createObjectURL(photoFile) : null;
 
+    if (photoFile) {
+        const check = validateImageFile(photoFile);
+        if (!check.ok) {
+            showToast(check.error);
+            return;
+        }
+    }
+
+    const previewPhotoLocal = photoFile ? URL.createObjectURL(photoFile) : null;
     const shouldPublishToFeed = await askFeedPublishConfirmation(
         `Publicar seu cuidado com "${tree.commonName}" no Feed da Galera?\n\n${message ? `"${message}"` : "Registro de cuidado ambiental 💧"}`,
         previewPhotoLocal
@@ -1813,41 +2033,41 @@ const handleFinishCare = async () => {
         console.error("Erro ao finalizar cuidado:", error);
         showToast("Ocorreu um erro ao registrar o seu cuidado.");
     } finally {
+        if (previewPhotoLocal) URL.revokeObjectURL(previewPhotoLocal);
         showLoadingModal(false);
     }
 };
 
-// --- 14. FEED SOCIAL INTERATIVO (CURTIR, COMENTAR, FILTRO SEGUINDO) ---
+// --- 15. FEED SOCIAL INTERATIVO ---
 const loadFeedPosts = async () => {
     const feedContainer = document.getElementById("feed-posts-container");
     if (!feedContainer) return;
     feedContainer.innerHTML = `<p class="text-center text-slate-500 py-6">Carregando o feed da galera... 🫧</p>`;
 
     try {
-        // 1. Busca publicações oficiais do Feed (v2.0)
-        const feedQuery = query(collection(db, "feedPosts"), orderBy("timestamp", "desc"), limit(30));
-        const feedSnap = await getDocs(feedQuery);
-
         const posts = [];
         const coveredCareEventIds = new Set();
 
-        feedSnap.forEach(docSnap => {
-            const data = docSnap.data();
-            if (data.careEventId) coveredCareEventIds.add(data.careEventId);
-            posts.push({
-                id: docSnap.id,
-                collectionPath: "feedPosts",
-                ...data
+        // 1. Publicações oficiais v2+
+        try {
+            const feedQuery = query(collection(db, "feedPosts"), orderBy("timestamp", "desc"), limit(30));
+            const feedSnap = await getDocs(feedQuery);
+            feedSnap.forEach(docSnap => {
+                const data = docSnap.data();
+                if (data.careEventId) coveredCareEventIds.add(data.careEventId);
+                posts.push({ id: docSnap.id, collectionPath: "feedPosts", ...data });
             });
-        });
+        } catch (feedErr) {
+            console.warn("Aviso ao ler feedPosts:", feedErr);
+        }
 
-        // 2. Preserva registros legados do banco (anteriores à v2.0 onde publishToFeed não existia)
+        // 2. Preserva registros legados já cadastrados
         try {
             const legacyQuery = query(collectionGroup(db, "careEvents"), orderBy("timestamp", "desc"), limit(15));
             const legacySnap = await getDocs(legacyQuery);
             legacySnap.forEach(docSnap => {
                 const data = docSnap.data();
-                if (data.publishToFeed === false) return; // Usuário optou por NÃO publicar
+                if (data.publishToFeed === false) return;
                 if (coveredCareEventIds.has(docSnap.id)) return;
                 if (!data.photoUrl && !data.message) return;
 
@@ -1867,10 +2087,8 @@ const loadFeedPosts = async () => {
             console.warn("Feed legado opcional indisponível:", legacyErr);
         }
 
-        // Ordena tudo do mais recente para o mais antigo
         posts.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
 
-        // Aplica filtro "Seguindo" se ativo
         const filteredPosts = appState.feedFilter === "following"
             ? posts.filter(p => p.user?.id === appState.currentUser?.uid || appState.followingIds.has(p.user?.id))
             : posts;
@@ -1886,7 +2104,7 @@ const loadFeedPosts = async () => {
         if (window.lucide) lucide.createIcons();
     } catch (error) {
         console.error("Não foi possível carregar o feed:", error);
-        feedContainer.innerHTML = `<p class="text-erro text-center">Erro ao carregar o feed.</p>`;
+        feedContainer.innerHTML = `<p class="text-erro text-center text-sm">${escapeHtml(getFirebaseErrorMessage(error))}</p>`;
     }
 };
 
@@ -1896,11 +2114,13 @@ const renderFeedPostCard = (post) => {
     const isLiked = uid && likedBy.includes(uid);
     const isLegacy = post.collectionPath === "legacy";
     const postKey = isLegacy ? `legacy::${post.docPath}` : `feed::${post.id}`;
+    const avatarUrl = sanitizeUrl(post.user?.photoURL, "https://placehold.co/40x40/0ea5e9/FFFFFF?text=G");
+    const photoUrl = sanitizeUrl(post.photoUrl, "");
 
     return `
         <article class="aero-card p-4 fade-in" data-post-key="${escapeHtml(postKey)}">
             <div class="flex items-center gap-2.5 mb-2.5">
-                <img src="${escapeHtml(post.user?.photoURL || "https://placehold.co/40x40/0ea5e9/FFFFFF?text=G")}"
+                <img src="${escapeHtml(avatarUrl)}"
                      class="w-10 h-10 rounded-full object-cover border-2 border-white shadow cursor-pointer btn-open-user-profile"
                      data-uid="${escapeHtml(post.user?.id || "")}">
                 <div class="min-w-0 flex-grow">
@@ -1917,7 +2137,7 @@ const renderFeedPostCard = (post) => {
             </div>
 
             ${post.message ? `<p class="text-sm text-slate-700 mb-2.5 leading-relaxed">${escapeHtml(post.message)}</p>` : ""}
-            ${post.photoUrl ? `<img src="${escapeHtml(post.photoUrl)}" class="w-full max-h-80 rounded-xl object-cover border border-white shadow-sm mb-3">` : ""}
+            ${photoUrl ? `<img src="${escapeHtml(photoUrl)}" class="w-full max-h-80 rounded-xl object-cover border border-white shadow-sm mb-3">` : ""}
 
             <div class="flex items-center gap-3 pt-2 border-t border-sky-100">
                 <button type="button" class="btn-like-post flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full transition ${isLiked ? "bg-rose-100 text-rose-700" : "bg-white/70 text-slate-600 hover:bg-sky-50"}"
@@ -1937,8 +2157,8 @@ const renderFeedPostCard = (post) => {
             <div class="feed-comments-drawer hidden mt-3 pt-3 border-t border-sky-100 space-y-2" data-drawer-for="${escapeHtml(postKey)}">
                 <div class="feed-comments-list space-y-1.5 text-xs text-slate-700"></div>
                 <div class="flex gap-2 mt-2">
-                    <input type="text" class="feed-comment-input flex-grow p-2 text-xs rounded-lg border border-sky-200 bg-white/90" placeholder="Escreva um comentário carinhoso...">
-                    <button type="button" class="btn-send-feed-comment frutiger-aero-button small text-xs px-3 py-1.5" data-post-key="${escapeHtml(postKey)}">Enviar</button>
+                    <input type="text" maxlength="500" class="feed-comment-input flex-grow p-2 text-xs rounded-lg border border-sky-200 bg-white/90" placeholder="Escreva um comentário carinhoso...">
+                    <button type="button" class="btn-send-feed-comment frutiger-aero-button aero-green small text-xs px-3 py-1.5" data-post-key="${escapeHtml(postKey)}">Enviar</button>
                 </div>
             </div>
         </article>
@@ -1979,7 +2199,7 @@ const handleToggleLikePost = async (btn, postKey) => {
         btn.classList.toggle("text-rose-700", !alreadyLiked);
     } catch (err) {
         console.error("Erro ao curtir:", err);
-        showToast("Não foi possível registrar sua curtida.");
+        showToast(getFirebaseErrorMessage(err));
     } finally {
         btn.disabled = false;
     }
@@ -1988,7 +2208,6 @@ const handleToggleLikePost = async (btn, postKey) => {
 const handleToggleCommentsDrawer = async (postKey, articleEl) => {
     const drawer = articleEl.querySelector(".feed-comments-drawer");
     if (!drawer) return;
-
     const isHidden = drawer.classList.toggle("hidden");
     if (!isHidden) {
         await loadPostComments(postKey, drawer.querySelector(".feed-comments-list"));
@@ -2009,9 +2228,10 @@ const loadPostComments = async (postKey, listEl) => {
         }
         listEl.innerHTML = snap.docs.map(d => {
             const c = d.data();
+            const avatarUrl = sanitizeUrl(c.user?.photoURL, "https://placehold.co/24x24/0ea5e9/FFFFFF?text=G");
             return `
                 <div class="bg-white/80 p-2 rounded-lg border border-sky-100 flex items-start gap-2">
-                    <img src="${escapeHtml(c.user?.photoURL || "https://placehold.co/24x24/0ea5e9/FFFFFF?text=G")}" class="w-6 h-6 rounded-full object-cover flex-shrink-0">
+                    <img src="${escapeHtml(avatarUrl)}" class="w-6 h-6 rounded-full object-cover flex-shrink-0">
                     <div>
                         <span class="font-bold text-slate-800">${escapeHtml(c.user?.name || "Guardião")}</span>
                         <span class="text-[10px] text-slate-400 ml-1">${formatDateBR(c.timestamp)}</span>
@@ -2030,7 +2250,7 @@ const handleSendFeedComment = async (postKey, articleEl) => {
     const user = appState.currentUser;
     if (!user) return;
     const input = articleEl.querySelector(".feed-comment-input");
-    const text = input?.value.trim();
+    const text = input?.value.trim().slice(0, 500);
     if (!text) return;
 
     const postRef = resolvePostDocRef(postKey);
@@ -2053,14 +2273,14 @@ const handleSendFeedComment = async (postKey, articleEl) => {
         await awardPoints("comment_feed");
     } catch (err) {
         console.error("Erro ao comentar no feed:", err);
-        showToast("Erro ao enviar comentário.");
+        showToast(getFirebaseErrorMessage(err));
     } finally {
         input.disabled = false;
     }
 };
 
-// --- 15. COMUNIDADE: BUSCAR PERFIS E CONECTAR (SEGUIR) ---
-const loadCommunityDirectory = async (searchTerm = "") => {
+// --- 16. COMUNIDADE: BUSCAR PERFIS PÚBLICOS E CONECTAR (SEGUIR) ---
+const loadCommunityDirectory = async (searchTerm = "", forceRefresh = false) => {
     const listEl = document.getElementById("community-users-list");
     if (!listEl || !appState.currentUser) return;
 
@@ -2069,43 +2289,48 @@ const loadCommunityDirectory = async (searchTerm = "") => {
     if (folEl) folEl.textContent = appState.followingIds.size;
     if (flwEl) flwEl.textContent = appState.currentUser.followersCount || 0;
 
-    listEl.innerHTML = `<p class="text-center text-slate-500 py-4 text-sm">Buscando guardiões na rede... 🌐</p>`;
-
     try {
-        if (appState.cachedUsers.length === 0 || searchTerm === "") {
-            const snap = await getDocs(collection(db, "users"));
-            appState.cachedUsers = snap.docs
+        if (!appState.profilesLoadedOnce || forceRefresh) {
+            listEl.innerHTML = `<p class="text-center text-slate-500 py-4 text-sm">Buscando guardiões na rede... 🌐</p>`;
+            const snap = await getDocs(collection(db, "publicProfiles"));
+            appState.cachedProfiles = snap.docs
                 .map(d => ({ uid: d.id, ...d.data() }))
-                .filter(u => u.uid !== appState.currentUser.uid);
+                .filter(u => u.uid !== appState.currentUser.uid)
+                .sort((a, b) => (Number(b.points) || 0) - (Number(a.points) || 0));
+            appState.profilesLoadedOnce = true;
         }
 
-        const term = searchTerm.trim().toLowerCase();
-        const filtered = term
-            ? appState.cachedUsers.filter(u =>
-                (u.name || "").toLowerCase().includes(term) ||
-                (u.levelName || "").toLowerCase().includes(term)
+        const normalizedQuery = normalizeText(searchTerm);
+        const filtered = normalizedQuery
+            ? appState.cachedProfiles.filter(u =>
+                normalizeText(u.name).includes(normalizedQuery) ||
+                normalizeText(u.levelName).includes(normalizedQuery)
             )
-            : appState.cachedUsers;
+            : appState.cachedProfiles;
 
         if (filtered.length === 0) {
-            listEl.innerHTML = `<p class="text-center text-slate-500 italic text-sm py-4">Nenhum guardião encontrado com "${escapeHtml(searchTerm)}".</p>`;
+            listEl.innerHTML = normalizedQuery
+                ? `<div class="aero-card p-5 text-center text-sm text-slate-600">Nenhum guardião encontrado para "<strong>${escapeHtml(searchTerm)}</strong>".</div>`
+                : `<div class="aero-card p-5 text-center text-sm text-slate-600">Ainda não há outros perfis públicos sincronizados na rede. Convide amigos ou sincronize contas antigas pelo Painel Admin! 🌍</div>`;
             return;
         }
 
         listEl.innerHTML = filtered.map(u => {
             const isFollowing = appState.followingIds.has(u.uid);
             const lvl = getLevelInfo(u.points || 0);
+            const avatarUrl = sanitizeUrl(u.photoURL, "https://placehold.co/48x48/0ea5e9/FFFFFF?text=G");
+
             return `
                 <div class="aero-card p-3.5 flex items-center gap-3">
-                    <img src="${escapeHtml(u.photoURL || "https://placehold.co/48x48/0ea5e9/FFFFFF?text=G")}"
-                         class="w-12 h-12 rounded-full object-cover border-2 border-white shadow cursor-pointer btn-open-user-profile"
+                    <img src="${escapeHtml(avatarUrl)}"
+                         class="w-12 h-12 rounded-full object-cover border-2 border-white shadow cursor-pointer btn-open-user-profile flex-shrink-0"
                          data-uid="${escapeHtml(u.uid)}">
                     <div class="min-w-0 flex-grow cursor-pointer btn-open-user-profile" data-uid="${escapeHtml(u.uid)}">
-                        <p class="font-bold text-sm text-slate-800 truncate">${escapeHtml(u.name || "Guardião")}</p>
-                        <p class="text-xs text-emerald-700 font-medium truncate">${lvl.current.emoji} ${escapeHtml(lvl.current.name)}</p>
+                        <p class="font-extrabold text-sm text-slate-800 truncate hover:text-sky-700">${escapeHtml(u.name || "Guardião")}</p>
+                        <p class="text-xs text-emerald-700 font-semibold truncate">${lvl.current.emoji} ${escapeHtml(lvl.current.name)}</p>
                         <p class="text-[11px] text-slate-500">🌳 ${u.treesCared || 0} cuidadas • 📍 ${u.treesAdded || 0} adicionadas</p>
                     </div>
-                    <button type="button" class="btn-follow-toggle text-xs font-bold px-3.5 py-2 rounded-full transition flex-shrink-0 ${isFollowing ? "bg-sky-100 text-sky-900 border border-sky-300" : "frutiger-aero-button small"}"
+                    <button type="button" class="btn-follow-toggle text-xs font-bold px-3.5 py-2 rounded-full transition flex-shrink-0 ${isFollowing ? "bg-sky-100 text-sky-900 border border-sky-300" : "frutiger-aero-button aero-green small"}"
                             data-target-uid="${escapeHtml(u.uid)}">
                         ${isFollowing ? "Seguindo ✓" : "Seguir +"}
                     </button>
@@ -2114,7 +2339,7 @@ const loadCommunityDirectory = async (searchTerm = "") => {
         }).join("");
     } catch (err) {
         console.error("Erro ao carregar comunidade:", err);
-        listEl.innerHTML = `<p class="text-erro text-center text-sm">Erro ao carregar usuários.</p>`;
+        listEl.innerHTML = `<div class="aero-card p-4 text-center text-erro text-xs font-bold">${escapeHtml(getFirebaseErrorMessage(err))}</div>`;
     }
 };
 
@@ -2125,16 +2350,14 @@ const handleToggleFollow = async (targetUid, buttonEl = null) => {
     if (buttonEl) buttonEl.disabled = true;
     const isCurrentlyFollowing = appState.followingIds.has(targetUid);
 
-    const myFollowingRef = doc(db, "users", me.uid, "following", targetUid);
-    const targetFollowerRef = doc(db, "users", targetUid, "followers", me.uid);
+    const myFollowingRef = doc(db, "publicProfiles", me.uid, "following", targetUid);
+    const targetFollowerRef = doc(db, "publicProfiles", targetUid, "followers", me.uid);
 
     try {
         if (isCurrentlyFollowing) {
             await deleteDoc(myFollowingRef);
             await deleteDoc(targetFollowerRef);
             appState.followingIds.delete(targetUid);
-            await updateDoc(doc(db, "users", me.uid), { followingCount: increment(-1) }).catch(() => {});
-            await updateDoc(doc(db, "users", targetUid), { followersCount: increment(-1) }).catch(() => {});
             showToast("Você deixou de seguir este perfil.");
         } else {
             await setDoc(myFollowingRef, { followedAt: serverTimestamp() });
@@ -2144,23 +2367,22 @@ const handleToggleFollow = async (targetUid, buttonEl = null) => {
                 followedAt: serverTimestamp()
             });
             appState.followingIds.add(targetUid);
-            await updateDoc(doc(db, "users", me.uid), { followingCount: increment(1) }).catch(() => {});
-            await updateDoc(doc(db, "users", targetUid), { followersCount: increment(1) }).catch(() => {});
             showToast("Agora vocês estão conectados! 🌐");
         }
 
         me.followingCount = appState.followingIds.size;
+        await updateDoc(doc(db, "users", me.uid), { followingCount: me.followingCount }).catch(() => {});
         updateGamificationUI();
 
         const searchVal = document.getElementById("community-search-input")?.value || "";
-        loadCommunityDirectory(searchVal);
+        loadCommunityDirectory(searchVal, false);
 
-        if (appState.selectedPublicProfileUid === targetUid) {
+        if (appState.selectedPublicProfileUid === targetUid && !document.getElementById("public-profile-modal").classList.contains("hidden")) {
             openPublicUserProfile(targetUid);
         }
     } catch (err) {
         console.error("Erro ao seguir/deixar de seguir:", err);
-        showToast("Erro ao atualizar conexão.");
+        showToast(getFirebaseErrorMessage(err));
     } finally {
         if (buttonEl) buttonEl.disabled = false;
     }
@@ -2175,28 +2397,35 @@ const openPublicUserProfile = async (uid) => {
 
     showLoadingModal(true, "Carregando perfil...");
     try {
-        const snap = await getDoc(doc(db, "users", uid));
-        if (!snap.exists()) {
-            showToast("Perfil não encontrado.");
+        const [profileSnap, followersSnap, followingSnap] = await Promise.all([
+            getDoc(doc(db, "publicProfiles", uid)),
+            getDocs(collection(db, "publicProfiles", uid, "followers")),
+            getDocs(collection(db, "publicProfiles", uid, "following"))
+        ]);
+
+        if (!profileSnap.exists()) {
+            showToast("Este guardião ainda não ativou o perfil público na versão 2.0.");
             return;
         }
-        const u = snap.data();
+
+        const u = profileSnap.data();
         appState.selectedPublicProfileUid = uid;
         const lvl = getLevelInfo(u.points || 0);
         const isFollowing = appState.followingIds.has(uid);
 
-        document.getElementById("public-profile-avatar").src = u.photoURL || "https://placehold.co/96x96/0ea5e9/FFFFFF?text=G";
+        document.getElementById("public-profile-avatar").src = sanitizeUrl(u.photoURL, "https://placehold.co/96x96/0ea5e9/FFFFFF?text=G");
         document.getElementById("public-profile-name").textContent = u.name || "Guardião";
         document.getElementById("public-profile-level").textContent = `${lvl.current.emoji} ${lvl.current.name} • ${u.points || 0} pts`;
-        document.getElementById("public-profile-followers").textContent = `${u.followersCount || 0} seguidores`;
-        document.getElementById("public-profile-following").textContent = `${u.followingCount || 0} seguindo`;
+        document.getElementById("public-profile-followers").textContent = `${followersSnap.size} seguidores`;
+        document.getElementById("public-profile-following").textContent = `${followingSnap.size} seguindo`;
         document.getElementById("public-profile-stats").innerHTML = `
             <div class="aero-mini-stat"><strong>🌳 ${u.treesCared || 0}</strong><span>Cuidadas</span></div>
             <div class="aero-mini-stat"><strong>🍃 ${u.treesIdentified || 0}</strong><span>Identificadas</span></div>
             <div class="aero-mini-stat"><strong>📍 ${u.treesAdded || 0}</strong><span>Adicionadas</span></div>
         `;
 
-        const unlockedEmblems = EMBLEMS.filter(e => (Number(u[e.statKey]) || 0) >= e.goal);
+        const unlockedIds = new Set(u.unlockedEmblems || []);
+        const unlockedEmblems = EMBLEMS.filter(e => unlockedIds.has(e.id));
         document.getElementById("public-profile-emblems").innerHTML = unlockedEmblems.length > 0
             ? unlockedEmblems.map(e => `<span class="aero-badge-pill text-xs px-2.5 py-1 font-semibold">${e.emoji} ${escapeHtml(e.name)}</span>`).join("")
             : `<span class="text-xs text-slate-400 italic">Ainda desbloqueando emblemas...</span>`;
@@ -2208,13 +2437,13 @@ const openPublicUserProfile = async (uid) => {
         document.getElementById("public-profile-modal").classList.remove("hidden");
     } catch (err) {
         console.error("Erro ao abrir perfil público:", err);
-        showToast("Erro ao carregar perfil.");
+        showToast(getFirebaseErrorMessage(err));
     } finally {
         showLoadingModal(false);
     }
 };
 
-// --- 16. CÂMERA, IDENTIFICAÇÃO (PL@NTNET + ÁRVORE/PLANTA) E CADASTRO ---
+// --- 17. CÂMERA, IDENTIFICAÇÃO (PL@NTNET + ÁRVORE/PLANTA) E CADASTRO ---
 const requestCameraAccess = async () => {
     const videoEl = document.getElementById("camera-feed");
     const placeholder = document.getElementById("camera-placeholder");
@@ -2251,11 +2480,16 @@ const capturePhotoFromFeed = () => {
 
     canvas.toBlob((blob) => {
         if (blob) handlePlantIdentification(blob);
-    }, "image/jpeg", 0.95);
+    }, "image/jpeg", 0.92);
 };
 
 const handlePlantIdentification = async (file) => {
     if (!file) return;
+    const check = validateImageFile(file);
+    if (!check.ok) {
+        showToast(check.error);
+        return;
+    }
 
     appState.tempTreePhotoFile = file;
     document.getElementById("result-plant-image").src = URL.createObjectURL(file);
@@ -2304,8 +2538,8 @@ const handlePlantIdentification = async (file) => {
             if (badgeEl) {
                 badgeEl.textContent = habit.label;
                 badgeEl.className = habit.isTree
-                    ? "inline-block text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 mt-2"
-                    : "inline-block text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-900 mt-2";
+                    ? "inline-block text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 mt-1"
+                    : "inline-block text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-900 mt-1";
             }
             if (noteEl) noteEl.textContent = habit.note;
             if (checkboxEl) checkboxEl.checked = habit.isTree;
@@ -2386,11 +2620,16 @@ const handleRegisterNewTree = async () => {
     }
 
     const health = document.getElementById("add-tree-health").value;
-    const message = document.getElementById("add-tree-message").value.trim();
+    const message = document.getElementById("add-tree-message").value.trim().slice(0, 1000);
     const photoFile = document.getElementById("add-tree-photo-input").files[0] || appState.tempTreePhotoFile;
 
     if (!photoFile) {
         showToast("Por favor, anexe uma foto da árvore para cadastrá-la.");
+        return;
+    }
+    const check = validateImageFile(photoFile);
+    if (!check.ok) {
+        showToast(check.error);
         return;
     }
 
@@ -2406,9 +2645,9 @@ const handleRegisterNewTree = async () => {
         if (!photoUrl) throw new Error("Falha no upload da imagem");
 
         const newTree = {
-            commonName: appState.currentPlantInfo.commonName,
-            scientificName: appState.currentPlantInfo.scientificName,
-            family: appState.currentPlantInfo.family || "",
+            commonName: String(appState.currentPlantInfo.commonName || "Espécie").slice(0, 120),
+            scientificName: String(appState.currentPlantInfo.scientificName || "").slice(0, 160),
+            family: String(appState.currentPlantInfo.family || "").slice(0, 100),
             isTree: appState.currentPlantInfo.isTree !== false,
             status: health,
             location: new GeoPoint(latFinal, lngFinal),
@@ -2447,8 +2686,13 @@ const handleRegisterNewTree = async () => {
             });
         }
 
-        await awardPoints("add_tree");
-        showToast("Árvore salva! Consultando MapBiomas...");
+        if (newTree.isTree) {
+            await awardPoints("add_tree");
+        } else {
+            await awardPoints("mission_reward", 20);
+        }
+
+        showToast("Registro salvo! Consultando MapBiomas...");
         showPage("map");
 
         // INTEGRAÇÃO COM MAPBIOMAS (PYTHON) PRESERVADA
@@ -2473,7 +2717,6 @@ const handleRegisterNewTree = async () => {
         })
         .catch(err => console.error("Erro na integração MapBiomas:", err));
 
-        // Limpeza da tela
         appState.tempTreePhotoFile = null;
         document.getElementById("add-tree-photo-input").value = null;
         document.getElementById("tree-registration-preview").src = "";
@@ -2484,11 +2727,12 @@ const handleRegisterNewTree = async () => {
         console.error("Erro ao cadastrar árvore:", error);
         showToast("Ocorreu um erro ao cadastrar a árvore.");
     } finally {
+        if (previewPhotoLocal) URL.revokeObjectURL(previewPhotoLocal);
         showLoadingModal(false);
     }
 };
 
-// --- 17. PARCEIROS OFICIAIS, MAPA DE PARCEIROS E RECOMPENSAS ---
+// --- 18. PARCEIROS OFICIAIS, MAPA DE PARCEIROS E VOUCHERS ---
 const initializePartnerSignupMap = () => {
     const mapEl = document.getElementById("partner-signup-map");
     if (!mapEl) return;
@@ -2532,7 +2776,6 @@ const loadApprovedPartnersSection = async () => {
 
     dirList.innerHTML = `<p class="text-slate-500 text-center text-sm py-3">Carregando parceiros aprovados... 🏪</p>`;
 
-    // Inicializa mapa de parceiros
     if (!appState.partnersMap) {
         appState.partnersMap = L.map("partners-map-container").setView([-22.9068, -43.1729], 12);
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -2547,7 +2790,6 @@ const loadApprovedPartnersSection = async () => {
         const snap = await getDocs(q);
         appState.cachedPartners = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-        // Limpa marcadores anteriores
         Object.values(appState.partnerMarkers).forEach(m => m.remove());
         appState.partnerMarkers = {};
 
@@ -2571,6 +2813,7 @@ const loadApprovedPartnersSection = async () => {
         dirList.innerHTML = appState.cachedPartners.map(p => {
             const lat = p.location?.latitude ?? p.location?.lat;
             const lng = p.location?.longitude ?? p.location?.lng;
+            const photoUrl = sanitizeUrl(p.photoURL, "https://placehold.co/64x64/0ea5e9/FFFFFF?text=🏪");
 
             if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
                 const marker = L.marker([lat, lng], { icon: partnerIcon }).addTo(appState.partnersMap);
@@ -2582,7 +2825,7 @@ const loadApprovedPartnersSection = async () => {
 
             return `
                 <div class="aero-card p-3.5 flex items-center gap-3 cursor-pointer hover:scale-[1.01] transition btn-open-partner" data-partner-id="${escapeHtml(p.id)}">
-                    <img src="${escapeHtml(p.photoURL || "https://placehold.co/64x64/0ea5e9/FFFFFF?text=🏪")}" class="w-14 h-14 rounded-xl object-cover border border-white shadow flex-shrink-0">
+                    <img src="${escapeHtml(photoUrl)}" class="w-14 h-14 rounded-xl object-cover border border-white shadow flex-shrink-0">
                     <div class="min-w-0 flex-grow">
                         <div class="flex items-center gap-1.5">
                             <p class="font-bold text-slate-800 text-sm truncate">${escapeHtml(p.businessName)}</p>
@@ -2602,7 +2845,7 @@ const loadApprovedPartnersSection = async () => {
         if (window.lucide) lucide.createIcons();
     } catch (err) {
         console.error("Erro ao carregar parceiros aprovados:", err);
-        dirList.innerHTML = `<p class="text-erro text-sm text-center">Erro ao carregar mapa de parceiros.</p>`;
+        dirList.innerHTML = `<p class="text-erro text-xs text-center">${escapeHtml(getFirebaseErrorMessage(err))}</p>`;
     }
 };
 
@@ -2611,7 +2854,7 @@ const openPartnerDetailModal = async (partnerId) => {
     if (!partner) return;
     appState.selectedPartnerDetail = partner;
 
-    document.getElementById("partner-detail-photo").src = partner.photoURL || "https://placehold.co/400x200/0ea5e9/FFFFFF?text=Parceiro";
+    document.getElementById("partner-detail-photo").src = sanitizeUrl(partner.photoURL, "https://placehold.co/400x200/0ea5e9/FFFFFF?text=Parceiro");
     document.getElementById("partner-detail-name").textContent = partner.businessName;
     document.getElementById("partner-detail-category").textContent = `🏪 ${partner.category || "Comércio Parceiro"}`;
     document.getElementById("partner-detail-address").textContent = `📍 ${partner.address}`;
@@ -2623,9 +2866,12 @@ const openPartnerDetailModal = async (partnerId) => {
     document.getElementById("partner-detail-modal").classList.remove("hidden");
 
     try {
-        const q = query(collection(db, "partnerRewards"), where("partnerId", "==", partnerId));
-        const snap = await getDocs(q);
-        const approvedRewards = snap.docs
+        const [rewardsSnap, myRedemptionsSnap] = await Promise.all([
+            getDocs(query(collection(db, "partnerRewards"), where("partnerId", "==", partnerId))),
+            getDocs(query(collection(db, "redemptions"), where("userId", "==", appState.currentUser.uid)))
+        ]);
+
+        const approvedRewards = rewardsSnap.docs
             .map(d => ({ id: d.id, ...d.data() }))
             .filter(r => r.status === "approved");
 
@@ -2634,8 +2880,6 @@ const openPartnerDetailModal = async (partnerId) => {
             return;
         }
 
-        // Verifica se usuário já resgatou alguma recompensa deste parceiro
-        const myRedemptionsSnap = await getDocs(query(collection(db, "redemptions"), where("userId", "==", appState.currentUser.uid)));
         const redeemedByRewardId = {};
         myRedemptionsSnap.forEach(d => {
             const data = d.data();
@@ -2667,7 +2911,7 @@ const openPartnerDetailModal = async (partnerId) => {
                             <p class="text-[10px] text-slate-500">Apresente este código no balcão do parceiro.</p>
                         </div>
                     ` : canRedeem ? `
-                        <button type="button" class="btn-redeem-reward frutiger-aero-button small w-full mt-3"
+                        <button type="button" class="btn-redeem-reward frutiger-aero-button aero-green small w-full mt-3"
                                 data-reward-id="${escapeHtml(r.id)}" data-partner-id="${escapeHtml(partnerId)}">
                             Resgatar Recompensa 🎟️
                         </button>
@@ -2679,7 +2923,7 @@ const openPartnerDetailModal = async (partnerId) => {
         }).join("");
     } catch (err) {
         console.error("Erro ao carregar recompensas do parceiro:", err);
-        rewardsList.innerHTML = `<p class="text-xs text-erro text-center">Erro ao carregar recompensas.</p>`;
+        rewardsList.innerHTML = `<p class="text-xs text-erro text-center">${escapeHtml(getFirebaseErrorMessage(err))}</p>`;
     }
 };
 
@@ -2689,12 +2933,28 @@ const handleRedeemReward = async (rewardId, partnerId) => {
 
     showLoadingModal(true, "Gerando seu voucher Arboriza...");
     try {
-        const rewardSnap = await getDoc(doc(db, "partnerRewards", rewardId));
-        const partnerSnap = await getDoc(doc(db, "partners", partnerId));
+        const redemptionId = `${user.uid}_${rewardId}`;
+        const existingRef = doc(db, "redemptions", redemptionId);
+        const existingSnap = await getDoc(existingRef);
+        if (existingSnap.exists()) {
+            showToast("Você já resgatou esta recompensa! Veja seu código abaixo.");
+            await openPartnerDetailModal(partnerId);
+            return;
+        }
+
+        const [rewardSnap, partnerSnap] = await Promise.all([
+            getDoc(doc(db, "partnerRewards", rewardId)),
+            getDoc(doc(db, "partners", partnerId))
+        ]);
         if (!rewardSnap.exists() || !partnerSnap.exists()) throw new Error("Recompensa indisponível.");
 
         const reward = rewardSnap.data();
         const partner = partnerSnap.data();
+
+        if (reward.status !== "approved" || partner.status !== "approved") {
+            showToast("Esta recompensa não está mais ativa.");
+            return;
+        }
 
         const userStat = Number(user[reward.missionType]) || 0;
         const reqCount = Number(reward.requiredCount) || 1;
@@ -2704,10 +2964,9 @@ const handleRedeemReward = async (rewardId, partnerId) => {
         }
 
         const voucherCode = generateVoucherCode();
-        // Quantas árvores essa recompensa representa para o contador de impacto do comércio
-        const treesContribution = reward.missionType === "points" ? Math.max(1, Math.round(reqCount / 100)) : reqCount;
+        const treesContribution = Math.min(500, Math.max(1, reward.missionType === "points" ? Math.round(reqCount / 100) : reqCount));
 
-        await addDoc(collection(db, "redemptions"), {
+        await setDoc(existingRef, {
             voucherCode,
             rewardId,
             rewardTitle: reward.title,
@@ -2716,17 +2975,15 @@ const handleRedeemReward = async (rewardId, partnerId) => {
             userId: user.uid,
             userName: user.name,
             treesContribution,
-            status: "active", // 'active' -> 'used' quando validado no balcão
+            status: "active",
             redeemedAt: serverTimestamp()
         });
 
-        // Incrementa o contador de árvores apoiadas pelo comércio parceiro
         await updateDoc(doc(db, "partners", partnerId), {
             treesImpacted: increment(treesContribution),
             vouchersRedeemed: increment(1)
         });
 
-        // Atualiza cache local
         partner.treesImpacted = (partner.treesImpacted || 0) + treesContribution;
         const cached = appState.cachedPartners.find(p => p.id === partnerId);
         if (cached) cached.treesImpacted = partner.treesImpacted;
@@ -2736,13 +2993,13 @@ const handleRedeemReward = async (rewardId, partnerId) => {
         loadApprovedPartnersSection();
     } catch (err) {
         console.error("Erro ao resgatar recompensa:", err);
-        showToast("Erro ao gerar voucher. Tente novamente.");
+        showToast(getFirebaseErrorMessage(err));
     } finally {
         showLoadingModal(false);
     }
 };
 
-// --- 18. PAINEL DO PARCEIRO (GERENCIAMENTO DE PERFIL E RECOMPENSAS) ---
+// --- 19. PAINEL DO PARCEIRO ---
 const loadOwnPartnerDocument = async (uid) => {
     try {
         const snap = await getDoc(doc(db, "partners", uid));
@@ -2772,14 +3029,13 @@ const renderPartnerDashboard = async () => {
         statusBanner.innerHTML = "🕓 AGUARDANDO APROVAÇÃO — Nossa equipe está validando seu comércio para ativá-lo no mapa.";
     }
 
-    document.getElementById("partner-dash-photo").src = p.photoURL || "https://placehold.co/120x120/0ea5e9/FFFFFF?text=🏪";
+    document.getElementById("partner-dash-photo").src = sanitizeUrl(p.photoURL, "https://placehold.co/120x120/0ea5e9/FFFFFF?text=🏪");
     document.getElementById("partner-dash-name").textContent = p.businessName;
     document.getElementById("partner-dash-category").textContent = p.category || "Comércio Local";
     document.getElementById("partner-dash-address").textContent = p.address || "";
     document.getElementById("partner-dash-trees-impacted").textContent = p.treesImpacted || 0;
     document.getElementById("partner-dash-vouchers-count").textContent = p.vouchersRedeemed || 0;
 
-    // Preenche formulário de edição
     document.getElementById("partner-edit-name").value = p.businessName || "";
     document.getElementById("partner-edit-category").value = p.category || "Comércio Local";
     document.getElementById("partner-edit-address").value = p.address || "";
@@ -2794,21 +3050,30 @@ const handleUpdatePartnerProfile = async (e) => {
     if (!appState.currentUser) return;
     const uid = appState.currentUser.uid;
 
+    const photoFile = document.getElementById("partner-edit-photo-input").files[0];
+    if (photoFile) {
+        const check = validateImageFile(photoFile);
+        if (!check.ok) {
+            showToast(check.error);
+            return;
+        }
+    }
+
     showLoadingModal(true, "Salvando dados do comércio...");
     try {
         const updates = {
-            businessName: document.getElementById("partner-edit-name").value.trim(),
+            businessName: document.getElementById("partner-edit-name").value.trim().slice(0, 100),
             category: document.getElementById("partner-edit-category").value,
-            address: document.getElementById("partner-edit-address").value.trim(),
-            description: document.getElementById("partner-edit-description").value.trim()
+            address: document.getElementById("partner-edit-address").value.trim().slice(0, 200),
+            description: document.getElementById("partner-edit-description").value.trim().slice(0, 500)
         };
 
-        const photoFile = document.getElementById("partner-edit-photo-input").files[0];
         if (photoFile) {
             const url = await uploadImage(photoFile, `partners/${uid}`);
             if (url) {
                 updates.photoURL = url;
                 await updateDoc(doc(db, "users", uid), { photoURL: url, name: updates.businessName });
+                appState.currentUser.photoURL = url;
             }
         } else {
             await updateDoc(doc(db, "users", uid), { name: updates.businessName });
@@ -2816,11 +3081,13 @@ const handleUpdatePartnerProfile = async (e) => {
 
         await updateDoc(doc(db, "partners", uid), updates);
         appState.currentUser.name = updates.businessName;
+        await syncPublicProfile(uid, appState.currentUser);
+
         showToast("Informações do comércio atualizadas! ✅");
         renderPartnerDashboard();
     } catch (err) {
         console.error("Erro ao atualizar parceiro:", err);
-        showToast("Erro ao salvar informações.");
+        showToast(getFirebaseErrorMessage(err));
     } finally {
         showLoadingModal(false);
     }
@@ -2830,10 +3097,10 @@ const handleAddPartnerReward = async (e) => {
     e.preventDefault();
     if (!appState.currentUser || !appState.currentPartnerDoc) return;
 
-    const title = document.getElementById("reward-title-input").value.trim();
-    const description = document.getElementById("reward-desc-input").value.trim();
+    const title = document.getElementById("reward-title-input").value.trim().slice(0, 100);
+    const description = document.getElementById("reward-desc-input").value.trim().slice(0, 400);
     const missionType = document.getElementById("reward-mission-type").value;
-    const requiredCount = parseInt(document.getElementById("reward-required-count").value, 10) || 10;
+    const requiredCount = Math.max(1, parseInt(document.getElementById("reward-required-count").value, 10) || 10);
 
     if (!title || !description) {
         showToast("Preencha o título e a descrição da recompensa.");
@@ -2849,7 +3116,7 @@ const handleAddPartnerReward = async (e) => {
             description,
             missionType,
             requiredCount,
-            status: "pending", // Sempre passa por aprovação do admin!
+            status: "pending",
             createdAt: serverTimestamp()
         });
 
@@ -2858,7 +3125,7 @@ const handleAddPartnerReward = async (e) => {
         loadPartnerOwnRewards();
     } catch (err) {
         console.error("Erro ao cadastrar recompensa:", err);
-        showToast("Erro ao enviar recompensa.");
+        showToast(getFirebaseErrorMessage(err));
     } finally {
         showLoadingModal(false);
     }
@@ -2929,7 +3196,7 @@ const loadPartnerVouchersList = async () => {
                 ${v.status === "used" ? `
                     <span class="text-xs font-bold text-slate-500">✅ Entregue</span>
                 ` : `
-                    <button type="button" class="btn-validate-voucher frutiger-aero-button small text-xs" data-voucher-id="${escapeHtml(v.id)}">Confirmar Uso</button>
+                    <button type="button" class="btn-validate-voucher frutiger-aero-button aero-green small text-xs" data-voucher-id="${escapeHtml(v.id)}">Confirmar Uso</button>
                 `}
             </div>
         `).join("");
@@ -2938,7 +3205,7 @@ const loadPartnerVouchersList = async () => {
     }
 };
 
-// --- 19. PAINEL ADMINISTRATIVO (APROVAÇÃO DE PARCEIROS E RECOMPENSAS) ---
+// --- 20. PAINEL ADMINISTRATIVO + MIGRAÇÃO SEGURA DE PERFIS ANTIGOS ---
 const loadAdminDashboard = async () => {
     if (!isAdminUser(appState.currentUser)) return;
     showLoadingModal(true, "Carregando Painel Administrativo...");
@@ -2963,14 +3230,13 @@ const loadAdminDashboard = async () => {
         document.getElementById("admin-stat-partners").textContent = activePartners.length;
         document.getElementById("admin-stat-pending").textContent = pendingPartners.length + pendingRewards.length;
 
-        // Lista de Parceiros Pendentes
         const pendingPartnersEl = document.getElementById("admin-pending-partners-list");
         pendingPartnersEl.innerHTML = pendingPartners.length === 0
             ? `<p class="text-sm text-slate-500 italic text-center py-4">Nenhuma solicitação de parceiro pendente! ✨</p>`
             : pendingPartners.map(p => `
                 <div class="aero-card p-4 space-y-2">
                     <div class="flex items-center gap-3">
-                        <img src="${escapeHtml(p.photoURL || "https://placehold.co/56x56/0ea5e9/FFFFFF?text=🏪")}" class="w-14 h-14 rounded-xl object-cover border border-white shadow">
+                        <img src="${escapeHtml(sanitizeUrl(p.photoURL, "https://placehold.co/56x56/0ea5e9/FFFFFF?text=🏪"))}" class="w-14 h-14 rounded-xl object-cover border border-white shadow">
                         <div class="min-w-0">
                             <p class="font-bold text-slate-800">${escapeHtml(p.businessName)}</p>
                             <p class="text-xs text-sky-800 font-semibold">${escapeHtml(p.category)} • ${escapeHtml(p.email)}</p>
@@ -2979,13 +3245,12 @@ const loadAdminDashboard = async () => {
                     </div>
                     <p class="text-xs text-slate-700 bg-white/60 p-2 rounded-lg">${escapeHtml(p.description)}</p>
                     <div class="flex gap-2 pt-1">
-                        <button type="button" class="btn-admin-partner-decision frutiger-aero-button small flex-1" data-partner-id="${escapeHtml(p.id)}" data-decision="approved">✅ Aprovar</button>
+                        <button type="button" class="btn-admin-partner-decision frutiger-aero-button aero-green small flex-1" data-partner-id="${escapeHtml(p.id)}" data-decision="approved">✅ Aprovar</button>
                         <button type="button" class="btn-admin-partner-decision bg-red-600 text-white text-xs font-bold py-2 px-4 rounded-full flex-1 hover:bg-red-700" data-partner-id="${escapeHtml(p.id)}" data-decision="rejected">❌ Recusar</button>
                     </div>
                 </div>
             `).join("");
 
-        // Lista de Recompensas Pendentes
         const pendingRewardsEl = document.getElementById("admin-pending-rewards-list");
         pendingRewardsEl.innerHTML = pendingRewards.length === 0
             ? `<p class="text-sm text-slate-500 italic text-center py-4">Nenhuma recompensa aguardando revisão! ✨</p>`
@@ -2996,13 +3261,12 @@ const loadAdminDashboard = async () => {
                     <p class="text-xs text-slate-600">${escapeHtml(r.description)}</p>
                     <p class="text-xs font-semibold text-emerald-800">Missão: ${escapeHtml(getMissionTypeLabel(r.missionType, r.requiredCount))}</p>
                     <div class="flex gap-2 pt-1">
-                        <button type="button" class="btn-admin-reward-decision frutiger-aero-button small flex-1" data-reward-id="${escapeHtml(r.id)}" data-decision="approved">✅ Aprovar Recompensa</button>
+                        <button type="button" class="btn-admin-reward-decision frutiger-aero-button aero-green small flex-1" data-reward-id="${escapeHtml(r.id)}" data-decision="approved">✅ Aprovar Recompensa</button>
                         <button type="button" class="btn-admin-reward-decision bg-red-600 text-white text-xs font-bold py-2 px-4 rounded-full flex-1 hover:bg-red-700" data-reward-id="${escapeHtml(r.id)}" data-decision="rejected">❌ Recusar</button>
                     </div>
                 </div>
             `).join("");
 
-        // Lista de Parceiros Ativos
         const activePartnersEl = document.getElementById("admin-active-partners-list");
         activePartnersEl.innerHTML = activePartners.length === 0
             ? `<p class="text-sm text-slate-500 italic text-center py-4">Nenhum parceiro ativo ainda.</p>`
@@ -3018,13 +3282,33 @@ const loadAdminDashboard = async () => {
             `).join("");
     } catch (err) {
         console.error("Erro ao carregar painel admin:", err);
-        showToast("Erro ao carregar dados administrativos.");
+        showToast(getFirebaseErrorMessage(err));
     } finally {
         showLoadingModal(false);
     }
 };
 
-// --- 20. SABER MAIS (CURADORIA PRESERVADA) ---
+const handleAdminSyncPublicProfiles = async () => {
+    if (!isAdminUser(appState.currentUser)) return;
+    showLoadingModal(true, "Sincronizando perfis antigos na rede (sem expor emails)...");
+    try {
+        const usersSnap = await getDocs(collection(db, "users"));
+        let count = 0;
+        for (const docSnap of usersSnap.docs) {
+            await syncPublicProfile(docSnap.id, docSnap.data());
+            count++;
+        }
+        appState.profilesLoadedOnce = false;
+        showToast(`✅ ${count} perfis sincronizados com segurança na Rede!`);
+    } catch (err) {
+        console.error("Erro na sincronização:", err);
+        showToast(getFirebaseErrorMessage(err));
+    } finally {
+        showLoadingModal(false);
+    }
+};
+
+// --- 21. SABER MAIS (CURADORIA PRESERVADA) ---
 const curatedContent = {
     "Como melhorar a terra do canteiro?": {
         intro: "A @erika.canton tem uma dica de ouro...",
@@ -3056,7 +3340,7 @@ const handleLearnSearch = (queryText) => {
     if (content) {
         resultsContainer.innerHTML = `
             <p class="text-slate-700 mb-3 text-sm">${escapeHtml(content.intro)}</p>
-            <a href="${escapeHtml(content.url)}" target="_blank" rel="noopener noreferrer" class="aero-card block overflow-hidden hover:scale-[1.01] transition-all">
+            <a href="${escapeHtml(sanitizeUrl(content.url, "#"))}" target="_blank" rel="noopener noreferrer" class="aero-card block overflow-hidden hover:scale-[1.01] transition-all">
                 <div class="w-full h-44 bg-gradient-to-br from-sky-200 to-emerald-200 flex items-center justify-center">
                     <i data-lucide="instagram" class="w-12 h-12 text-emerald-800"></i>
                 </div>
@@ -3071,13 +3355,12 @@ const handleLearnSearch = (queryText) => {
     }
 };
 
-// --- 21. HELPERS E EVENT LISTENERS ---
+// --- 22. HELPERS E EVENT LISTENERS ---
 const setAppHeight = () => {
     document.documentElement.style.setProperty("--app-height", `${window.innerHeight}px`);
 };
 
 const setupEventListeners = () => {
-    // Delegação global de cliques para botões dinâmicos e navegação
     document.body.addEventListener("click", async (e) => {
         const navBtn = e.target.closest(".nav-btn, .nav-to-btn");
         if (navBtn && navBtn.dataset.page) {
@@ -3086,42 +3369,36 @@ const setupEventListeners = () => {
             return;
         }
 
-        // Resgatar pontos de missão
         const claimBtn = e.target.closest(".btn-claim-mission");
         if (claimBtn) {
             claimMissionReward(claimBtn.dataset.claimMission);
             return;
         }
 
-        // Abrir perfil público de outro usuário
         const userTrigger = e.target.closest(".btn-open-user-profile");
         if (userTrigger && userTrigger.dataset.uid) {
             openPublicUserProfile(userTrigger.dataset.uid);
             return;
         }
 
-        // Seguir / Deixar de seguir
         const followBtn = e.target.closest(".btn-follow-toggle");
         if (followBtn && followBtn.dataset.targetUid) {
             handleToggleFollow(followBtn.dataset.targetUid, followBtn);
             return;
         }
 
-        // Abrir árvore a partir do feed
         const openTreeBtn = e.target.closest(".btn-open-tree-from-feed");
         if (openTreeBtn && openTreeBtn.dataset.treeId) {
             showTreeProfile(openTreeBtn.dataset.treeId);
             return;
         }
 
-        // Curtir post no feed
         const likeBtn = e.target.closest(".btn-like-post");
         if (likeBtn && likeBtn.dataset.postKey) {
             handleToggleLikePost(likeBtn, likeBtn.dataset.postKey);
             return;
         }
 
-        // Abrir/fechar comentários do feed
         const toggleCommentsBtn = e.target.closest(".btn-toggle-comments");
         if (toggleCommentsBtn && toggleCommentsBtn.dataset.postKey) {
             const article = toggleCommentsBtn.closest("article");
@@ -3129,7 +3406,6 @@ const setupEventListeners = () => {
             return;
         }
 
-        // Enviar comentário no feed
         const sendFeedCommentBtn = e.target.closest(".btn-send-feed-comment");
         if (sendFeedCommentBtn && sendFeedCommentBtn.dataset.postKey) {
             const article = sendFeedCommentBtn.closest("article");
@@ -3137,21 +3413,18 @@ const setupEventListeners = () => {
             return;
         }
 
-        // Abrir detalhes do parceiro
         const partnerCard = e.target.closest(".btn-open-partner");
         if (partnerCard && partnerCard.dataset.partnerId) {
             openPartnerDetailModal(partnerCard.dataset.partnerId);
             return;
         }
 
-        // Resgatar recompensa de parceiro
         const redeemBtn = e.target.closest(".btn-redeem-reward");
         if (redeemBtn) {
             handleRedeemReward(redeemBtn.dataset.rewardId, redeemBtn.dataset.partnerId);
             return;
         }
 
-        // Parceiro: excluir própria recompensa
         const delRewardBtn = e.target.closest(".btn-delete-reward");
         if (delRewardBtn) {
             if (!confirm("Deseja excluir esta recompensa?")) return;
@@ -3161,7 +3434,6 @@ const setupEventListeners = () => {
             return;
         }
 
-        // Parceiro: confirmar uso do voucher
         const validateVoucherBtn = e.target.closest(".btn-validate-voucher");
         if (validateVoucherBtn) {
             await updateDoc(doc(db, "redemptions", validateVoucherBtn.dataset.voucherId), {
@@ -3173,7 +3445,6 @@ const setupEventListeners = () => {
             return;
         }
 
-        // Admin: aprovar/recusar parceiro
         const adminPartnerBtn = e.target.closest(".btn-admin-partner-decision");
         if (adminPartnerBtn && isAdminUser(appState.currentUser)) {
             const { partnerId, decision } = adminPartnerBtn.dataset;
@@ -3183,7 +3454,6 @@ const setupEventListeners = () => {
             return;
         }
 
-        // Admin: aprovar/recusar recompensa
         const adminRewardBtn = e.target.closest(".btn-admin-reward-decision");
         if (adminRewardBtn && isAdminUser(appState.currentUser)) {
             const { rewardId, decision } = adminRewardBtn.dataset;
@@ -3250,6 +3520,7 @@ const setupEventListeners = () => {
     // Atalhos de perfil para Parceiro e Admin
     document.getElementById("btn-open-partner-dashboard")?.addEventListener("click", () => showPage("partner-dashboard"));
     document.getElementById("btn-open-admin-panel")?.addEventListener("click", () => showPage("admin"));
+    document.getElementById("btn-admin-sync-profiles")?.addEventListener("click", handleAdminSyncPublicProfiles);
 
     // Modal de confirmação antes de publicar no Feed
     document.getElementById("btn-feed-confirm-yes")?.addEventListener("click", () => {
@@ -3267,7 +3538,7 @@ const setupEventListeners = () => {
         }
     });
 
-    // Filtros do Feed (Todos vs Seguindo)
+    // Filtros do Feed
     document.getElementById("feed-tab-all")?.addEventListener("click", () => {
         appState.feedFilter = "all";
         document.getElementById("feed-tab-all").classList.add("aero-tab-active");
@@ -3281,12 +3552,18 @@ const setupEventListeners = () => {
         loadFeedPosts();
     });
 
-    // Busca na Comunidade
+    // Busca na Comunidade (ao digitar, clicar na lupa ou apertar Enter)
     document.getElementById("btn-community-search")?.addEventListener("click", () => {
-        loadCommunityDirectory(document.getElementById("community-search-input").value);
+        loadCommunityDirectory(document.getElementById("community-search-input").value, true);
     });
     document.getElementById("community-search-input")?.addEventListener("input", (e) => {
-        loadCommunityDirectory(e.target.value);
+        loadCommunityDirectory(e.target.value, false);
+    });
+    document.getElementById("community-search-input")?.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            loadCommunityDirectory(e.target.value, true);
+        }
     });
 
     // Modal de Perfil Público
