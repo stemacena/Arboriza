@@ -833,3 +833,20 @@ input[type="file"] { display: none; }
         animation: none !important;
     }
 }
+
+/* Corrige o corte do formulário e libera a rolagem nas telas de cadastro e login */
+#screen-login,
+#screen-signup,
+#screen-partner-signup {
+    flex: 1 1 0%;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2.5rem;
+}
+
+#screen-login > *,
+#screen-signup > *,
+#screen-partner-signup > * {
+    flex-shrink: 0;
+}
